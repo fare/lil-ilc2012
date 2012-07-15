@@ -124,45 +124,104 @@ how it could be applied in some languages and with what limitations.
 @section[:title @'{Interface-Passing Style}]{
 @subsection[:title @'{Simple Interfaces}]{
 @p+{
-Examples: @<>{eq}, @<>{hashable}
+Example: @<>{eq}, interface for objects with an equality predicate.
+Algorithms that depend on that interface (or any interface that inherits from it)
+may rely on the existing of a method for gf test-function (interface x y)
+on a suitable class of objects that will be used by the algorithm.
+Test-function defaults to eql.
+We could have been a default to undefined,
+but we prefer usable defaults, which fits better with Lisp programming style.
+
+Example: @<>{hashable}, inherits from @<>{eq},
+clients may assume a method on gf hash (interface x);
+servers must provide such a method.
+There again, we default to sxhash (which matches equal, not eql).
+@<>{equal}, inherits from both @<>{eq} and @<>{hashable},
+uses equal for its test-function.
 }}
 @subsection[:title @'{Parametric Interfaces}]{
-@p+{Examples: @<>{alist}
+@p+{
+Example: @<>{alist}. Takes an @<>{eq} interface as parameter.
 
-:parametric - automatic function. Memoization.
+Define-interface extension option :parametric automatically generates
+a function to create such interface objects.
+This function further uses memoization so interfaces with identical parameters
+end up being the same interface rather than new objects every time.
 
-:singleton - automatic special variable.
+Define-interface extension option :singleton relies on the previous
+(a trivial version of which is assumed if not present)
+to automatic a special variable.
+Therefore clients can use the symbol @<>{alist}
+to refer to the one such interface, instead of
+having to either create a new instance every time with (make-instance '<alist>)
+or to call function (<alist>) with the default test function.
 }}
 @subsection[:title @'{Making Interfaces Implicit}]{
 @p+{
-with-interface
+Local bindings with
+(with-interface-methods (interface &key methods prefix) &body body).
+DISCLAIMER: macro TBD20120715.
+
+Global definitions with
+(define-interface-methods interface &key methods prefix package).
+DISCLAIMER: macro TBD20120715.
 }}}
 @section[:title @'{Classic Data-Structure}]{
 @subsection[:title @'{Tree Mixins}]{
 @p+{
 Power of CLOS:
-From naive binary trees to balanced binary trees in one method.
+From naive binary trees to balanced binary trees in one method
+(plus a little bit of boilerplate).
 }}
 @subsection[:title @'{Bootstrapping Datastructures}]{
 @p+{
 Power of Parametric Composition:
 pure hash-tables bootstrapped from pure trees of hash buckets and pure alists as buckets.
 
-Example from Okasaki.
+Example of bootstrapped datastructure from Okasaki.
 }}
 @subsection[:title @'{Same Data, Multiple Interfaces}]{
 @p+{
 Implicit in the above bootstrapping.
 
-Multiply-indexed tuple store.
+Multiply-indexed-organized tuple store.
+Each node is simultaneously node of multiple trees.
+Depending on which index you're using,
+they have to be viewed as a tree in the according way,
+and appropriate accessors have to be chosen for say subtree access.
+The same tree-manipulation routines can be used on the same tree nodes
+with completely different results depending on which interface you use.
+DISCLAIMER: example TBD20120715.
+
+Because the interface is not tied to the data, the data can remain unchanged
+while the interface changes.
+In some algorithms, you might want to constantly switch
+your point of view on the same data, as for a Necker Cube.
+When using classes to control behavior, this requires
+constant rewriting of the object,
+either by global rewriting
+or by rewrapping and unwrapping.
+If creating new datastructures with these objects,
+this can even leak memory
+(or some kind of memoization must be done,
+either through a table which is somewhat slow,
+or by adding an ad-hoc memoization field to relevant classes,
+neither of which is nice if you wanted to preserve purity from side-effects).
+First class interfaces separate behavior from representation
+and avoid this issue.
+DISCLAIMER: example TBD20120715.
 }}
 @subsection[:title @'{From Pure to Stateful and Back}]{
 @p+{
-put pure state in mutable box.
+Put pure datum in a mutable box.
 
-put mutable object in use-once box.
+Put mutable object in use-once box.
 
-Provide all wrappers for all the methods via macros.
+Provide wrappers for all relevant methods via macros.
+Also need to identify for every method
+which position in argument and/or return values
+holds the object or datum to wrap/unwrap.
+DISCLAIMER: macros TBD20120715.
 }}}
 @section[:title @'{Conclusion}]{
 @p+{
@@ -181,16 +240,17 @@ we embraced the opening up of the implementation details
 and deferred any hiding of interfaces to later facilities.
 On the one hand makes, this is
 a rather low-level way of achieving parametric polymorphism,
-and is more cumbersome to use than methods that abstract interfaces away.
-On the other hand, it gives programmers more control and
-makes it easy to leverage the power of CLOS,
+and is more cumbersome to use than methods that abstract interfaces away;
+for instance, in static languages such as Haskell or ML,
+type inference allows the language to
+automatically pick the right interface at every call site,
+instead of the user having to explicitly pass interfaces around.
+On the other hand, it gives programmers more control
+(a same datum can be seen through multiple interfaces;
+your interfaces can depend on first-class data, not just second-class types and functions)
+and makes it easy to leverage the power of CLOS,
 whereas it is always possible to use Lisp macros to
 build higher-level abstractions as additional layers on top of this mechanism.
-
-@XXX{
-Haskell has the advantage that it will automatically infer the type class for you and pass it around as an implicit argument. In a dynamic language like Common Lisp, you have to explicitly pass the interface around, which on the one hand is cumbersome, but on the other, gives you more control: you can express parametric polymorphism, existential quantification, dependent types, and multiple ways to view a very same data structure as being an instance of the same interface protocol, which is especially great when bootstrapping elaborate versions of a protocol from simpler versions of the same (as is done with hash-tables). Of course, using Haskell, you could also go from one point of view to the other by wrapping objects inside view-specific constructors; but then, if your algorithm switches point of view constantly as for a Necker Cube, you may waste a lot of space and possibly leak as you keep creating new wrapped objects; whereas with a first-class interface separate from the data, you can just switch interface without consing.
-}
-
 }}
 @section[:number #f :title @'{Bibliography}]{
 @font[:size -1 (print-bibliography :all #t)]}
