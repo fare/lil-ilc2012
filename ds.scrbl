@@ -160,11 +160,11 @@ or to call function (<alist>) with the default test function.
 @p+{
 Local bindings with
 (with-interface-methods (interface &key methods prefix) &body body).
-DISCLAIMER: macro TBD20120715.
+DISCLAIMER: macros TBD as of 20120715.
 
 Global definitions with
 (define-interface-methods interface &key methods prefix package).
-DISCLAIMER: macro TBD20120715.
+DISCLAIMER: macros TBD as of 20120715.
 }}}
 @section[:title @'{Classic Data-Structure}]{
 @subsection[:title @'{Tree Mixins}]{
@@ -191,7 +191,7 @@ they have to be viewed as a tree in the according way,
 and appropriate accessors have to be chosen for say subtree access.
 The same tree-manipulation routines can be used on the same tree nodes
 with completely different results depending on which interface you use.
-DISCLAIMER: example TBD20120715.
+DISCLAIMER: example TBD as of 20120715.
 
 Because the interface is not tied to the data, the data can remain unchanged
 while the interface changes.
@@ -209,8 +209,9 @@ or by adding an ad-hoc memoization field to relevant classes,
 neither of which is nice if you wanted to preserve purity from side-effects).
 First class interfaces separate behavior from representation
 and avoid this issue.
-DISCLAIMER: example TBD20120715.
-}}
+DISCLAIMER: example TBD as of 20120715.
+}}}
+@section[:title @'{Interface Transformations}]{
 @subsection[:title @'{From Pure to Stateful and Back}]{
 @p+{
 Put pure datum in a mutable box.
@@ -221,7 +222,35 @@ Provide wrappers for all relevant methods via macros.
 Also need to identify for every method
 which position in argument and/or return values
 holds the object or datum to wrap/unwrap.
-DISCLAIMER: macros TBD20120715.
+DISCLAIMER: macros TBD as of 20120715.
+}}
+@subsection[:title @'{From Interfaces to Classes and Back}]{
+@p+{
+An interface can be viewed as "detached" class information,
+where an object's "virtual method table" is passed
+as an explicit "self" argument.
+From any object-oriented API
+(set of classes and generic functions that dispatch on objects),
+you can therefore mechanically derive an interface-passing API
+(set of interfaces and generic functions that dispatch on interfaces),
+simply by passing around the object itself as the interface
+that drives the dispatch.
+DISCLAIMER: macros TBD as of 20120715.
+
+Conversely, you can view classes as "subjective" interfaces,
+where no explicit state object is passed, but rather
+where any state has been moved inside the interface itself.
+Once you build an elaborate interface API
+by composing several parametric interfaces,
+you can obtain a class-style API by having a class
+derive from your interface
+(but specifying the :allocation :class option for its slots)
+and your interface's object class
+(with :allocation :instance for its slots),
+and by automatically deriving subjective variants
+of the interface-passing style generic functions
+and appropriate wrappers.
+DISCLAIMER: macros TBD as of 20120715.
 }}}
 @section[:title @'{Conclusion}]{
 @p+{
