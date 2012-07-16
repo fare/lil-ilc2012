@@ -155,16 +155,6 @@ Therefore clients can use the symbol @<>{alist}
 to refer to the one such interface, instead of
 having to either create a new instance every time with (make-instance '<alist>)
 or to call function (<alist>) with the default test function.
-}}
-@subsection[:title @'{Making Interfaces Implicit}]{
-@p+{
-Local bindings with
-(with-interface-methods (interface &key methods prefix) &body body).
-DISCLAIMER: macros TBD as of 20120715.
-
-Global definitions with
-(define-interface-methods interface &key methods prefix package).
-DISCLAIMER: macros TBD as of 20120715.
 }}}
 @section[:title @'{Classic Data-Structure}]{
 @subsection[:title @'{Tree Mixins}]{
@@ -212,6 +202,18 @@ and avoid this issue.
 DISCLAIMER: example TBD as of 20120715.
 }}}
 @section[:title @'{Interface Transformations}]{
+@subsection[:title @'{Making Interfaces Implicit}]{
+@p+{
+Local bindings with
+(with-interface-methods (interface &key methods prefix) &body body).
+DISCLAIMER: macros TBD as of 20120715.
+
+Global definitions with
+(define-interface-methods interface &key methods prefix package).
+DISCLAIMER: macros TBD as of 20120715.
+
+TBD: from implicit interfaces back to explicit ones?
+}}
 @subsection[:title @'{From Pure to Stateful and Back}]{
 @p+{
 Put pure datum in a mutable box.
