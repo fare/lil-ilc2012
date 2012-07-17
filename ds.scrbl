@@ -297,9 +297,9 @@ http://international-lisp-conference.org/2012/call-for-papers.html
      abstracts of 4 pages for technical papers and abstracts of 2 pages
      for all other categories.
 
-     Deadline for abstract submissions: July 15, 2012
-     Notification of acceptance or rejection: July 31, 2012
-     Deadline for final paper submissions: August 31, 2012
+     Deadline for abstract submissions: August 5, 2012 (was July 15, 2012)
+     Notification of acceptance or rejection: August 25, 2012 (was July 31, 2012)
+     Deadline for final paper submissions: September 25, 2012 (was August 31, 2012)
 
 A complete technical paper is up to 15 pages and must describe original results.
 
