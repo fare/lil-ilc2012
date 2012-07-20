@@ -122,6 +122,9 @@ or to their underlying implementation;
 how it could be applied in some languages and with what limitations.
 }}
 @section[:title @'{Interface-Passing Style}]{
+@subsection[:title @'{Using Interfaces}]{
+@p+{
+}}
 @subsection[:title @'{Simple Interfaces}]{
 @p+{
 Example: @<>{eq}, interface for objects with an equality predicate.
@@ -131,7 +134,9 @@ on a suitable class of objects that will be used by the algorithm.
 Test-function defaults to eql.
 We could have been a default to undefined,
 but we prefer usable defaults, which fits better with Lisp programming style.
-
+}}
+@subsection[:title @'{Interface Inheritance}]{
+@p+{
 Example: @<>{hashable}, inherits from @<>{eq},
 clients may assume a method on gf hash (interface x);
 servers must provide such a method.
@@ -157,7 +162,7 @@ having to either create a new instance every time with (make-instance '<alist>)
 or to call function (<alist>) with the default test function.
 }}}
 @section[:title @'{Classic Data-Structure}]{
-@subsection[:title @'{Tree Mixins}]{
+@subsection[:title @'{Mixins}]{
 @p+{
 Power of CLOS:
 From naive binary trees to balanced binary trees in one method
@@ -168,7 +173,7 @@ From naive binary trees to balanced binary trees in one method
 Power of Parametric Composition:
 pure hash-tables bootstrapped from pure trees of hash buckets and pure alists as buckets.
 
-Example of bootstrapped datastructure from Okasaki.
+Example of bootstrapped datastructure from Okasaki. TBD.
 }}
 @subsection[:title @'{Same Data, Multiple Interfaces}]{
 @p+{
@@ -282,6 +287,8 @@ your interfaces can depend on first-class data, not just second-class types and 
 and makes it easy to leverage the power of CLOS,
 whereas it is always possible to use Lisp macros to
 build higher-level abstractions as additional layers on top of this mechanism.
+
+cl-containers: mixins and find-or-create-class.
 }}
 @section[:number #f :title @'{Bibliography}]{
 @font[:size -1 (print-bibliography :all #t)]}
@@ -302,8 +309,4 @@ http://international-lisp-conference.org/2012/call-for-papers.html
      Deadline for final paper submissions: September 25, 2012 (was August 31, 2012)
 
 A complete technical paper is up to 15 pages and must describe original results.
-
-Another category we might vie for is Demonstrations: Abstracts of up
-to 2 pages for demonstrations of tools, libraries and applications.
-
 |#
