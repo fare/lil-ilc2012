@@ -52,8 +52,8 @@ by which new types of objects may be specified that fit existing interfaces;
 this extension can be incremental through the use of inheritance
 in a class (or prototype) hierarchy.
 More advanced object systems such as the Common Lisp Object System (CLOS)
-have further mechanisms to make inheritance more expressive, such as
-mixins (multiple inheritance) and method combinations,
+have further mechanisms such as mixins (multiple inheritance)
+and method combinations,
 that allow for a more decentralized specification of program behavior.
 
 In statically typed languages such as OCaml or Haskell,
@@ -86,7 +86,7 @@ with varied results.
 In this paper, we present LIL, the Lisp Interface Library,
 which brings parametric polymorphism to Common Lisp
 and allows ad-hoc polymorphism and parametric polymorphism
-to complement together in specifying abstract algorithms
+to complement each other in specifying abstract algorithms
 in the context of a dynamic programming language.
 
 In a first part, we describe
@@ -95,9 +95,8 @@ meta-data about the current algorithm is encapsulated
 in a first-class interface object,
 and this object is then explicitly passed around
 in computations that may require specialization based on it.
-We describe syntactic extensions provided
-to make the interface-passing implicit rather than explicit,
-and show how some things are easier one way or the other.
+We show basic mechanisms by which this make it possible
+to express ad-hoc and parametric polymorphism.
 
 In a second part, we demonstrate how we use this style to implement
 a library of classic datastructures, both pure and stateful.
@@ -111,9 +110,18 @@ and the bootstrapping of more efficient ones
 from simpler but less efficient variants;
 first-class interfaces allow a very same object
 as implementing a given type of interface in different ways.
-Finally, we show how adequate macros allow to bridge between
-pure and stateful variants of our datastructures without
-requiring the programmer to introduce a lot of boilerplate.
+
+In a third part, we show how adequate macros allow to bridge
+between different programming styles of interface-based programming.
+We demonstrate macros that bridge between
+syntactically implicit or explicit interfaces.
+We demonstrate macros that bridge between
+pure functional and stateful datastructures.
+We demonstrate macros that bridge between
+"detached" interfaces and "subjective" objects.
+All these macros allow programmers to choose a programming style
+that best fit the problem at hand and their own tastes
+while still enjoying the full benefits of @[IPS] libraries.
 
 We conclude with a short statement about how @[IPS] in Lisp
 relates to idioms in other programming languages:
@@ -124,6 +132,18 @@ how it could be applied in some languages and with what limitations.
 @section[:title @'{Interface-Passing Style}]{
 @subsection[:title @'{Using Interfaces}]{
 @p+{
+From the point the user of a library written in @[IPS],
+interfaces are just one extra argument (sometimes two or more)
+passed as the first argument to appropriate function calls.
+The argument provides these functions with
+some contextual information about
+which specific algorithms and datastructures are being used.
+
+It is up to the user to make sure that he uses interfaces consistently;
+datastructures built using some interface
+must be consumed using the same interface or some compatible interface.
+Failure to do so may result in unspecified behavior,
+and interfaces may or may not check their arguments for consistency.
 }}
 @subsection[:title @'{Simple Interfaces}]{
 @p+{
