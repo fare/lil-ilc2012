@@ -193,7 +193,7 @@ From naive binary trees to balanced binary trees in one method
 Power of Parametric Composition:
 pure hash-tables bootstrapped from pure trees of hash buckets and pure alists as buckets.
 
-Example of bootstrapped datastructure from Okasaki. TBD.
+Example TBD of bootstrapped datastructure from Okasaki.
 }}
 @subsection[:title @'{Same Data, Multiple Interfaces}]{
 @p+{
@@ -230,14 +230,16 @@ DISCLAIMER: example TBD as of 20120715.
 @subsection[:title @'{Making Interfaces Implicit}]{
 @p+{
 Local bindings with
-(with-interface-methods (interface &key methods prefix) &body body).
-DISCLAIMER: macros TBD as of 20120715.
+(with-interface (interface functions-spec &key prefix package) &body body)
 
 Global definitions with
-(define-interface-methods interface &key methods prefix package).
-DISCLAIMER: macros TBD as of 20120715.
+(define-interface-specialized-functions interface functions-spec &key prefix package)
 
-TBD: from implicit interfaces back to explicit ones?
+Define methods with
+(define-interface-methods (i <myinterface>)
+  (:method ...) ...)
+
+Example TBD of how to build an implicit interface from explicit functions.
 }}
 @subsection[:title @'{From Pure to Stateful and Back}]{
 @p+{
