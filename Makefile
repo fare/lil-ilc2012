@@ -20,10 +20,13 @@ all: ${LIL}.PDF
 %.PDF: %.pdf
 	xpdf $<
 
-${LIL}.pdf: *.scrbl utils.rkt # style.tex
+${LIL}.pdf: *.scrbl utils.rkt
 	PLTCOLLECTS=`pwd`:${PLTCOLLECTS} \
 	scribble --dest-name $@ --pdf ds.scrbl \
-	; # ++style style.tex
+
+${LIL}.html: *.scrbl utils.rkt
+	PLTCOLLECTS=`pwd`:${PLTCOLLECTS} \
+	scribble --dest-name $@ --html ds.scrbl \
 
 clean:
 	rm lil-ilc2012.pdf
