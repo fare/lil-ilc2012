@@ -1,12 +1,17 @@
-(style 'fare-style)
+#lang sigalternate
+@(require scribble/base scribble/manual scriblib/autobib "utils.rkt"
+          (only-in scribble/core style))
 
-(define (IPS) "Interface-Passing Style")
-(define (<> x) (tt "<" x ">"))
 
-@document[
-  :title @'{LIL: higher-order datastructures meet CLOS}
-  :author (FRR)
-]{
+@title{LIL: higher-order datastructures meet CLOS}
+
+@authorinfo["François-René Rideau" "Google" "tunes@google.com"]
+@;@authorinfo["Eric O'Connor" "" "oconnore@gmail.com"]
+
+@conferenceinfo["ILC 2012" "October 26--27, Kyoto, Japan."]
+@copyrightyear{2012}
+@;@copyrightdata{123-4-5678-9012-3/45/67}
+
 @abstract{
 LIL, the Lisp Interface Library,
 uses an explicit interface-passing style
@@ -14,33 +19,35 @@ to implement an algorithmic data-structure library.
 By separating algorithmic information
 from the concrete representation of data
 and encapsulating it in first-class interface objects,
-LIL simultaneously allows for parametric polymorphism
+LIL simultaneously allows for both parametric polymorphism
 (abstracting over types, classes, functions, data)
 and sharing of code and data fragments
 through inheritance of CLOS mixins.
 LIL provides both pure functional and stateful datastructure interfaces,
-with functions to transform ones into the others.
+with a common fragment and with functions to transform ones into the others.
 Finally, judicious Lisp macros allow developers to avoid boilerplate and
 to abstract away interface objects to expose classic-looking Lisp APIs.
 }
-@apply*[bibliography
-'((misc Rideau-IPS
-   (title "Interface-passing style")
-   (author "François-René Rideau")
-   (year "2010")
-   (url "http://fare.livejournal.com/155094.html"))
-  (misc LIL
-   (title "lisp-interface-library")
-   (author "François-René Rideau and Eric O'Connor")
-   (year "2010-2012")
-   (url "http://github.com/fare/lisp-interface-library/"))
-  (article Implementing-Type-Classes
-   (title "Implementing Type Classes")
-   (author "John Peterson and Mark Jones")
-   (year "1993")))
-]
-@section[:title @'{Introduction}]{
-@p+{
+
+@(define-bib Rideau-IPS
+  #:title "Interface-passing style"
+  #:author "François-René Rideau"
+  #:date 2010
+  #:url "http://fare.livejournal.com/155094.html")
+
+@(define-bib LIL
+  #:title "lisp-interface-library"
+  #:author "François-René Rideau and Eric O'Connor"
+  #:date 2012
+  #:url "http://github.com/fare/lisp-interface-library/")
+
+@(define-bib Implementing-Type-Classes
+  #:title "Implementing Type Classes"
+  #:author "John Peterson and Mark Jones"
+  #:date "1993")
+
+@section{Introduction}
+
 In dynamically typed languages such as Common Lisp or Python,
 programmers usually rely on ad-hoc polymorphism
 to provide a uniform interface to multiple kinds of situations:
@@ -83,14 +90,14 @@ In a more recent past, many languages,
 usually static languages (C++, OCaml, Haskell, Scala, etc.),
 have offered some combination of these two forms of polymorphism,
 with varied results.
-In this paper, we present LIL, the Lisp Interface Library,
+In this paper, we present LIL, the Lisp Interface Library@~cite[LIL],
 which brings parametric polymorphism to Common Lisp
 and allows ad-hoc polymorphism and parametric polymorphism
 to complement each other in specifying abstract algorithms
 in the context of a dynamic programming language.
 
 In a first part, we describe
-the @[IPS] @ref[:bib "Rideau-IPS"] in which LIL is written:
+the @[IPS] @~cite[Rideau-IPS] in which LIL is written:
 meta-data about the current algorithm is encapsulated
 in a first-class interface object,
 and this object is then explicitly passed around
@@ -128,10 +135,10 @@ relates to idioms in other programming languages:
 how it compares to existing mechanisms for polymorphism in these languages
 or to their underlying implementation;
 how it could be applied in some languages and with what limitations.
-}}
-@section[:title @'{Interface-Passing Style}]{
-@subsection[:title @'{Using Interfaces}]{
-@p+{
+
+@section{Interface-Passing Style}
+@subsection{Using Interfaces}
+
 From the point the user of a library written in @[IPS],
 interfaces are just one extra argument (sometimes two or more)
 passed as the first argument to appropriate function calls.
@@ -144,9 +151,9 @@ datastructures built using some interface
 must be consumed using the same interface or some compatible interface.
 Failure to do so may result in unspecified behavior,
 and interfaces may or may not check their arguments for consistency.
-}}
-@subsection[:title @'{Simple Interfaces}]{
-@p+{
+
+@subsection{Simple Interfaces}
+
 Example: @<>{eq}, interface for objects with an equality predicate.
 Algorithms that depend on that interface (or any interface that inherits from it)
 may rely on the existing of a method for gf test-function (interface x y)
@@ -154,18 +161,18 @@ on a suitable class of objects that will be used by the algorithm.
 Test-function defaults to eql.
 We could have been a default to undefined,
 but we prefer usable defaults, which fits better with Lisp programming style.
-}}
-@subsection[:title @'{Interface Inheritance}]{
-@p+{
+
+@subsection{Interface Inheritance}
+
 Example: @<>{hashable}, inherits from @<>{eq},
 clients may assume a method on gf hash (interface x);
 servers must provide such a method.
 There again, we default to sxhash (which matches equal, not eql).
 @<>{equal}, inherits from both @<>{eq} and @<>{hashable},
 uses equal for its test-function.
-}}
-@subsection[:title @'{Parametric Interfaces}]{
-@p+{
+
+@subsection{Parametric Interfaces}
+
 Example: @<>{alist}. Takes an @<>{eq} interface as parameter.
 
 Define-interface extension option :parametric automatically generates
@@ -180,23 +187,23 @@ Therefore clients can use the symbol @<>{alist}
 to refer to the one such interface, instead of
 having to either create a new instance every time with (make-instance '<alist>)
 or to call function (<alist>) with the default test function.
-}}}
-@section[:title @'{Classic Data-Structure}]{
-@subsection[:title @'{Mixins}]{
-@p+{
+
+@section{Classic Data-Structure}
+@subsection{Mixins}
+
 Power of CLOS:
 From naive binary trees to balanced binary trees in one method
 (plus a little bit of boilerplate).
-}}
-@subsection[:title @'{Bootstrapping Datastructures}]{
-@p+{
+
+@subsection{Bootstrapping Datastructures}
+
 Power of Parametric Composition:
 pure hash-tables bootstrapped from pure trees of hash buckets and pure alists as buckets.
 
 Example TBD of bootstrapped datastructure from Okasaki.
-}}
-@subsection[:title @'{Same Data, Multiple Interfaces}]{
-@p+{
+
+@subsection{Same Data, Multiple Interfaces}
+
 Implicit in the above bootstrapping.
 
 Multiply-indexed-organized tuple store.
@@ -225,10 +232,10 @@ neither of which is nice if you wanted to preserve purity from side-effects).
 First class interfaces separate behavior from representation
 and avoid this issue.
 DISCLAIMER: example TBD as of 20120715.
-}}}
-@section[:title @'{Interface Transformations}]{
-@subsection[:title @'{Making Interfaces Implicit}]{
-@p+{
+
+@section{Interface Transformations}
+@subsection{Making Interfaces Implicit or Explicit}
+
 Local bindings with
 (with-interface (interface functions-spec &key prefix package) &body body)
 
@@ -240,9 +247,9 @@ Define methods with
   (:method ...) ...)
 
 Example TBD of how to build an implicit interface from explicit functions.
-}}
-@subsection[:title @'{From Pure to Stateful and Back}]{
-@p+{
+
+@subsection{From Pure to Stateful and Back}
+
 Put pure datum in a mutable box.
 
 Put mutable object in use-once box.
@@ -252,9 +259,9 @@ Also need to identify for every method
 which position in argument and/or return values
 holds the object or datum to wrap/unwrap.
 DISCLAIMER: macros TBD as of 20120715.
-}}
-@subsection[:title @'{From Interfaces to Classes and Back}]{
-@p+{
+
+@subsection{From Interfaces to Classes and Back}
+
 An interface can be viewed as "detached" class information,
 where an object's "virtual method table" is passed
 as an explicit "self" argument.
@@ -280,15 +287,15 @@ and by automatically deriving subjective variants
 of the interface-passing style generic functions
 and appropriate wrappers.
 DISCLAIMER: macros TBD as of 20120715.
-}}}
-@section[:title @'{Conclusion}]{
-@p+{
+
+@section{Conclusion}
+
 @[IPS] is an effective tool with which to write software libraries.
 However, the underlying principle is hardly original,
 as @[IPS] is typically how existing languages with parametric polymorphism
 have implicitly implemented this polymorphism for decades:
 for instance, that is how
-Haskell implements Type Classes @[ref :bib "Implementing-Type-Classes"],
+Haskell implements Type Classes @~cite[Implementing-Type-Classes],
 PLT Scheme implements Units@[XXX 'ref :bib], and
 ML implements functors@[XXX 'ref :bib].
 
@@ -311,12 +318,15 @@ whereas it is always possible to use Lisp macros to
 build higher-level abstractions as additional layers on top of this mechanism.
 
 cl-containers: mixins and find-or-create-class.
-}}
-@section[:number #f :title @'{Bibliography}]{
-@font[:size -1 (print-bibliography :all #t)]}
-}
 
-#|
+@(generate-bib)
+
+@section[#:style (style #f '(hidden unnumbered))]{}
+
+@;@bold{Acknowledgment:} Thanks to ...
+
+
+@XXX{
 The call for paper is here:
 http://international-lisp-conference.org/2012/call-for-papers.html
 
@@ -331,4 +341,4 @@ http://international-lisp-conference.org/2012/call-for-papers.html
      Deadline for final paper submissions: September 25, 2012 (was August 31, 2012)
 
 A complete technical paper is up to 15 pages and must describe original results.
-|#
+}
