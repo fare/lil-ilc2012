@@ -1,4 +1,6 @@
-LIL=lil-ilc2012
+LIL := lil-ilc2012
+
+LILSRC = ${LIL}.scrbl utils.rkt
 
 all: ${LIL}.PDF
 
@@ -11,17 +13,18 @@ all: ${LIL}.PDF
 %.PDF: %.pdf
 	xpdf $<
 
-${LIL}.pdf: *.scrbl utils.rkt
+${LIL}.pdf: ${LILSRC}
 	PLTCOLLECTS=`pwd`:${PLTCOLLECTS} \
-	scribble --dest-name $@ --pdf ds.scrbl
+	scribble --dest-name $@ --pdf ${LIL}.scrbl
 
-${LIL}.html: *.scrbl utils.rkt
+${LIL}.html: ${LILSRC}
 	PLTCOLLECTS=`pwd`:${PLTCOLLECTS} \
-	scribble --dest-name $@ --html ds.scrbl
+	scribble --dest-name $@ --html $<
+
+latex: ${LILSRC}
+	PLTCOLLECTS=`pwd`:${PLTCOLLECTS} \
+	scribble --latex --dest tmp $<
 
 clean:
-	rm lil-ilc2012.pdf
-
-latex:
-	PLTCOLLECTS=`pwd`:${PLTCOLLECTS} \
-	scribble --latex --dest tmp ds.scrbl
+	rm ${LIL}.pdf ${LIL}.html
+	rm -rf tmp
