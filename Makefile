@@ -2,15 +2,6 @@ LIL=lil-ilc2012
 
 all: ${LIL}.PDF
 
-#all: ds.W
-#
-#%.html: %.scrbl
-#	exscribe -I $${FARE}/fare/www -o $@ $<
-#
-#%.pdf: %.scrbl
-#	exscribe -I $${FARE}/fare/www -P -o $@ $<
-#
-
 %.W: %.html
 	w3m -T text/html $<
 
@@ -22,11 +13,11 @@ all: ${LIL}.PDF
 
 ${LIL}.pdf: *.scrbl utils.rkt
 	PLTCOLLECTS=`pwd`:${PLTCOLLECTS} \
-	scribble --dest-name $@ --pdf ds.scrbl \
+	scribble --dest-name $@ --pdf ds.scrbl
 
 ${LIL}.html: *.scrbl utils.rkt
 	PLTCOLLECTS=`pwd`:${PLTCOLLECTS} \
-	scribble --dest-name $@ --html ds.scrbl \
+	scribble --dest-name $@ --html ds.scrbl
 
 clean:
 	rm lil-ilc2012.pdf

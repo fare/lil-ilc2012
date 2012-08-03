@@ -2,7 +2,6 @@
 @(require scribble/base scribble/manual scriblib/autobib "utils.rkt"
           (only-in scribble/core style))
 
-
 @title{LIL: higher-order datastructures meet CLOS}
 
 @authorinfo["François-René Rideau" "Google" "tunes@google.com"]
@@ -44,7 +43,28 @@ to abstract away interface objects to expose classic-looking Lisp APIs.
 @(define-bib Implementing-Type-Classes
   #:title "Implementing Type Classes"
   #:author "John Peterson and Mark Jones"
-  #:date "1993")
+  #:date 1993)
+
+@(define-bib Units-Flatt-Felleisen
+  #:title "Units: Cool Modules for HOT Languages"
+  #:author "Matthew Flatt and Matthias Felleisen"
+  ;; #:conference "Proceedings of PLDI 98"
+  #:date 1998)
+
+@(define-bib MOOPUM
+  #:title "Modular Object-Oriented Programming with Units and Mixins"
+  #:author "Robert Bruce Findler and Matthew Flatt"
+  ;; #:conference "Proceedings of ICFP 98"
+  #:date 1998
+#|
+See discussion on 2012-08-03 on #racket
+<asumu> I don't think this combination is used much.
+<asumu> Partly, I think, because units are a fairly heavyweight feature.
+<asumu> (to clarify: mixins & units *are* used together, but not in this particular pattern)
+<asumu> (see the DrRacket tool API for an example of their use)
+|#
+  )
+
 
 @section{Introduction}
 
@@ -59,11 +79,11 @@ by which new types of objects may be specified that fit existing interfaces;
 this extension can be incremental through the use of inheritance
 in a class (or prototype) hierarchy.
 More advanced object systems such as the Common Lisp Object System (CLOS)
-have further mechanisms such as mixins (multiple inheritance)
-and method combinations,
+have further mechanisms such as multiple inheritance,
+multiple dispatch, and method combinations,
 that allow for a more decentralized specification of program behavior.
 
-In statically typed languages such as OCaml or Haskell,
+In statically typed languages such as ML or Haskell,
 a given function requires its arguments to have fixed types.
 While sum types allow to a point for dispatch of algorithmic behavior
 depending on the provided arguments,
@@ -85,16 +105,18 @@ Of course, in the past
 there have been static languages with ad-hoc polymorphism
 (such as the original C++),
 and dynamic languages with parametric polymorphism
-(such as units in PLT Scheme).
+(such as units in PLT Scheme @~cite[Units-Flatt-Felleisen]).
 In a more recent past, many languages,
-usually static languages (C++, OCaml, Haskell, Scala, etc.),
+usually static languages (C++, OCaml, Haskell, Java, Scala, etc.),
+but also dynamic languages (PLT Scheme@~cite[MOOPUM]),
 have offered some combination of these two forms of polymorphism,
 with varied results.
 In this paper, we present LIL, the Lisp Interface Library@~cite[LIL],
 which brings parametric polymorphism to Common Lisp
 and allows ad-hoc polymorphism and parametric polymorphism
 to complement each other in specifying abstract algorithms
-in the context of a dynamic programming language.
+in the context of a dynamic programming language,
+where we take advantage of the full power of CLOS.
 
 In a first part, we describe
 the @[IPS] @~cite[Rideau-IPS] in which LIL is written:
@@ -161,6 +183,12 @@ on a suitable class of objects that will be used by the algorithm.
 Test-function defaults to eql.
 We could have been a default to undefined,
 but we prefer usable defaults, which fits better with Lisp programming style.
+
+Multiple dispatch means we can dispatch on more than the interface argument,
+and preserve the language's object-oriented style
+to dispatch on non-interface arguments.
+In a language with single-dispatch, we couldn't do that.
+
 
 @subsection{Interface Inheritance}
 
