@@ -1,14 +1,19 @@
-#lang at-exp racket
+#lang racket
+
+;;(display "In utils.rkt!\n")
 
 (require scribble/base
-         scribble/manual
-         scribble/bnf
-         scriblib/autobib
-         (for-syntax syntax/parse))
+         scriblib/autobib)
 
-(provide ~cite IPS <> define-bib p+ XXX generate-bib)
+
+(provide ~cite IPS <> define-bib p+ XXX generate-bib long short abstract-only)
 
 ;;(define-syntax-rule (~cite what ...) "")
+
+
+(define abstract-only (make-parameter #f))
+(define-syntax-rule (long x ...) (unless (abstract-only) (list x ...)))
+(define-syntax-rule (short x ...) (when (abstract-only) (list x ...)))
 
 (define (IPS) "Interface-Passing Style")
 (define (<> x) (tt "<" x ">"))

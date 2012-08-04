@@ -1,8 +1,12 @@
 LIL := lil-ilc2012
+LILA := ${LIL}-abstract
 
-LILSRC = ${LIL}.scrbl utils.rkt
+LILSRC = ds.scrbl bibliography.scrbl utils.rkt
 
-all: ${LIL}.PDF
+export PLTCOLLECTS:=$(shell pwd):${PLTCOLLECTS}
+
+all: ${LIL}.pdf ${LIL}.PDF
+abstract: ${LILA}.pdf ${LILA}.PDF
 
 %.W: %.html
 	w3m -T text/html $<
@@ -13,18 +17,15 @@ all: ${LIL}.PDF
 %.PDF: %.pdf
 	xpdf $<
 
-${LIL}.pdf: ${LILSRC}
-	PLTCOLLECTS=`pwd`:${PLTCOLLECTS} \
-	scribble --dest-name $@ --pdf ${LIL}.scrbl
+%.pdf: %.scrbl ${LILSRC}
+	scribble --dest-name $@ --pdf $<
 
-${LIL}.html: ${LILSRC}
-	PLTCOLLECTS=`pwd`:${PLTCOLLECTS} \
+%.html: %.scrbl ${LILSRC}
 	scribble --dest-name $@ --html $<
 
-latex: ${LILSRC}
-	PLTCOLLECTS=`pwd`:${PLTCOLLECTS} \
+%.latex: %.scrbl ${LILSRC}
 	scribble --latex --dest tmp $<
 
 clean:
-	rm ${LIL}.pdf ${LIL}.html
+	rm ${LIL}.pdf ${LIL}.html ${LILA}.pdf ${LILA}.html
 	rm -rf tmp
