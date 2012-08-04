@@ -7,6 +7,7 @@ export PLTCOLLECTS:=$(shell pwd):${PLTCOLLECTS}
 
 all: ${LIL}.pdf ${LIL}.PDF
 abstract: ${LILA}.pdf ${LILA}.PDF
+html: ${LIL}.html ${LILA}.html
 
 %.W: %.html
 	w3m -T text/html $<
