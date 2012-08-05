@@ -11,7 +11,7 @@
 @title{LIL: higher-order datastructures meet CLOS}
 
 @authorinfo["François-René Rideau" "Google" "tunes@google.com"]
-@;@authorinfo["Eric O'Connor" "" "oconnore@gmail.com"]
+@;@authorinfo["Eric O'Connor" "Mercer University" "oconnore@gmail.com"]
 
 @conferenceinfo["ILC 2012" "October 26--27, Kyoto, Japan."]
 @copyrightyear{2012}
@@ -20,7 +20,7 @@
 @abstract{
 LIL, the Lisp Interface Library,
 uses an explicit interface-passing style
-to implement an algorithmic data-structure library.
+to implement an algorithmic datastructure library.
 By separating algorithmic information
 from the concrete representation of data
 and encapsulating it in first-class interface objects,
@@ -36,18 +36,18 @@ to abstract away interface objects to expose classic-looking Lisp APIs.
 
 @section{Introduction}
 
-In dynamically typed languages such as Common Lisp or Python
+In dynamically typed languages such as @[CL] or Python
 (but also in some statically typed languages like the original C++),
 programmers usually rely on ad-hoc polymorphism
 to provide a uniform interface to multiple kinds of situations:
-a same function can accept arguments of any type thanks to dynamic typing,
+a same function can accept arguments of many types thanks to dynamic typing,
 then dispatch on the type of these arguments to select an appropriate behavior.
 Object-oriented programming via user-defined classes or prototypes
 may then provide extension mechanisms
 by which new types of objects may be specified that fit existing interfaces;
 this extension can be incremental through the use of inheritance
 in a class (or prototype) hierarchy.
-More advanced object systems such as the Common Lisp Object System (CLOS)
+More advanced object systems such as the @[CL] Object System (CLOS)
 have further mechanisms such as multiple inheritance,
 multiple dispatch, and method combinations,
 that allow for a more decentralized specification of program behavior.
@@ -65,13 +65,13 @@ the composition also enables the bootstrapping of more elaborate versions
 of a same datastructure interface type from simpler components.
 
 In the past, many languages,
-usually static languages (C++, OCaml, Haskell, Java, Scala, etc.),
-but also dynamic languages (PLT Scheme@~cite[MOOPUM]),
+usually statically typed languages (C++, OCaml, Haskell, Java, Scala, etc.),
+but also dynamically typed languages (PLT Scheme@~cite[MOOPUM]),
 have offered some combination of both
 ad-hoc polymorphism and parametric polymorphism,
 with a variety of results.
 In this paper, we present LIL, the Lisp Interface Library@~cite[LIL],
-which brings parametric polymorphism to Common Lisp,
+which brings parametric polymorphism to @[CL],
 in a way that nicely fits into existing ad-hoc polymorphism,
 taking full advantage of the advanced features of CLOS.
 
@@ -98,7 +98,7 @@ first-class interfaces allow a very same object
 as implementing a given type of interface in different ways.
 
 In a third part, we show how adequate macros allow to bridge
-between different programming styles of interface-based programming.
+between different programming styles.
 We demonstrate macros that bridge between
 syntactically implicit or explicit interfaces.
 We demonstrate macros that bridge between
@@ -119,59 +119,116 @@ how it could be applied in some languages and with what limitations.
 @subsection{Using Interfaces}
 
 From the point the user of a library written in @[IPS],
-interfaces are just one extra argument (sometimes two or more)
-passed as the first argument to appropriate function calls.
-The argument provides these functions with
+interfaces are just one extra argument (more rarely, two or more)
+passed as the first argument (or arguments) to appropriate function calls.
+Each such interface argument provides these functions with
 some contextual information about
-which specific algorithms and datastructures are being used.
+which specific variant of some algorithm or datastructure is being used.
 
-It is up to the user to make sure that he uses interfaces consistently;
-datastructures built using some interface
-must be consumed using the same interface or some compatible interface.
-Failure to do so may result in unspecified behavior,
-and interfaces may or may not check their arguments for consistency.
+For instance, assuming you have
+a pure functional alist (association list) @cl{person},
+then you can insert a new key @cl{name} and a new value @cl{"Rideau"} as follows:
+@;
+@clcode{(insert <alist> person 'name "Rideau")}
+@;
+By specifying the interface @<>{alist},
+the generic function @cl{insert} will know that @cl{person} is an alist,
+and will return a new alist with that new key and value added to it.
+If instead of using alists, we were using some kind of balanced binary tree,
+you would pass the appropriate interface instead of @<>{alist}.
+
+By abstracting over the interface object,
+accepting it as an argument and passing it to other functions,
+you can write algorithms that are independent of the specifics
+of the underlying datastructure.
+
+If you were using a stateful datastructure,
+the generic function @cl{insert} would side-effect the datastructure
+and return no values, instead of returning a new one.
+This is a different, incompatible API, and therefore a different
+generic function. To distinguish between them, they are put in
+different namespaces (using @[CL] packages):
+@cl{pure:insert} vs @cl{stateful:insert}.
+
+@[IPS] is somewhat low-level, in that
+the user is given both full control and full responsibility
+with respect to passing around appropriate interfaces.
+If the user fails to ensure consistency
+between the interfaces being used and datastructures being passed as arguments,
+unspecified behavior may ensue
+(usually resulting in a runtime error at some point),
+as generic functions may or may not check their arguments for consistency.
+On the other hand, the user may enjoy
+the ability to explicitly specify an interface
+in some uncommon cases where the "canonical" interface isn't what he wants,
+or where there isn't any "canonical" interface to begin with.
 
 @subsection{Simple Interfaces}
 
 Example: @<>{eq}, interface for objects with an equality predicate.
 Algorithms that depend on that interface (or any interface that inherits from it)
-may rely on the existing of a method for gf test-function (interface x y)
+may rely on the existing of a method for @[gf] @cl{test-function (interface x y)}
 on a suitable class of objects that will be used by the algorithm.
-Test-function defaults to eql.
-We could have been a default to undefined,
-but we prefer usable defaults, which fits better with Lisp programming style.
+@cl{test-function} defaults to @cl{eql},
+the equality comparison function always used as a default in @[CL].
+We could have decided not to define a default,
+but we prefer usable defaults, which better fits with @[CL] programming style.
 
-Multiple dispatch means we can dispatch on more than the interface argument,
-and preserve the language's object-oriented style
-to dispatch on non-interface arguments.
-In a language with single-dispatch, we couldn't do that.
-
+Also, because CLOS has multiple dispatch,
+our generic functions can dispatch on more than the first argument,
+thus preserving the language's object-oriented style
+on arguments beyond the initial interface argument.
+In a language with single-dispatch, we couldn't do that,
+at least not directly,
+as dispatching on the interface would use up the object-oriented ability
+to specialize behavior depending on arguments.
 
 @subsection{Interface Inheritance}
 
 Example: @<>{hashable}, inherits from @<>{eq},
-clients may assume a method on gf hash (interface x);
+clients may assume a method on @[gf] @cl{hash (interface x)};
 servers must provide such a method.
-There again, we default to sxhash (which matches equal, not eql).
+
 @<>{equal}, inherits from both @<>{eq} and @<>{hashable},
-uses equal for its test-function.
+uses @cl{equal} for its @cl{test-function}
+and @cl{sxhash} as its @cl{hash} function.
+
+New interfaces can be defined with macro @cl{define-interface}.
+It is an extension of the standard @[CL] macro @cl{defclass},
+with various new options,
+some of which we will describe in this article.
 
 @subsection{Parametric Interfaces}
 
 Example: @<>{alist}. Takes an @<>{eq} interface as parameter.
 
-Define-interface extension option :parametric automatically generates
-a function to create such interface objects.
+Note that as a syntactic convention,
+we often use angle brackets around the names of interface classes
+(such as class @<>{alist}),
+of functions returning interfaces
+(such as function @<>{alist}
+taking an optional parameter to specify which interface to use
+for equality),
+or of variables bound to a singleton interface object
+(such as variable @<>{alist},
+bound to an object of class @<>{alist}
+using the default equality interface @<>{eq}).
+
+@cl{define-interface} extension option
+@cl{:parametric} automatically generates
+such a function to create such interface objects.
 This function further uses memoization so interfaces with identical parameters
 end up being the same interface rather than new objects every time.
 
-Define-interface extension option :singleton relies on the previous
+@cl{define-interface} extension option @cl{:singleton}
+relies on the previous
 (a trivial version of which is assumed if not present)
-to automatic a special variable.
+to automatically define such a special variable.
 Therefore clients can use the symbol @<>{alist}
-to refer to the one such interface, instead of
-having to either create a new instance every time with (make-instance '<alist>)
-or to call function (<alist>) with the default test function.
+to refer to the one such interface,
+instead of having to either create a new instance every time
+with @cl{(make-instance '<alist>)}
+or to call function @cl{(<alist>)} with the default equality interface @<>{eq}.
 
 @section{Classic Data-Structure}
 @subsection{Mixins}
@@ -198,7 +255,7 @@ they have to be viewed as a tree in the according way,
 and appropriate accessors have to be chosen for say subtree access.
 The same tree-manipulation routines can be used on the same tree nodes
 with completely different results depending on which interface you use.
-DISCLAIMER: example TBD as of 20120715.
+DISCLAIMER: example TBD.
 
 Because the interface is not tied to the data, the data can remain unchanged
 while the interface changes.
@@ -216,20 +273,28 @@ or by adding an ad-hoc memoization field to relevant classes,
 neither of which is nice if you wanted to preserve purity from side-effects).
 First class interfaces separate behavior from representation
 and avoid this issue.
-DISCLAIMER: example TBD as of 20120715.
+DISCLAIMER: example TBD.
 
 @section{Interface Transformations}
 @subsection{Making Interfaces Implicit or Explicit}
 
 Local bindings with
-(with-interface (interface functions-spec &key prefix package) &body body)
+@clcode{
+with-interface (interface functions-spec
+                &key prefix package) &body body
+}
 
 Global definitions with
-(define-interface-specialized-functions interface functions-spec &key prefix package)
+@clcode{
+define-interface-specialized-functions
+  interface functions-spec &key prefix package
+}
 
 Define methods with
+@clcode{
 (define-interface-methods (i <myinterface>)
   (:method ...) ...)
+}
 
 Example TBD of how to build an implicit interface from explicit functions.
 
@@ -243,7 +308,7 @@ Provide wrappers for all relevant methods via macros.
 Also need to identify for every method
 which position in argument and/or return values
 holds the object or datum to wrap/unwrap.
-DISCLAIMER: macros TBD as of 20120715.
+DISCLAIMER: macros TBD.
 
 @subsection{From Interfaces to Classes and Back}
 
@@ -256,7 +321,7 @@ you can therefore mechanically derive an interface-passing API
 (set of interfaces and generic functions that dispatch on interfaces),
 simply by passing around the object itself as the interface
 that drives the dispatch.
-DISCLAIMER: macros TBD as of 20120715.
+DISCLAIMER: macros TBD.
 
 Conversely, you can view classes as "subjective" interfaces,
 where no explicit state object is passed, but rather
@@ -265,48 +330,71 @@ Once you build an elaborate interface API
 by composing several parametric interfaces,
 you can obtain a class-style API by having a class
 derive from your interface
-(but specifying the :allocation :class option for its slots)
+(but specifying the @cl{:allocation :class} option for its slots)
 and your interface's object class
-(with :allocation :instance for its slots),
+(with @cl{:allocation :instance} for its slots),
 and by automatically deriving subjective variants
 of the interface-passing style generic functions
 and appropriate wrappers.
-DISCLAIMER: macros TBD as of 20120715.
+DISCLAIMER: macros TBD.
 
 @section{Conclusion}
 
-@[IPS] is an effective tool with which to write software libraries.
-However, the underlying principle is hardly original,
-as @[IPS] is typically how existing languages with parametric polymorphism
-have implicitly implemented this polymorphism for decades:
-for instance, that is how
+While the underlying principle of @[IPS] is hardly original,
+we found it an effective tool to implement a generic datastructure library,
+and a particularly good fit to @[CL]
+thanks to the way we can leverage CLOS and macros.
+
+As for its lack of originality,
+@[IPS] is typically how existing implementations
+of languages with parametric polymorphism
+have implicitly implemented this feature for decades, under the hood.
+For instance, that is how
 Haskell implements Type Classes @~cite[Implementing-Type-Classes],
-PLT Scheme implements Units@[XXX 'ref :bib], and
+PLT Scheme implements Units @~cite[Units-Flatt-Felleisen], and
 ML implements functors@[XXX 'ref :bib].
 
-However, there are some minor innovations in our library.
-First, instead of hiding the interfaces behind a language abstraction,
-we embraced the opening up of the implementation details
-and deferred any hiding of interfaces to later facilities.
-On the one hand makes, this is
-a rather low-level way of achieving parametric polymorphism,
-and is more cumbersome to use than methods that abstract interfaces away;
-for instance, in static languages such as Haskell or ML,
-type inference allows the language to
-automatically pick the right interface at every call site,
-instead of the user having to explicitly pass interfaces around.
-On the other hand, it gives programmers more control
-(a same datum can be seen through multiple interfaces;
-your interfaces can depend on first-class data, not just second-class types and functions)
-and makes it easy to leverage the power of CLOS,
-whereas it is always possible to use Lisp macros to
-build higher-level abstractions as additional layers on top of this mechanism.
+However, there are a few minor innovations in our use of @[IPS],
+related to our embracing both the powers and limitations of @[CL]
+in our implementation:
+@itemlist[
+ @item{
+   [Limitation] Unlike a statically typed language such as Haskell,
+   we can't rely on type inference
+   to hide interfaces behind a language abstraction,
+   whereby the appropriate interface is implicitly selected at each call site
+   from inferred type information.}
+ @item{
+   [Power] We embraced the opening up of the implementation details.
+   This gives our library a low-level flavor of control and responsibility,
+   and we can take advantage of that control to access
+   a same datastructure through multiple interfaces.}
+ @item{
+   [Power] Our interfaces can be parameterized by arbitrary first-class data;
+   the parameters are not constrained to be second-class entities
+   to allow for termination of a type inference algorithm.}
+ @item{
+   [Power] Thanks to @[CL] macros, we make it easy for users
+   to hide these interfaces in usual cases,
+   with facilities both syntactic (such as @cl{with-interface})
+   and semantic (such as our macros TBD to go from interfaces to classes).}
+ @item{
+   [Limitation] Unlike a statically scoped language like Racket,
+   @[CL] classes share a global namespace, so we can't just
+   instantiate a class for each new list of parameters.}
+ @item{
+   [Power] The same classes and @[gfs] are shared for all parameter values,
+   which is less intensive in namespace, memory and multiple-dispatch tables.}
+ @item{
+   [Power] We can leverage the full power of CLOS
+   in defining methods for our interfaces.}
+]
 
-cl-containers: mixins and find-or-create-class.
+Relatedly, in the library @tt{cl-containers}: mixins and @cl{find-or-create-class}.
 
 @(generate-bib)
 
-@section[#:style (style #f '(hidden unnumbered))]{}
+@;@section[#:style (style #f '(hidden unnumbered))]{}
 
 @;@bold{Acknowledgment:} Thanks to ...
 
