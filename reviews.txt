@@ -1,0 +1,42 @@
+
+----------------------- REVIEW 1 ---------------------
+PC MEMBER:
+OVERALL RATING: 3 (strong accept)
+REVIEWER'S CONFIDENCE: 3 (high)
+
+This abstract describes the implementation of a data structure library
+using an "interface-passing" style, where an interface object is
+passed around as a first-class object to computations.
+Proposal and case study of a programming style that is novel to the Common Lisp community is clearly relevant to ILC, and should be interesting to attendees.
+The abstract is quite intriguing -- I'm looking forward to reading the full paper and trying out the library.
+
+----------------------- REVIEW 2 ---------------------
+PC MEMBER:
+OVERALL RATING: -2 (reject)
+REVIEWER'S CONFIDENCE: 4 (expert)
+
+I have voted to reject this paper for these reasons:
+
+    - It inadequately prepares the reader for interface-passing style.
+
+    - It does not show how interface passing "bridges the gap" between parametric and ad-hoc  polymorphism.
+
+    - It does not show the advantages of using interface passing.
+
+Interface passing style is not a well-known technique in the community.  A short description of what this entails would be helpful.  The example of (insert <alist> person ’name "Rideau")
+is simply not illustrative enough.
+
+Why do some object systems use parametric polymorphism and others ad-hoc?  Are they commensurate?  What would parametric polymorphism look like in Lisp?  Why is this a preferred way of writing code?
+
+What improves when parametric polymorphism is added?  What degrades?  Why would I use technique?  How would I know when to use it?
+
+Thank you for taking the time to write and submit your paper.
+
+----------------------- REVIEW 3 ---------------------
+PC MEMBER:
+OVERALL RATING: 2 (accept)
+REVIEWER'S CONFIDENCE: 4 (expert)
+
+The paper describes a library (named LIL) that brings parametric polymorphism into Common-Lisp. The key technology called interface-passing style enables explicit checking of types (or type signatures). As a result, the library provides safer (type based) composition of components than the traditional duck typing.
+
+The author should give technical details of interface-passing style and some (non trivial) examples. The reviewer thinks it is possible because the author already has enough materials in his Github repository and his weblog referred in the paper.

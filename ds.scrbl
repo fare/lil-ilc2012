@@ -1,4 +1,4 @@
-#lang sigalternate
+#lang sigalternate @nocopyright
 
 @;;(display "In ds!\n")
 
@@ -189,7 +189,7 @@ Example: @<>{hashable}, inherits from @<>{eq},
 clients may assume a method on @[gf] @cl{hash (interface x)};
 servers must provide such a method.
 
-@<>{equal}, inherits from both @<>{eq} and @<>{hashable},
+@<>{equal} inherits from both @<>{eq} and @<>{hashable},
 uses @cl{equal} for its @cl{test-function}
 and @cl{sxhash} as its @cl{hash} function.
 
@@ -300,15 +300,14 @@ Example TBD of how to build an implicit interface from explicit functions.
 
 @subsection{From Pure to Stateful and Back}
 
-Put pure datum in a mutable box.
+Put pure datum in a mutable box. DONE.
 
-Put mutable object in use-once box.
+Put mutable object in use-once box. DONE.
 
 Provide wrappers for all relevant methods via macros.
 Also need to identify for every method
 which position in argument and/or return values
 holds the object or datum to wrap/unwrap.
-DISCLAIMER: macros TBD.
 
 @subsection{From Interfaces to Classes and Back}
 

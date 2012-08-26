@@ -1,0 +1,16 @@
+From Review 2 (reject)
+* Adequately prepare the reader for interface-passing style.
+* Illustrative examples.
+* show how interface passing "bridges the gap" between parametric and ad-hoc polymorphism.
+* show the advantages of using interface passing.
+* Why do some object systems use parametric polymorphism and others ad-hoc?
+  Are they commensurate?  What would parametric polymorphism look like in Lisp?
+  Why is this a preferred way of writing code?
+* What improves when parametric polymorphism is added? What degrades?
+  Why would I use technique?  How would I know when to use it?
+
+From Review 3 (accept)
+* Misconception: interface-passing style enables explicit checking of types (or type signatures).
+ As a result, the library provides safer (type based) composition of
+   components than the traditional duck typing.
+* give technical details of interface-passing style and some (non trivial) examples.
