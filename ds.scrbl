@@ -26,10 +26,15 @@ from the concrete representation of data
 and encapsulating it in first-class interface objects,
 LIL simultaneously allows for both parametric polymorphism
 (abstracting over types, classes, functions, data)
-and sharing of code and data fragments
-through inheritance of CLOS mixins.
-LIL provides both pure functional and stateful datastructure interfaces,
-with a common fragment and with functions to transform ones into the others.
+and ad-hoc polymorphism
+(sharing of code and data fragments through CLOS inheritance and mixins).
+LIL provides interfaces to both
+pure functional (persistent) and stateful (ephemeral) datastructure,
+with a common fragment for read-only methods.
+Based on metadata describing side-effects of methods,
+macros can transform pure datastructures into stateful interfaces
+and the other way around,
+automatically wrapping methods with proper boxing and linearization.
 Finally, judicious Lisp macros allow developers to avoid boilerplate and
 to abstract away interface objects to expose classic-looking Lisp APIs.
 }
@@ -72,7 +77,8 @@ ad-hoc polymorphism and parametric polymorphism,
 with a variety of results.
 In this paper, we present LIL, the Lisp Interface Library@~cite[LIL],
 which brings parametric polymorphism to @[CL],
-in a way that nicely fits into existing ad-hoc polymorphism,
+in a way that nicely fits into the language
+and its existing ad-hoc polymorphism,
 taking full advantage of the advanced features of CLOS.
 
 In a first part, we describe
@@ -82,10 +88,10 @@ in a first-class interface object,
 and this object is then explicitly passed around
 in computations that may require specialization based on it.
 We show basic mechanisms by which this make it possible
-to express ad-hoc and parametric polymorphism.
+to express both ad-hoc and parametric polymorphism.
 
 In a second part, we demonstrate how we use this style to implement
-a library of classic datastructures, both pure and stateful.
+a library of classic datastructures, both pure (persistent) and stateful (ephemeral).
 We show how our library makes good use of @[IPS]
 to build up interesting datastructures:
 ad-hoc polymorphism allows us to share code fragments through mixins
@@ -102,7 +108,9 @@ between different programming styles.
 We demonstrate macros that bridge between
 syntactically implicit or explicit interfaces.
 We demonstrate macros that bridge between
-pure functional and stateful datastructures.
+pure functional and stateful datastructures
+based on metadata describing effects of methods
+according to a simple model of such effects.
 We demonstrate macros that bridge between
 "detached" interfaces and "subjective" objects.
 All these macros allow programmers to choose a programming style
@@ -134,7 +142,8 @@ then you can insert a new key @cl{name} and a new value @cl{"Rideau"} as follows
 By specifying the interface @<>{alist},
 the generic function @cl{insert} will know that @cl{person} is an alist,
 and will return a new alist with that new key and value added to it.
-If instead of using alists, we were using some kind of balanced binary tree,
+If instead of using alists, you were using some kind of balanced binary tree,
+ordered as per @cl{string<} or as per some Unicode collating sequence,
 you would pass the appropriate interface instead of @<>{alist}.
 
 By abstracting over the interface object,
@@ -351,45 +360,98 @@ have implicitly implemented this feature for decades, under the hood.
 For instance, that is how
 Haskell implements Type Classes @~cite[Implementing-Type-Classes],
 PLT Scheme implements Units @~cite[Units-Flatt-Felleisen], and
-ML implements functors@[XXX 'ref :bib].
+ML implements functors@[XXX 'ref :bib]:
+an extra interface argument is implicitly passed around
+to the lower-level functions implementing these various constructs,
+and this extra argument encapsulates the parameters to said constructs.
 
-However, there are a few minor innovations in our use of @[IPS],
-related to our embracing both the powers and limitations of @[CL]
-in our implementation:
+However, there are several ways
+in which our @[IPS] differ from any of the above-mentioned systems;
+these ways, some of them innovative, are all related to our embracing
+the powers and limitations of @[CL] in implementing parametric polymorphism:
 @itemlist[
  @item{
-   [Limitation] Unlike a statically typed language such as Haskell,
-   we can't rely on type inference
-   to hide interfaces behind a language abstraction,
-   whereby the appropriate interface is implicitly selected at each call site
-   from inferred type information.}
+   @emph{We do not rely on static information},
+   either purely syntactic (via scoping as in PLT)
+   or somewhat semantic (via type inference as in Haskell),
+   to statically resolve interfaces,
+   or otherwise hide them behind a language abstraction.
+   Instead, we embrace the dynamic nature of @[CL]
+   and let interfaces be first-class objects
+   that may be determined at runtime at any call site.
+   This can be viewed either as
+   a restriction on the capabilities of our technique, or as
+   the absence of a restriction on its applicability.}
  @item{
-   [Power] We embraced the opening up of the implementation details.
-   This gives our library a low-level flavor of control and responsibility,
-   and we can take advantage of that control to access
+   @emph{Interface arguments are explicit passed around rather than implicitly}.
+   We embrace the opening up of what in other systems is an implementation detail.
+   This gives our library a low-level flavor of control and responsibility;
+   while the responsibility is indeed sometimes burdensome,
+   we can take advantage of that control to access
    a same datastructure through multiple interfaces.}
  @item{
-   [Power] Our interfaces can be parameterized by arbitrary first-class data;
-   the parameters are not constrained to be second-class entities
-   to allow for termination of a type inference algorithm.}
+   @emph{Our interfaces can be parameterized by arbitrary first-class data}.
+   The parameters are not constrained to be second-class entities
+   to allow for termination of a type inference algorithm.
+   This does raise the difficulty for authors of compilers to optimize our code,
+   or for authors of proof systems to accommodate the complexity.}
  @item{
-   [Power] Thanks to @[CL] macros, we make it easy for users
-   to hide these interfaces in usual cases,
+   @emph{We make it easy for users to hide these interfaces in usual cases}
+   thanks to @[CL] macros,
    with facilities both syntactic (such as @cl{with-interface})
-   and semantic (such as our macros TBD to go from interfaces to classes).}
+   and semantic (such as our macros TBD to go from interfaces to classes).
+   In common cases, we can therefore eschew the burden
+   of explicitly passing around interface objects.}
  @item{
-   [Limitation] Unlike a statically scoped language like Racket,
-   @[CL] classes share a global namespace, so we can't just
-   instantiate a class for each new list of parameters.}
+   @emph{We support ad-hoc polymorphism by explicitly dispatching on interface arguments}.
+   These interfaces need not be uniform dictionaries
+   (like the implicit arguments in the respective implementations
+   of the above-mentioned systems),
+   but can objects of arbitrary user-defined classes,
+   subject to the usual object-oriented dispatch techniques.}
  @item{
-   [Power] The same classes and @[gfs] are shared for all parameter values,
-   which is less intensive in namespace, memory and multiple-dispatch tables.}
+   @emph{Our ad-hoc polymorphism is scoped outside of parameters, not inside}.
+   This matters a lot for @[CL], that doesn't have first-class class combinators
+   or cheap portable anonymous classes;
+   therefore, the opposite scoping of classes inside parameterized units,
+   as done in the PLT unit article @~cite[MOOPUM],
+   doesn't apply to @[CL].
+   By scoping classes and generic functions outside of parameters,
+   we fit very well into @[CL]
+   where classes and generic functions are global indeed.}
  @item{
-   [Power] We can leverage the full power of CLOS
+   @emph{We rely on multiple-dispatch to
+   not sacrifice object-oriented style to interface dispatch}.
+   We can dispatch on the interface and still dispatch on further arguments
+   as per normal object-oriented style.
+   We can leverage the full power of CLOS
    in defining methods for our interfaces.}
 ]
 
-Relatedly, in the library @tt{cl-containers}: mixins and @cl{find-or-create-class}.
+Our solution would fit any other dynamic language,
+especially if it also has multiple dispatch and/or syntax extension facilities.
+
+Thanks to @[CL] syntax extension, we could also achieve
+a few interesting features
+beside the addition of parametric polymorphism to @[CL]:
+
+@itemlist[
+ @item{
+   Our library provides both pure and stateful datastructures,
+   that share a common interface for read-only methods.}
+ @item{
+   Macros make interfaces implicit again in the usual cases.}
+ @item{
+   For the sake of the above, we associate @[gfs] to interfaces.}
+ @item{
+   Additionally, we annotate @[gfs] with trivial metadata about their side-effects.}
+ @item{
+   Based on such metadata, macros to automate bridging between
+   pure (persistent) and corresponding stateful (ephemeral) datastructure.}
+]
+
+Relatedly, in the library @tt{cl-containers}: mixins and @cl{find-or-create-class}
+for a poor man's first-class class combinators.
 
 @(generate-bib)
 
@@ -404,13 +466,10 @@ http://international-lisp-conference.org/2012/call-for-papers.html
 
    Important Dates:
 
-     Please send contributions before the submission deadline, including
-     abstracts of 4 pages for technical papers and abstracts of 2 pages
-     for all other categories.
-
-     Deadline for abstract submissions: August 5, 2012 (was July 15, 2012)
-     Notification of acceptance or rejection: August 25, 2012 (was July 31, 2012)
      Deadline for final paper submissions: September 25, 2012 (was August 31, 2012)
 
 A complete technical paper is up to 15 pages and must describe original results.
+
+
+
 }
