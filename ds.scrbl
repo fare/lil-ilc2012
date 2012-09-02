@@ -348,7 +348,9 @@ DISCLAIMER: macros TBD.
 
 @section{Conclusion}
 
-While the underlying principle of @[IPS] is hardly original,
+@subsection{Related Works}
+
+While the underlying principle behind @[IPS] is hardly original,
 we found it an effective tool to implement a generic datastructure library,
 and a particularly good fit to @[CL]
 thanks to the way we can leverage CLOS and macros.
@@ -450,8 +452,109 @@ beside the addition of parametric polymorphism to @[CL]:
    pure (persistent) and corresponding stateful (ephemeral) datastructure.}
 ]
 
-Relatedly, in the library @tt{cl-containers}: mixins and @cl{find-or-create-class}
-for a poor man's first-class class combinators.
+@subsection{Current Limitations and Future Work}
+
+LIL at this point is already a usable datastructure library
+that has contributed features not previously available to @[CL] users:
+not only does it offer infrastructure for users to develop their own
+parametrically polymorphic datastructures,
+it sports a generic map interface with pure and stateful variants,
+and implementations as balanced binary trees, hash-tables or patricia trees.
+
+Yet, in many ways, LIL is still in its early stages;
+at the current moment it is a usable proof-of-concept
+rather than full-fledged library.
+It sports as few usable features as necessary to illustrate its concepts,
+and each of its features is as bare as possible while remaining functional.
+There are thus many axes for development,
+both in terms of actually provided algorithms
+and in terms of linguistic abstraction.
+
+Obviously, more known datastructures could be provided:
+Stacks, queues, double-queues, arrays, heaps, sets, multi-sets,
+both pure and stateful,
+could be fit in the existing framework.
+We notably intend to port the algorithms from
+Chris Okasaki's now classic book@~cite[Okasaki]
+and other currently popular pure functional datastructures;
+and of course matching interfaces to well-known stateful variants.
+
+Just as obviously, our linguistic features could offer more bells and whistles:
+users could have more flexibility in
+mapping names, parameters and other aspects of their interfaces
+when translating between variants of algorithms,
+pure and stateful, interface-based and class-based.
+These transformations could be more mindful of interface and class hierarchies
+rather than operate on all the generic functions of one pair of APIs at a time.
+The packaging of the current features could be improved,
+with internals being refactored and exported.
+
+However, here are a few less-obvious ways in which we'd like to improve LIL.
+
+Firstly, we'd like to explore how algorithms can be developed in terms
+of combining small individual features, each embodied in an interface mixin:
+controlling whether any given property is implemented
+as a slot or a user-defined method;
+controlling whether some data is indirectly accessible through a box
+or inlined in the current object;
+combining multiple datastructures to achieve better access guarantees
+(i.e. records are both nodes of a hash-table for constant-time lookup
+and of a doubly-linked list for preserving insertion order),
+or implementing the same datastructure twice with a different view
+(i.e. records are part of several trees that index several fields
+or computed expressions from fields).
+Mixins would be combined in the style of @tt{cl-containers} and its macro
+@cl{find-or-create-class}, which implements first-class class combination
+on top of @[CL]'s second-class class object-system
+but first-class reflection.
+Possibly, we could also provide some way for abstract interfaces
+to provide a default concrete implementations;
+thus, in simple cases one could obtain a full implementation
+just by specifying the high-level properties of the desired algorithm,
+yet in more complex cases, manual specialization would be possible.
+
+Second, we'd like to explore how both pure and stateful variants
+of some algorithms can be extracted from a single specification:
+the specification would essentially combine a pure node-building algorithm
+with annotations on which object identities are to be preserved
+between original and new objects.
+The pure variant would just create new values and drop the identities.
+A stateful variant would clobber old identities
+using change-class on previous nodes.
+New variants could purely pass around or statefully effect
+an additional explicit store object.
+The main ambition though is that a single specification should simply
+make all the variants possible, so that each user may
+fine-tuning which variant makes sense for him
+while being able to share his algorithms with other users that
+need the "same" algorithm viewed from a totally different angle.
+
+Third, and relatedly, we'd like to explore how to improve
+the so far trivial language by which we currently express "effects"
+of API functions.
+The current first-order specifications can probably be generalized
+into some kind of higher-order type system.
+Presumably, API transformations could be automatically extracted
+from expressions in that more elaborate effect specification language.
+Possibly, simple API implementations themselves
+could in some cases be automatically extracted
+from the API specification itself.
+If the specifications also include annotations about performance guarantees,
+this opens a venue for a more declarative approach
+to datastructure development.
+
+The ultimate goal is that it should be possible to write programs
+out of small individual contributions,
+each written in the style its author considers simplest
+to express what he means.
+These contributions should be automatically aligned
+along a common semantic framework thanks to declarative specifications
+of the style in which they are intended
+(some more constrained bits of code can be viewed in many ways).
+And it should thereafter be possible to seamlessly combine
+these contributions into a common result,
+made available to the user according to whichever point of view
+best suits his needs.
 
 @(generate-bib)
 
@@ -469,7 +572,5 @@ http://international-lisp-conference.org/2012/call-for-papers.html
      Deadline for final paper submissions: September 25, 2012 (was August 31, 2012)
 
 A complete technical paper is up to 15 pages and must describe original results.
-
-
 
 }

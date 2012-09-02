@@ -40,3 +40,25 @@ REVIEWER'S CONFIDENCE: 4 (expert)
 The paper describes a library (named LIL) that brings parametric polymorphism into Common-Lisp. The key technology called interface-passing style enables explicit checking of types (or type signatures). As a result, the library provides safer (type based) composition of components than the traditional duck typing.
 
 The author should give technical details of interface-passing style and some (non trivial) examples. The reviewer thinks it is possible because the author already has enough materials in his Github repository and his weblog referred in the paper.
+
+----------------------- REVIEW 4 ---------------------
+PAPER: 11
+TITLE: LIL: higher-order datastructures meet CLOS
+AUTHORS: Francois-Rene Rideau
+
+PC MEMBER:
+REVIEWER:
+OVERALL RATING: 2 (accept)
+REVIEWER'S CONFIDENCE: 2 (medium)
+
+This paper describes an algorithmic data structure library - a means of adding parametric polymorphism using CLOS and an interface-passing style.
+
+The paper is interesting and generally well-written.
+
+In Sec 3.2, Okasaki is mentioned, but does not appear in the references.
+
+TBD is mentioned several times.  It would be better if this information was described in a future work section.
+
+The conclusion contains a good discussion of the strengths and weaknesses of the library.
+
+I suggest modifications to the paper to remove or relocate all the TBD statements.  Expand more on the novelty mentioned in the conclusion.

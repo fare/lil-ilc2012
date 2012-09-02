@@ -27,11 +27,31 @@
   #:location (proceedings-location "PLDI 98")
   #:date 1998)
 
-@(define-bib MOOPUM
+(define-bib MOOPUM
   #:title "Modular Object-Oriented Programming with Units and Mixins"
   #:author "Robert Bruce Findler and Matthew Flatt"
   #:location (proceedings-location "ICFP 98")
   #:date 1998)
+
+(define-bib Okasaki
+  #:title "Pure Functional Datastructures" ; ???
+  #:date 1999) ; ???
+
+(define-bib DSST-Persistent
+  #:title "Making Data Structures Persistent"
+  #:author "J. R. Driscoll, N. Sarnak, D. D. Sleator and R. E. Tarjan"
+  #:url "http://www.cs.cmu.edu/~sleator/papers/Persistence.htm"
+  #:location (journal-location "Journal of Computer and System Sciences, Vol. 38, No. 1")
+  #:date 1989)
+
+(define-bib Baker-Shallow
+  #:title "Shallow binding makes functional arrays fast" ; ???
+  #:date 1991) ; ???
+
+(define-bib cl-containers
+  #:title "cl-containers"
+  #:author "Gary King" ; and...
+  #:date 2008) ; ???
 
 @(XXX #|
 See discussion on 2012-08-03 on #racket
@@ -40,15 +60,6 @@ See discussion on 2012-08-03 on #racket
 <asumu> (to clarify: mixins & units *are* used together, but not in this particular pattern)
 <asumu> (see the DrRacket tool API for an example of their use)
 
-http://www.cs.cmu.edu/~sleator/papers/Persistence.htm
-Making Data Structures Persistent
-J. R. Driscoll, N. Sarnak, D. D. Sleator, R. E. Tarjan, Making Data Structures Persistent, Journal of Computer and System Sciences, Vol. 38, No. 1, 1989
 
-Henry Baker
-Shallow binding makes functional arrays fast
-
-
-pure vs stateful
-persistent vs ephemeral   ==> persist vs ephemeralize ?
 
 |#)
