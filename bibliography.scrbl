@@ -19,7 +19,8 @@
 (define-bib Implementing-Type-Classes
   #:title "Implementing Type Classes"
   #:author "John Peterson and Mark Jones"
-  #:date 1993)
+  #:date 1993
+  #:url "http://web.cecs.pdx.edu/~mpj/pubs/pldi93.html")
 
 (define-bib Units-Flatt-Felleisen
   #:title "Units: Cool Modules for HOT Languages"
@@ -34,8 +35,9 @@
   #:date 1998)
 
 (define-bib Okasaki
-  #:title "Pure Functional Datastructures" ; ???
-  #:date 1999) ; ???
+  #:title "Purely Functional Data Structures"
+  #:author "Chris Okasaki"
+  #:url "http://www.cs.cmu.edu/~rwh/theses/okasaki.pdf")
 
 (define-bib DSST-Persistent
   #:title "Making Data Structures Persistent"
@@ -44,14 +46,21 @@
   #:location (journal-location "Journal of Computer and System Sciences, Vol. 38, No. 1")
   #:date 1989)
 
-(define-bib Baker-Shallow
-  #:title "Shallow binding makes functional arrays fast" ; ???
-  #:date 1991) ; ???
+#|(define-bib Baker-TreeShadow
+  #:title "Worlds in Collision: A Mostly Functional Model of Concurrency Control and Recovery"
+  #:url "http://home.pipeline.com/~hbaker1/TreeShadow.html"
+  #:date 1990)|#
+
+(define-bib Baker-ShallowArrays
+  #:title "Shallow Binding Makes Functional Arrays Fast"
+  #:url "http://home.pipeline.com/~hbaker1/ShallowArrays.html"
+  #:date 1991) ; 1990-1991
 
 (define-bib cl-containers
   #:title "cl-containers"
-  #:author "Gary King" ; and...
-  #:date 2008) ; ???
+  #:author "Gary King and contributors" ; and...
+  #:url "http://common-lisp.net/project/cl-containers/"
+  #:date 2005) ; 2005-2011
 
 @(XXX #|
 See discussion on 2012-08-03 on #racket
@@ -59,7 +68,4 @@ See discussion on 2012-08-03 on #racket
 <asumu> Partly, I think, because units are a fairly heavyweight feature.
 <asumu> (to clarify: mixins & units *are* used together, but not in this particular pattern)
 <asumu> (see the DrRacket tool API for an example of their use)
-
-
-
 |#)

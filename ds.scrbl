@@ -2,7 +2,8 @@
 
 @;;(display "In ds!\n")
 
-@(require scribble/base scribble/manual scriblib/autobib
+@(require scribble/base scribble/manual
+          scriblib/autobib scriblib/footnote
           (only-in scribble/core style)
           "utils.rkt" "bibliography.scrbl")
 
@@ -413,19 +414,27 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
    subject to the usual object-oriented dispatch techniques.}
  @item{
    @emph{Our ad-hoc polymorphism is scoped outside of parameters, not inside}.
-   This matters a lot for @[CL], that doesn't have first-class class combinators
-   or cheap portable anonymous classes;
-   therefore, the opposite scoping of classes inside parameterized units,
+   This lambda lifting of interface objects matters a lot for @[CL],
+   for @[CL] doesn't have first-class class combinators
+   or cheap portable anonymous classes,
+   but instead has a global public namespace
+   that favors dynamic linking of new methods to existing generic functions
+   and dynamic instantiation of new interface objects with runtime parameters.
+   Note that this starkly constrasts with classes inside parameterized units,
    as done in the PLT unit article @~cite[MOOPUM],
-   doesn't apply to @[CL].
-   By scoping classes and generic functions outside of parameters,
-   we fit very well into @[CL]
-   where classes and generic functions are global indeed.}
+   where parameterized class are statically linked and strict scoped
+   via an assemblage of units;
+   though the PLT approach allows for dynamic instantiation of unit assemblages
+   with runtime parameters, any such assemblage is semantically sealed
+   and unextensible after instantiation.
+   Once again, the @[CL] approach has a lower-level feel overall.
+   }
  @item{
    @emph{We rely on multiple-dispatch to
    not sacrifice object-oriented style to interface dispatch}.
    We can dispatch on the interface and still dispatch on further arguments
    as per normal object-oriented style.
+   In a language with single-dispatch, explicit
    We can leverage the full power of CLOS
    in defining methods for our interfaces.}
 ]
@@ -503,10 +512,16 @@ and of a doubly-linked list for preserving insertion order),
 or implementing the same datastructure twice with a different view
 (i.e. records are part of several trees that index several fields
 or computed expressions from fields).
-Mixins would be combined in the style of @tt{cl-containers} and its macro
-@cl{find-or-create-class}, which implements first-class class combination
+Mixins would be combined in the style of
+@tt{cl-containers}@~cite[cl-containers]
+and its macro @cl{find-or-create-class},
+which implements first-class class combination
 on top of @[CL]'s second-class class object-system
 but first-class reflection.
+Some protocol would manage the several classes of objects
+associated to an interface, and combine them all (or the relevant subset)
+with additional mixins when such mixins are specified;
+this would also be used extracting "classified" APIs from @[IPS] APIs.
 Possibly, we could also provide some way for abstract interfaces
 to provide a default concrete implementations;
 thus, in simple cases one could obtain a full implementation
@@ -543,7 +558,8 @@ If the specifications also include annotations about performance guarantees,
 this opens a venue for a more declarative approach
 to datastructure development.
 
-The ultimate goal is that it should be possible to write programs
+The ultimate goal we would be reaching for
+is that it should be possible to write programs
 out of small individual contributions,
 each written in the style its author considers simplest
 to express what he means.
