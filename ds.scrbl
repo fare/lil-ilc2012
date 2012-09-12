@@ -125,7 +125,9 @@ or to their underlying implementation;
 how it could be applied in some languages and with what limitations.
 
 @section{Interface-Passing Style}
-@subsection{Using Interfaces}
+@subsection{Using Interfaces: An Overview}
+
+@subsubsection{Interface 101: An Extra Argument}
 
 From the point the user of a library written in @[IPS],
 interfaces are just one extra argument (more rarely, two or more)
@@ -134,31 +136,117 @@ Each such interface argument provides these functions with
 some contextual information about
 which specific variant of some algorithm or datastructure is being used.
 
-For instance, assuming you have
-a pure functional alist (association list) @cl{person},
-then you can insert a new key @cl{name} and a new value @cl{"Rideau"} as follows:
-@;
-@clcode{(insert <alist> person 'name "Rideau")}
-@;
-By specifying the interface @<>{alist},
-the generic function @cl{insert} will know that @cl{person} is an alist,
-and will return a new alist with that new key and value added to it.
-If instead of using alists, you were using some kind of balanced binary tree,
-ordered as per @cl{string<} or as per some Unicode collating sequence,
-you would pass the appropriate interface instead of @<>{alist}.
+@subsubsection{Trivial Example: Finite Maps}
 
+Our library as it is mainly implements finite maps.
+Assuming you have an object @cl{map}
+that according to an interface @cl{<i>} maps keys to values,
+you can lookup to what value a given key is mapped (say, string @cl{"some key"})
+with:
+@;
+@clcode{(lookup <i> map "some key")}
+@;
+and you can insert a new mapping of key to value into said map
+(say, as a key the string @cl{"other key"} and as a value the number @cl{42})
+as follows:
+@;
+@clcode{(insert <i> map "other key" 42)}
+
+Depending on what interface @cl{<i>} you specified,
+these generic functions (in the sense of CLOS)
+will select an algorithm and appropriately query or update
+the datastructure bound to variable @cl{map},
+returning the expected results.
+
+@subsubsection{Pure vs Stateful Interfaces}
+
+Which results are expected from a function call
+of course may vary with the interface.
+
+For instance, the simplest such interface is @<>{alist},
+which like the name implies stores maps as association lists
+in usual @[CL] tradition:
+a list of pairs (@cl{cons} cells),
+containing a key (as the cell's @cl{car})
+and a value (as the cell's @cl{cdr}).
+The interface is pure, meaning that the maps it manipulates
+are never modified in place, but
+new lists and association pairs are created as required.
+In particular, this means that the function @cl{insert}
+when applied to an object with an @<>{alist} interface
+will return a new alist object. e.g.
+@;
+@clcode{
+(insert <alist>
+  '((conference . "ILC") (year . 2010))
+  'year 2012)}
+@;
+will return a new alist
+@clcode{((conference . "ILC") (year . 2012))}
+without modifying any previous data cell.
+
+If instead of alists,
+we were using the interface @cl{stateful:<hash-table>}
+and a hash-table object,
+the function @cl{insert} would have returned no values,
+instead modifying the existing hash-table in place.
+
+Because @cl{insert} means something quite different
+for pure and stateful datastructures, with incompatible invariants,
+our library actually defines two different generic functions,
+@cl{pure:insert} and @cl{stateful:insert},
+each in its own package.
+(Packages are the standard first-class namespace mechanism of @[CL].)
+
+By contrast, there is only one lookup function,
+@cl{interface:lookup}
+which is shared by a the pure and stateful datastructures
+and imported in both the @cl{pure} and @cl{impure} packages.
+In both cases, returns two values:
+the value associated to the given key if a mapping was found,
+and a boolean that it true iff a mapping was found.
+
+@subsubsection{Variable Interfaces}
+
+Now, the interface doesn't have to be a compile-time constant;
+you can pass interfaces around as first-class objects,
+write functions that abstract over interface objects,
+create new interface objects, etc.
 By abstracting over the interface object,
 accepting it as an argument and passing it to other functions,
 you can write algorithms that are independent of the specifics
 of the underlying datastructure.
 
-If you were using a stateful datastructure,
-the generic function @cl{insert} would side-effect the datastructure
-and return no values, instead of returning a new one.
-This is a different, incompatible API, and therefore a different
-generic function. To distinguish between them, they are put in
-different namespaces (using @[CL] packages):
-@cl{pure:insert} vs @cl{stateful:insert}.
+For instance, you can write functions that fold over a map (reduce it)
+without knowing how the map is implemented internally
+(or indeed whether it's pure or stateful, computing serially or in parallel),
+and be able to apply such functions to a wide variety of situations,
+in each of which the map will be implemented in a way suitable optimized
+to the context at hand:
+@clcode{
+(defmethod sum-all-values ((<i> pure:<map>) map)
+  (multiple-value-bind (m1 m2) (pure:divide <i> map)
+    ;; we rely on a promised invariant of pure:divide
+    (cond
+      ((empty-p <i> m1) ; m1 and m2 both are empty
+       0)
+      ((empty-p <i> m2) ; m1 has only one mapping
+       (nth-value 1 (first-key-value <i> m1)))
+      (t
+       (+ (sum-all-values <i> m1)
+          (sum-all-values <i> m2))))))}
+
+The method above abstracts over interface @cl{<i>},
+and will work with all pure map interfaces implementing
+the @cl{pure:divide} API function.
+This is a standardized function in our library,
+whereby a map @cl{map} is divided in two submaps @cl{m1} and @cl{m2},
+with the promised invariant that these submaps will each have strictly
+fewer mappings than the original map, unless said map
+has zero or one mapping, in which case @cl{m2} is empty,
+and @cl{m1} is the same as @cl{map}.
+
+@subsubsection{Caveat}
 
 @[IPS] is somewhat low-level, in that
 the user is given both full control and full responsibility
@@ -209,6 +297,14 @@ with various new options,
 some of which we will describe in this article.
 
 @subsection{Parametric Interfaces}
+
+@subsubsection{Blah blah}
+
+If instead of using alists, you were using some kind of balanced binary tree,
+ordered as per @cl{string<} or as per some Unicode collating sequence,
+you would pass the appropriate interface instead of @<>{alist}.
+
+
 
 Example: @<>{alist}. Takes an @<>{eq} interface as parameter.
 
@@ -431,12 +527,15 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
    }
  @item{
    @emph{We rely on multiple-dispatch to
-   not sacrifice object-oriented style to interface dispatch}.
-   We can dispatch on the interface and still dispatch on further arguments
-   as per normal object-oriented style.
-   In a language with single-dispatch, explicit
-   We can leverage the full power of CLOS
-   in defining methods for our interfaces.}
+   not sacrifice object-oriented style when using interface dispatch}.
+   In a language with single-dispatch,
+   dispatch on our explicit interface argument will use up
+   the programmer's ability to rely on ad-hoc polymorphism
+   to express his algorithms.
+   In LIL, we leverage the multimethod capabilities of CLOS
+   to dispatch on our interface objects and
+   still be able to dispatch on further arguments
+   as per normal object-oriented style.}
 ]
 
 Our solution would fit any other dynamic language,
