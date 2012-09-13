@@ -118,11 +118,13 @@ All these macros allow programmers to choose a programming style
 that best fit the problem at hand and their own tastes
 while still enjoying the full benefits of @[IPS] libraries.
 
-We conclude with a short statement about how @[IPS] in Lisp
-relates to idioms in other programming languages:
-how it compares to existing mechanisms for polymorphism in these languages
-or to their underlying implementation;
-how it could be applied in some languages and with what limitations.
+We conclude about
+how @[IPS] in Lisp relates to idioms in other programming languages
+and compares to existing or potential mechanisms
+for polymorphism in these languages or to their underlying implementation,
+and what are the current limitations of our library and
+our plans of future developments.
+
 
 @section{Interface-Passing Style}
 @subsection{Using Interfaces}
