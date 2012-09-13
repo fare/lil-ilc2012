@@ -258,7 +258,7 @@ to the context at hand:
       ((null (rest submaps))
        ;; only one mapping, extract its value
        (nth-value 1 (first-key-value <i> map)))
-      (t ;; general case: recurse and map/reduce
+      (t ;; general case: recurse and map-reduce
        (reduce #'+
          (mapcar (λ (m) (sum-values <i> m))
                  submaps))))))}
@@ -400,40 +400,55 @@ Interfaces may be parameterized by other interfaces.
 
 For instance, association lists depend on a equality predicate
 with which to compare keys so as to lookup a given key.
-Our standard @<>{alist} class interface therefore has a slot @cl{key-interface},
+Our standard @<>{alist} interface therefore has a slot @cl{key-interface},
 the value of which must inherit from @<>{eq},
 that specifies how to compare keys.
 
+The definition of @<>{alist} in our library currently goes as follows:
+
+@clcode{
 (define-interface <alist>
-    (map-simple-empty map-simple-decons map-simple-update-key
+    (map-simple-empty map-simple-decons
+     map-simple-update-key
      map-divide/list-from-divide
-     map-simple-map/2 map-simple-join map-simple-join/list <map>)
+     map-simple-map/2 map-simple-join
+     map-simple-join/list <map>)
   ((key-interface
     :initarg :key-interface
     :initform <eql>
     :reader key-interface))
-  (:parametric (&optional (eq <eql>)) (make-interface :key-interface eq))
-  (:singleton))
+  (:parametric (&optional (eq <eql>))
+     (make-interface :key-interface eq))
+  (:singleton))}
 
-@cl{define-interface} extension option
+The super-interface list contains several mixins
+to deduce various methods from primitive methods,
+together with the interface @<>{map} that provides the API.
+
+The list of slots contains a single slot @cl{key-interface},
+that has a default value, @<>{eql}, which sports
+the comparison function used as a default
+by all standard @[CL] functions requiring such a function.
+We therefore follow the Lisp convention and tradition in providing
+this default.
+
+Our definition of @<>{alist} also uses
+two options recognized by @cl{define-interface} and
+not provided by @cl{defclass}.
+
+@subsubsection{Parametric Interface Function}
+
+The @cl{define-interface} extension option
 @cl{:parametric} automatically generates
-such a function to create such interface objects.
+a function to instantiate parameterized interface objects.
 This function further uses memoization so interfaces with identical parameters
-end up being the same interface rather than new objects every time.
-In this case, the interface if unspecified defaults to @<>{eql},
-which sports the standard @[CL] comparison function.
-We could have decided not to define a default,
-but we prefer usable defaults, which better fits with @[CL] programming style.
+end up being the actual same interface object
+rather than a new object every time.
 
-@cl{define-interface} extension option @cl{:singleton}
-relies on the previous parametric function
-(a trivial version of which is created if none is specified)
-to automatically define such a special variable.
-Therefore clients can use the variable @<>{alist}
-to refer to the one such interface,
-instead of having to either create a new instance every time
-with @cl{(make-instance '<alist>)}
-or to call function @cl{(<alist>)} with the default equality interface @<>{eq}.
+In the above @<>{alist} example,
+the function takes one optional parameter that defaults to @<>{eql}
+and makes an interface object with it using the locally defined function @cl{make-interface}
+that handles memoization of an underlying CLOS @cl{make-instance}.
 
 If instead of using alists, you were using some kind of balanced binary tree,
 you would have to specify a @cl{key-interface} that inherits from @<>{order}
@@ -442,6 +457,20 @@ For instance, simple dictionary may use the @<>{string} interface
 for lexicographic comparison of character contents;
 but it might instead use some Unicode collating sequence
 associated to some human language.
+
+@subsubsection{Singleton Interface Variable}
+
+The @cl{define-interface} extension option @cl{:singleton}
+relies on the previous parametric function if defined
+(and defines a trivial version of it if otherwise undefined)
+to automatically define a special variable bound to a one instance of the interface class
+using default values for the parameters if any.
+
+Therefore clients can use the variable @<>{alist}
+to refer to the one such interface,
+instead of having to either create a new instance every time
+with @cl{(make-instance '<alist>)}
+or to call function @cl{(<alist>)} with the default equality interface @<>{eq}.
 
 @subsubsection{Multiple Dispatch}
 
