@@ -129,27 +129,26 @@ how it could be applied in some languages and with what limitations.
 
 @subsubsection{Interface Passing: An Extra Argument}
 
-From the point the user of a library written in @[IPS],
+For the user of a library written in @[IPS],
 interfaces are just one extra argument (more rarely, two or more)
 passed as the first argument (or arguments) to appropriate function calls.
 Each such interface argument provides these functions with
 some contextual information about
 which specific variant of some algorithm or datastructure is being used.
 
-To make things slightly clearer, our library follows a syntactic convention
-that symbols that denote interface classes,
+As a syntactic convention followed by our library,
+symbols that denote interface classes,
 variables bound to interface objects,
 or functions returning interface objects
-usually start and end with respective angle brackets @cl{<} and @cl{>}.
-For instance, an interface to objects that may be empty is @<>{emptyable},
+will usually start and end with respective angle brackets @cl{<} and @cl{>}.
+For instance, the interface to objects that may be empty is @<>{emptyable},
 whereas a prototypical interface variable would be @<>{i}.
 
 @subsubsection{Trivial Example: Maps}
 
-The most developed API in our library
-is currently one that implements (finite) maps,
+The most developed API in our library currently deals with (finite) maps,
 i.e. a finite set of mappings from keys to values.
-Our examples will mainly draw from this fragment of our library.
+Our examples will mainly draw from this API.
 Maps notably include traditional Lisp alists (association lists) and hash-tables.
 
 Thus, whereas a traditional object-oriented API might feature a function
@@ -172,7 +171,7 @@ In this case, the library-exported variable @cl{<alist>}
 is bound to an interface for association lists.
 
 Similarly, to insert a new key-value mapping in an existing map,
-you would use a function call
+you would call a function
 @clcode{(insert <i> map key value)}
 and depending on what interface @cl{<i>} you specified,
 the generic function (in the sense of CLOS)
@@ -194,22 +193,20 @@ and a value (as the cell's @cl{cdr}).
 Our alist interface is pure,
 meaning that the maps it manipulates are never modified in place, but
 new lists and association pairs are created as required.
-In particular, this means that the function @cl{insert}
-when applied to an object with an @<>{alist} interface
-will return a new alist object. e.g.
-@;
+In particular, the function @cl{insert}
+when applied to our @<>{alist} interface,
+will return a new alist object:
 @clcode{
 (insert <alist>
   '((name . "ILC") (year . 2010) (topic . "Lisp"))
   'year 2012)}
-@;
 will return a new alist
 @clcode{((name . "ILC") (year . 2012) (topic . "Lisp"))}
 without modifying any previous data cell,
 and reusing the unmodified association pairs.
 
 If instead of alists,
-we were using the interface @cl{<hash-table>}
+we had been using the interface @cl{<hash-table>}
 and a hash-table object,
 the function @cl{insert} would have returned no values,
 instead modifying the existing hash-table in place.
@@ -223,10 +220,9 @@ each in its own package.
 where needed, the syntax for a symbol can be explicitly specify
 a package name as a prefix followed by a colon and the symbol name.)
 
-By contrast, there is only one lookup function,
-@cl{interface:lookup}
-which is shared by a the pure and stateful datastructures
-and imported in both the @cl{pure} and @cl{impure} packages.
+By contrast, there is only one function @cl{interface:lookup}
+that is shared by all pure and stateful interfaces
+and imported in both the @cl{pure} and @cl{stateful} packages.
 Indeed, lookup has the same specification in both cases:
 it takes an interface, a map and a key as parameters, and
 it returns two values,
@@ -251,18 +247,18 @@ and be able to apply such functions to a wide variety of situations,
 in each of which the map will be implemented in a way suitable optimized
 to the context at hand:
 @clcode{
-(defmethod sum-all-values ((<i> pure:<map>) map)
+(defmethod sum-values ((<i> pure:<map>) map)
   (let ((submaps (divide/list <i> map)))
     ;; see promised invariant of divide/list
     (cond
       ((null submaps) ; no element
        0)
       ((null (rest submaps))
-       ;; only one mapping, get its value
+       ;; only one mapping, extract its value
        (nth-value 1 (first-key-value <i> map)))
-      (t
+      (t ;; general case: recurse and map/reduce
        (reduce #'+
-         (mapcar (λ (m) (sum-all-values <i> m))
+         (mapcar (λ (m) (sum-values <i> m))
                  submaps))))))}
 
 The method above abstracts over interface @cl{<i>},
@@ -299,16 +295,62 @@ that could be deduced by type inference isn't what he wants,
 and even in cases where
 there isn't any such "canonical" interface to begin with.
 
-@subsection{Simple Interfaces}
+@subsection{Defining Interfaces}
+
+@subsubsection{define-interface}
+
+Interfaces can be defined with @cl{define-interface},
+which is an extension to @cl{defclass}
+with many features specific to interfaces.
+
+For instance, here is
+a stripped-down excerpt from our library:
+
+@clcode{
+(define-interface <emptyable> (<type>) ()
+  (:generic empty (<emptyable>)
+   (:values object) (:out 0)
+   (:documentation "Return an empty object"))
+  (:generic empty-p (<emptyable> object)
+   (:in 1) (:values boolean)
+   (:documentation "Is object empty?")))}
+
+It defines an interface @<>{emptyable}
+that inherits from the super-interface @<>{type}
+of interfaces associated with some datatype,
+and extends it with the notion that elements of that type may be empty.
+As in @cl{defclass}, the third argument is a list of slots;
+in this case, this list is empty, as
+there are no parameters defined by this interface.
+Associated to the this newly defined interface are
+two generic functions, @cl{empty} and @cl{empty-p}.
+The first one takes no argument beyond the interface;
+the @cl{(values object)} specifies that
+it returns one value named object, and the
+@cl{(:out 0)} specifies that return argument in first position
+(indexes are 0-based) is of the target type.
+and returns one value, an object, of said type.
+Similarly, the second function is a predicate,
+takes one argument of the target type and returns one boolean value.
+
+The functions we associate to interfaces
+and the meta-information associated to these functions
+will matter later on when we automatically transform interfaces.
+For now, they may be considered as mostly documentation
+that trivially expands into according @cl{(defgeneric ...)} statements.
+
+@subsubsection{Blah}
 
 Example: @<>{eq}, interface for objects with an equality predicate.
 Algorithms that depend on that interface (or any interface that inherits from it)
-may rely on the existing of a method for @[gf] @cl{test-function (interface x y)}
+may rely on the existing of a method for @[gf] @cl{eq-function (interface x y)}
 on a suitable class of objects that will be used by the algorithm.
-@cl{test-function} defaults to @cl{eql},
+@cl{eq-function} defaults to @cl{eql},
 the equality comparison function always used as a default in @[CL].
 We could have decided not to define a default,
 but we prefer usable defaults, which better fits with @[CL] programming style.
+
+@subsubsection{Multiple Dispatch}
 
 Also, because CLOS has multiple dispatch,
 our generic functions can dispatch on more than the first argument,
@@ -464,7 +506,6 @@ you can therefore mechanically derive an interface-passing API
 (set of interfaces and generic functions that dispatch on interfaces),
 simply by passing around the object itself as the interface
 that drives the dispatch.
-DISCLAIMER: macros TBD.
 
 Conversely, you can view classes as "subjective" interfaces,
 where no explicit state object is passed, but rather

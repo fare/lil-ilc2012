@@ -12,7 +12,7 @@
 
 (define-bib LIL
   #:title "lisp-interface-library"
-  #:author "François-René Rideau and Eric O'Connor"
+  #:author "François-René Rideau" ;; and Eric O'Connor ??
   #:date 2012
   #:url "http://github.com/fare/lisp-interface-library/")
 
