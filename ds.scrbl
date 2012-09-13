@@ -341,7 +341,7 @@ will matter later on when we automatically transform interfaces.
 For now, they may be considered as mostly documentation
 that trivially expands into according @cl{(defgeneric ...)} statements.
 
-@subsubsection{(Multiple) Inheritance of Interfaces}
+@subsubsection{Inheritance of Interfaces}
 
 Interfaces may inherit from other interfaces
 and be organized in inheritance hierarchies.
@@ -361,6 +361,8 @@ and implements equality with the standard @[CL] predicate @cl{eql};
 there is no standard @[CL] hash function that corresponds to it,
 and it doesn't inherit from @<>{hashable}.
 
+@subsubsection{Multiple Inheritance of Interfaces}
+
 Interfaces may inherit from any number of super-interfaces.
 Indeed, our interfaces are CLOS classes,
 and since CLOS supports multiple-inheritance,
@@ -371,18 +373,26 @@ the CLOS metaclass @cl{interface-class}.
 
 As an example of multiple inheritance,
 our @cl{pure:<tree>} map interface inherits from both
-the readonly @cl{interface:<tree>} interface
-and the @cl{pure:<map>} interface allowing for pure update.
+the @cl{interface:<tree>} interface specifying readonly API functions on trees,
+and the @cl{pure:<map>} interface specifying an API with pure update as well as lookup.
+
+@subsubsection{Interface Mixins}
 
 Our library also relies on multiple-inheritance extensively
 in the form of mixins:
-small interface classes implement a small aspect of the interface,
-oftentimes to simply deduce the implementation of some API functions
-from other API functions.
+small interface classes implement a small aspect of the interface.
+Oftentimes, a mixin will be used to simply deduce
+the implementation of some API functions from other API functions.
 Depending on which API functions are more "primitive" for a given datastructure,
 opposite mixins may be used that deduce some functions from the others or the other way around.
-Example TBD.
-See more about mixins later in this article.
+
+For instance, the @<>{eq} interface actually has two associated functions,
+@cl{(== <i> x y)}  that compares two objects @cl{x} and @cl{y}, and equivalently
+@cl{(eq-function <i>)} that returns a function object that may be passed
+as an argument to various higher-order functions.
+The mixin @<>{eq-from-==} will automatically deduce @cl{eq-function}
+from @cl{==} while the opposite deduction is provided by the mixin
+@<>{eq-from-eq-function}.
 
 @subsubsection{Parametric Interfaces}
 
