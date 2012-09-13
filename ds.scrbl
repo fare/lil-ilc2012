@@ -343,6 +343,10 @@ that trivially expands into according @cl{(defgeneric ...)} statements.
 
 @subsubsection{Interface Inheritance}
 
+For instance, our @cl{pure:<tree>} map interface
+inherits from both the readonly @cl{interface:<tree>} interface
+and the @cl{pure:<map>} interface allowing for pure update.
+
 Example: @<>{hashable}, inherits from @<>{eq},
 clients may assume a method on @[gf] @cl{hash (interface x)};
 servers must provide such a method.
@@ -364,6 +368,16 @@ on a suitable class of objects that will be used by the algorithm.
 the equality comparison function always used as a default in @[CL].
 We could have decided not to define a default,
 but we prefer usable defaults, which better fits with @[CL] programming style.
+
+@subsubsection{Multiple-Inheritance of Interfaces}
+
+Interfaces may inherit from several super-interfaces.
+Indeed, our interfaces are CLOS classes
+and as such may easily inherit from multiple CLOS classes
+since CLOS has multiple-inheritance.
+Internally, our interfaces are instances of
+the CLOS metaclass @cl{interface-class},
+and we only allow interfaces to inherit from other interfaces.
 
 @subsubsection{Parametric Interfaces}
 
