@@ -341,79 +341,97 @@ will matter later on when we automatically transform interfaces.
 For now, they may be considered as mostly documentation
 that trivially expands into according @cl{(defgeneric ...)} statements.
 
-@subsubsection{Interface Inheritance}
+@subsubsection{(Multiple) Inheritance of Interfaces}
 
-For instance, our @cl{pure:<tree>} map interface
-inherits from both the readonly @cl{interface:<tree>} interface
+Interfaces may inherit from other interfaces
+and be organized in inheritance hierarchies.
+
+For instance,
+@<>{type} is an interface with an associated datatype.
+@<>{eq}, is an interface that inherits from @<>{type},
+for datatypes with an equality comparison predicate @cl{==}.
+@<>{hashable}, is an interface that inherits from @<>{eq},
+for datatypes with a function @cl{hash} such
+that two equal values (as compared by @<>{==}) have the same hash.
+@<>{equal} is an interface that inherits from @<>{hashable},
+and implements equality with the standard @[CL] predicate @cl{equal}
+and @cl{hash} with the standard @[CL] function @cl{sxhash}.
+@<>{eql} is an interface that inherits from @<>{eq},
+and implements equality with the standard @[CL] predicate @cl{eql};
+there is no standard @[CL] hash function that corresponds to it,
+and it doesn't inherit from @<>{hashable}.
+
+Interfaces may inherit from any number of super-interfaces.
+Indeed, our interfaces are CLOS classes,
+and since CLOS supports multiple-inheritance,
+they may easily inherit from multiple other such classes.
+Interfaces may only inherit from other interfaces.
+Internally they are instances of
+the CLOS metaclass @cl{interface-class}.
+
+As an example of multiple inheritance,
+our @cl{pure:<tree>} map interface inherits from both
+the readonly @cl{interface:<tree>} interface
 and the @cl{pure:<map>} interface allowing for pure update.
 
-Example: @<>{hashable}, inherits from @<>{eq},
-clients may assume a method on @[gf] @cl{hash (interface x)};
-servers must provide such a method.
-
-@<>{equal} inherits from both @<>{eq} and @<>{hashable},
-uses @cl{equal} for its @cl{test-function}
-and @cl{sxhash} as its @cl{hash} function.
-
-New interfaces can be defined with macro @cl{define-interface}.
-It is an extension of the standard @[CL] macro @cl{defclass},
-with various new options,
-some of which we will describe in this article.
-
-Example: @<>{eq}, interface for objects with an equality predicate.
-Algorithms that depend on that interface (or any interface that inherits from it)
-may rely on the existing of a method for @[gf] @cl{eq-function (interface x y)}
-on a suitable class of objects that will be used by the algorithm.
-@cl{eq-function} defaults to @cl{eql},
-the equality comparison function always used as a default in @[CL].
-We could have decided not to define a default,
-but we prefer usable defaults, which better fits with @[CL] programming style.
-
-@subsubsection{Multiple-Inheritance of Interfaces}
-
-Interfaces may inherit from several super-interfaces.
-Indeed, our interfaces are CLOS classes
-and as such may easily inherit from multiple CLOS classes
-since CLOS has multiple-inheritance.
-Internally, our interfaces are instances of
-the CLOS metaclass @cl{interface-class},
-and we only allow interfaces to inherit from other interfaces.
+Our library also relies on multiple-inheritance extensively
+in the form of mixins:
+small interface classes implement a small aspect of the interface,
+oftentimes to simply deduce the implementation of some API functions
+from other API functions.
+Depending on which API functions are more "primitive" for a given datastructure,
+opposite mixins may be used that deduce some functions from the others or the other way around.
+Example TBD.
+See more about mixins later in this article.
 
 @subsubsection{Parametric Interfaces}
 
-If instead of using alists, you were using some kind of balanced binary tree,
-ordered as per @cl{string<} or as per some Unicode collating sequence,
-you would pass the appropriate interface instead of @<>{alist}.
+Interfaces may be parameterized by other interfaces.
 
-Example: @<>{alist}. Takes an @<>{eq} interface as parameter.
+For instance, association lists depend on a equality predicate
+with which to compare keys so as to lookup a given key.
+Our standard @<>{alist} class interface therefore has a slot @cl{key-interface},
+the value of which must inherit from @<>{eq},
+that specifies how to compare keys.
 
-Note that as a syntactic convention,
-we often use angle brackets around the names of interface classes
-(such as class @<>{alist}),
-of functions returning interfaces
-(such as function @<>{alist}
-taking an optional parameter to specify which interface to use
-for equality),
-or of variables bound to a singleton interface object
-(such as variable @<>{alist},
-bound to an object of class @<>{alist}
-using the default equality interface @<>{eq}).
+(define-interface <alist>
+    (map-simple-empty map-simple-decons map-simple-update-key
+     map-divide/list-from-divide
+     map-simple-map/2 map-simple-join map-simple-join/list <map>)
+  ((key-interface
+    :initarg :key-interface
+    :initform <eql>
+    :reader key-interface))
+  (:parametric (&optional (eq <eql>)) (make-interface :key-interface eq))
+  (:singleton))
 
 @cl{define-interface} extension option
 @cl{:parametric} automatically generates
 such a function to create such interface objects.
 This function further uses memoization so interfaces with identical parameters
 end up being the same interface rather than new objects every time.
+In this case, the interface if unspecified defaults to @<>{eql},
+which sports the standard @[CL] comparison function.
+We could have decided not to define a default,
+but we prefer usable defaults, which better fits with @[CL] programming style.
 
 @cl{define-interface} extension option @cl{:singleton}
-relies on the previous
-(a trivial version of which is assumed if not present)
+relies on the previous parametric function
+(a trivial version of which is created if none is specified)
 to automatically define such a special variable.
-Therefore clients can use the symbol @<>{alist}
+Therefore clients can use the variable @<>{alist}
 to refer to the one such interface,
 instead of having to either create a new instance every time
 with @cl{(make-instance '<alist>)}
 or to call function @cl{(<alist>)} with the default equality interface @<>{eq}.
+
+If instead of using alists, you were using some kind of balanced binary tree,
+you would have to specify a @cl{key-interface} that inherits from @<>{order}
+so that keys may be compared.
+For instance, simple dictionary may use the @<>{string} interface
+for lexicographic comparison of character contents;
+but it might instead use some Unicode collating sequence
+associated to some human language.
 
 @subsubsection{Multiple Dispatch}
 
