@@ -231,11 +231,11 @@ it returns two values,
 the value associated to the given key if a mapping was found,
 and a boolean that it true iff a mapping was found.
 
-@subsubsection{Variable Interfaces}
+@subsubsection{First-Class Interfaces}
 
-Interfaces don't have to be compile-time constants.
-You can pass interfaces around as first-class objects,
-write functions that abstract over interface objects,
+Interfaces are first-class objects.
+They don't have to be compile-time constants.
+Functions can abstract over interface objects,
 create new interface objects, etc.
 By abstracting over the interface object,
 accepting it as an argument and passing it to other functions,
@@ -341,29 +341,7 @@ will matter later on when we automatically transform interfaces.
 For now, they may be considered as mostly documentation
 that trivially expands into according @cl{(defgeneric ...)} statements.
 
-@subsubsection{Blah}
-
-Example: @<>{eq}, interface for objects with an equality predicate.
-Algorithms that depend on that interface (or any interface that inherits from it)
-may rely on the existing of a method for @[gf] @cl{eq-function (interface x y)}
-on a suitable class of objects that will be used by the algorithm.
-@cl{eq-function} defaults to @cl{eql},
-the equality comparison function always used as a default in @[CL].
-We could have decided not to define a default,
-but we prefer usable defaults, which better fits with @[CL] programming style.
-
-@subsubsection{Multiple Dispatch}
-
-Also, because CLOS has multiple dispatch,
-our generic functions can dispatch on more than the first argument,
-thus preserving the language's object-oriented style
-on arguments beyond the initial interface argument.
-In a language with single-dispatch, we couldn't do that,
-at least not directly,
-as dispatching on the interface would use up the object-oriented ability
-to specialize behavior depending on arguments.
-
-@subsection{Interface Inheritance}
+@subsubsection{Interface Inheritance}
 
 Example: @<>{hashable}, inherits from @<>{eq},
 clients may assume a method on @[gf] @cl{hash (interface x)};
@@ -378,15 +356,20 @@ It is an extension of the standard @[CL] macro @cl{defclass},
 with various new options,
 some of which we will describe in this article.
 
-@subsection{Parametric Interfaces}
+Example: @<>{eq}, interface for objects with an equality predicate.
+Algorithms that depend on that interface (or any interface that inherits from it)
+may rely on the existing of a method for @[gf] @cl{eq-function (interface x y)}
+on a suitable class of objects that will be used by the algorithm.
+@cl{eq-function} defaults to @cl{eql},
+the equality comparison function always used as a default in @[CL].
+We could have decided not to define a default,
+but we prefer usable defaults, which better fits with @[CL] programming style.
 
-@subsubsection{Blah blah}
+@subsubsection{Parametric Interfaces}
 
 If instead of using alists, you were using some kind of balanced binary tree,
 ordered as per @cl{string<} or as per some Unicode collating sequence,
 you would pass the appropriate interface instead of @<>{alist}.
-
-
 
 Example: @<>{alist}. Takes an @<>{eq} interface as parameter.
 
@@ -417,6 +400,28 @@ to refer to the one such interface,
 instead of having to either create a new instance every time
 with @cl{(make-instance '<alist>)}
 or to call function @cl{(<alist>)} with the default equality interface @<>{eq}.
+
+@subsubsection{Multiple Dispatch}
+
+Because CLOS has multiple dispatch,
+our generic functions can dispatch on more than the first argument,
+thus preserving the language's object-oriented style
+on arguments beyond the initial interface argument.
+In a language with single-dispatch, we couldn't do that,
+at least not directly,
+as dispatching on the interface would use up the object-oriented ability
+to specialize behavior depending on arguments.
+
+As a simple example, an interface @<>{empty-class}
+could implement @<>{emptyable} as follows,
+given a class @cl{empty} for its empty objects:
+@clcode{
+(defmethod empty-p ((<i> <empty-class>) (x t))
+  nil)
+(defmethod empty-p ((<i> <empty-class>) (x empty))
+  t)}
+Non-empty objects would be matched by the first method,
+while empty objects would be matched by the more specific second method.
 
 @section{Classic Data-Structure}
 @subsection{Mixins}
