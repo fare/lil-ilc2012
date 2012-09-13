@@ -10,7 +10,7 @@
   #:date 2010
   #:url "http://fare.livejournal.com/155094.html")
 
-(define-bib LIL
+(define-bib LIL2012
   #:title "lisp-interface-library"
   #:author "François-René Rideau" ;; and Eric O'Connor ??
   #:date 2012

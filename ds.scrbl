@@ -19,7 +19,7 @@
 @;@copyrightdata{123-4-5678-9012-3/45/67}
 
 @abstract{
-LIL, the Lisp Interface Library,
+LIL, the @[LIL],
 uses an explicit interface-passing style
 to implement an algorithmic datastructure library.
 By separating algorithmic information
@@ -76,7 +76,7 @@ but also dynamically typed languages (PLT Scheme@~cite[MOOPUM]),
 have offered some combination of both
 ad-hoc polymorphism and parametric polymorphism,
 with a variety of results.
-In this paper, we present LIL, the Lisp Interface Library@~cite[LIL],
+In this paper, we present LIL, the @[LIL]@~cite[LIL2012],
 which brings parametric polymorphism to @[CL],
 in a way that nicely fits into the language
 and its existing ad-hoc polymorphism,
@@ -519,9 +519,22 @@ while empty objects would be matched by the more specific second method.
 More complex examples could involve more methods,
 with bigger class hierarchies or dispatch on more than two arguments.
 
-@section{Classic Data-Structure}
+@section{Classic Datastructures}
 
-@subsection{Mixins}
+@subsection{Pure, Stateful, their Intersection, and Beyond}
+
+Developing in @[IPS], we built LIL, the @[LIL],
+that we ambition to become the definitive library for datastructures in @[CL].
+To be able to improve on all existing libraries, we decided to provide both
+pure functional (persistent) datastructures and
+stateful (ephemeral) datastructures.
+Furthermore, we decided to do it the Right Way™
+by sharing as much as possible of the interface and implementation
+between the two styles of datastructures,
+with APIs so congruent with each other that it is possible to build
+automated bridges between the two styles.
+
+@subsubsection{Incremental Layers of Functionality}
 
 Power of CLOS:
 From naive binary trees to balanced binary trees in one method

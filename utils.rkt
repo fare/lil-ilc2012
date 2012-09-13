@@ -11,7 +11,7 @@
   (for-syntax syntax/parse))
 
 (provide
-  XXX IPS CL gf gfs
+  XXX IPS CL gf gfs LIL
   cl clcode clblock <>
   ~cite define-bib generate-bib
   long short abstract-only)
@@ -25,6 +25,7 @@
 
 (define (IPS) "Interface-Passing Style")
 (define (CL) "Common Lisp")
+(define (LIL) "Lisp Interface Library")
 (define (gf) "generic function")
 (define (gfs) "generic functions")
 
