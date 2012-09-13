@@ -16,7 +16,7 @@ html: ${LIL}.html # ${LILA}.html
 	donuts.pl unhtml < $< | wc
 
 %.PDF: %.pdf
-	xpdf $<
+	xpdf -z width -aa yes $<
 
 %.pdf: %.scrbl ${LILSRC}
 	scribble --dest-name $@ --pdf $<

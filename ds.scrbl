@@ -202,10 +202,11 @@ will return a new alist object:
 (insert <alist>
   '((name . "ILC") (year . 2010) (topic . "Lisp"))
   'year 2012)}
-will return a new alist
+will return
 @clcode{((name . "ILC") (year . 2012) (topic . "Lisp"))}
+or some equivalent alist,
 without modifying any previous data cell,
-and reusing the unmodified association pairs.
+instead reusing the unmodified cells as possible.
 
 If instead of alists,
 we had been using the interface @cl{<hash-table>}
@@ -219,8 +220,9 @@ our library actually defines two different generic functions,
 @cl{pure:insert} and @cl{stateful:insert},
 each in its own package.
 (Packages are the standard first-class namespace mechanism of @[CL];
-where needed, the syntax for a symbol can be explicitly specify
-a package name as a prefix followed by a colon and the symbol name.)
+the syntax for a symbol can either leave the package implicit,
+or explicitly specify a package name as a prefix
+followed by a colon and the symbol name.)
 
 By contrast, there is only one function @cl{interface:lookup}
 that is shared by all pure and stateful interfaces
@@ -374,7 +376,8 @@ the CLOS metaclass @cl{interface-class}.
 As an example of multiple inheritance,
 our @cl{pure:<tree>} map interface inherits from both
 the @cl{interface:<tree>} interface specifying readonly API functions on trees,
-and the @cl{pure:<map>} interface specifying an API with pure update as well as lookup.
+and the @cl{pure:<map>} interface specifying an API for maps
+with pure update as well as mere lookup.
 
 @subsubsection{Interface Mixins}
 
@@ -391,12 +394,13 @@ For instance, the @<>{eq} interface actually has two associated functions,
 @cl{(eq-function <i>)} that returns a function object that may be passed
 as an argument to various higher-order functions.
 The mixin @<>{eq-from-==} will automatically deduce @cl{eq-function}
-from @cl{==} while the opposite deduction is provided by the mixin
+from @cl{==} while the converse deduction is provided by the mixin
 @<>{eq-from-eq-function}.
 
 @subsubsection{Parametric Interfaces}
 
-Interfaces may be parameterized by other interfaces.
+Interfaces may be parameterized by other interfaces
+as well as by any object.
 
 For instance, association lists depend on a equality predicate
 with which to compare keys so as to lookup a given key.
@@ -432,6 +436,13 @@ by all standard @[CL] functions requiring such a function.
 We therefore follow the Lisp convention and tradition in providing
 this default.
 
+Slot definitions such as these are how
+we achieve parametric polymorphism in @[IPS]:
+an interface class with such a slot get instantiated
+as interface objects with a specific value in that slot,
+and a method defined on this interface class
+can extract the value in said slot as a parameter to its behavior.
+
 Our definition of @<>{alist} also uses
 two options recognized by @cl{define-interface} and
 not provided by @cl{defclass}.
@@ -447,30 +458,41 @@ rather than a new object every time.
 
 In the above @<>{alist} example,
 the function takes one optional parameter that defaults to @<>{eql}
-and makes an interface object with it using the locally defined function @cl{make-interface}
+and makes an interface object with it using
+the locally defined function @cl{make-interface}
 that handles memoization of an underlying CLOS @cl{make-instance}.
 
-If instead of using alists, you were using some kind of balanced binary tree,
-you would have to specify a @cl{key-interface} that inherits from @<>{order}
+Our library implements datastructures more elaborate than alists.
+For instance, you could use balanced binary tree, in which case
+you would have to provide the tree interface with
+a parameter @cl{key-interface} that inherits from @<>{order},
 so that keys may be compared.
-For instance, simple dictionary may use the @<>{string} interface
-for lexicographic comparison of character contents;
-but it might instead use some Unicode collating sequence
-associated to some human language.
+Thus,
+@cl{(stateful:<avl-tree> <number>)}
+will return an interface
+that is ideal to maintain a sorted index of numbered records, whereas
+@cl{(pure:<avl-tree> <string>)}
+is suitable to build persistent dictionary structures.
+However, if you want your dictionary not in ASCIIbetical order
+but rather in a proper collating sequence for Japanese, you'll have to build
+an interface @cl{<japanese-collation>} around a Unicode library,
+and pass it as an argument to @cl{pure:<avl-tree>}, or
+to a variant thereof that caches the collation key.
 
 @subsubsection{Singleton Interface Variable}
 
 The @cl{define-interface} extension option @cl{:singleton}
-relies on the previous parametric function if defined
-(and defines a trivial version of it if otherwise undefined)
-to automatically define a special variable bound to a one instance of the interface class
+automatically defines a special variable bound
+to a one instance of the interface class
 using default values for the parameters if any.
-
-Therefore clients can use the variable @<>{alist}
-to refer to the one such interface,
-instead of having to either create a new instance every time
+It relies on the previous @cl{:parametric} function if explictly defined,
+and otherwise automatically defines a trivial version of it.
+Clients can therefore use the variable @<>{alist}
+to refer to the one default such interface,
+instead of having either to create a new instance every time
 with @cl{(make-instance '<alist>)}
-or to call function @cl{(<alist>)} with the default equality interface @<>{eq}.
+or to call function @cl{(<alist>)}
+with the default equality interface @<>{eql}.
 
 @subsubsection{Multiple Dispatch}
 
@@ -494,7 +516,11 @@ given a class @cl{empty} for its empty objects:
 Non-empty objects would be matched by the first method,
 while empty objects would be matched by the more specific second method.
 
+More complex examples could involve more methods,
+with bigger class hierarchies or dispatch on more than two arguments.
+
 @section{Classic Data-Structure}
+
 @subsection{Mixins}
 
 Power of CLOS:
