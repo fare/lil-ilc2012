@@ -378,7 +378,7 @@ and @cl{hash} with the standard @[CL] function @cl{sxhash}.
 @<>{eql} is an interface that inherits from @<>{eq},
 and implements equality with the standard @[CL] predicate @cl{eql};
 there is no standard @[CL] hash function that corresponds to it,
-and it doesn't inherit from @<>{hashable}.
+and so it doesn't inherit from @<>{hashable}.
 
 @subsubsection{Multiple Inheritance of Interfaces}
 
@@ -580,12 +580,16 @@ being treated specially and
 having to be of an object class implementing the interface.
 Instead, our signature functions treat all arguments uniformly,
 and none of these arguments have to be restricted to any particular class.
-In particular, there is no problem whatsoever with having "binary methods", and
+In particular, there is no problem whatsoever with having "binary methods",
 no special status is required for "constructor" methods that create an object
 of some target type
-when there was no object yet on which to dispatch interface methods.
-Note that although it helps a lot that we can use multimethods in CLOS,
-the latter properties would still apply in a language we there weren't.
+when there was no object yet on which to dispatch interface methods;
+there is no dilemma regarding contravariance or covariance of types
+when inheriting from a parametric interface.
+Note that many of these issues are already not a big deal in @[CL]
+with its multimethods and dynamic typing;
+but the interface-based approach would solve these issues
+even in a language without them.
 
 @section{Revisiting Classic Datastructures}
 
@@ -614,7 +618,7 @@ automated bridges between the two styles.
 The interfaces in @[IPS] proved to be a great locus in which formalize both
 the commonalities and divergences between pure and stateful datastructures.
 
-@subsubsection{Common Interfaces: Read-only Access}
+@subsubsection{Common Interfaces: Read-Only Access}
 
 The @cl{interface::<map>} interface declares the functions
 @cl{lookup}, @cl{first-key-value}, @cl{fold-left}, @cl{fold-right},
@@ -660,14 +664,16 @@ Power of CLOS:
 From naive binary trees to balanced binary trees in one method
 (plus a little bit of boilerplate).
 
-@subsection{Bootstrapping Datastructures}
+@subsection{Punning Interfaces}
+
+@subsubsection{Bootstrapping Datastructures}
 
 Power of Parametric Composition:
 pure hash-tables bootstrapped from pure trees of hash buckets and pure alists as buckets.
 
 Example TBD of bootstrapped datastructure from Okasaki.
 
-@subsection{Same Data, Multiple Interfaces}
+@subsubsection{Same Data, Multiple Interfaces}
 
 Implicit in the above bootstrapping.
 
