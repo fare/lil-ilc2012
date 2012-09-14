@@ -267,7 +267,7 @@ to the context at hand:
 
 The method above abstracts over interface @cl{<i>},
 and will work with all pure map interfaces implementing
-the @cl{divide/list} API function.
+the @cl{divide/list} signature function.
 This is a standardized function in our library,
 whereby a map @cl{map} is divided in a list of non-empty submaps
 each with strictly fewer mappings than the original map,
@@ -287,13 +287,13 @@ between the interfaces being used and datastructures being passed as arguments,
 unspecified behavior may ensue
 (usually resulting in a runtime error at some point),
 as generic functions may or may not check their arguments for consistency.
-While our library does provide an API function @cl{check-invariant}
+While our library does provide a signature function @cl{check-invariant}
 that the user may call at the entry points of his code or while debugging,
 most of the methods we provide do not call said function,
 and instead trust the user to do the right thing.
 
 The upside of this lack of automatic type-based interface control is that
-the user may enjoy the ability to explicitly specify an interface
+the user can explicitly specify an interface
 in some uncommon cases where the "canonical" interface
 that could be deduced by type inference isn't what he wants,
 and even in cases where
@@ -303,15 +303,16 @@ there isn't any such "canonical" interface to begin with.
 
 @subsubsection{define-interface}
 
-Interfaces can be defined with @cl{define-interface},
+Interfaces can be defined with the @cl{define-interface} macro,
 which is an extension to @cl{defclass}
-with many features specific to interfaces.
+that handles several features specific to interfaces.
 
 For instance, here is
 a stripped-down excerpt from our library:
 
 @clcode{
 (define-interface <emptyable> (<type>) ()
+  (:abstract)
   (:generic empty (<emptyable>)
    (:values object) (:out 0)
    (:documentation "Return an empty object"))
@@ -319,16 +320,36 @@ a stripped-down excerpt from our library:
    (:in 1) (:values boolean)
    (:documentation "Is object empty?")))}
 
-It defines an interface @<>{emptyable}
-that inherits from the super-interface @<>{type}
-of interfaces associated with some datatype,
-and extends it with the notion that elements of that type may be empty.
-As in @cl{defclass}, the third argument is a list of slots;
-in this case, this list is empty, as
+It defines an interface @<>{emptyable},
+the name of which is passed as first argument to the macro,
+as in @cl{defclass}.
+
+The second argument is a list specifying super-interfaces
+from which to inherit behavior, as in @cl{defclass}.
+In this case, there is one and only one super-interface, @<>{type}.
+In our library, @<>{type} is an abstract interface
+specifying that some datatype is associated to the interface.
+@<>{emptyable} extends it with the notion that
+elements of that type may be empty.
+
+As in @cl{defclass}, the third argument is a list of slots.
+A non-empty list of slots is how parametric polymorphism is achieved.
+In this case, this list is empty, as
 there are no parameters defined by this interface.
-Associated to the this newly defined interface are
-two generic functions, @cl{empty} and @cl{empty-p}.
-The first one takes no argument beyond the interface;
+
+Finally, the @cl{define-interface} macro accepts a list of options,
+just like @cl{defclass}. But it also accepts additional options
+not part of the @cl{defclass} specification.
+For instance, this interface uses the @cl{:abstract} option,
+and should not be instantiated,
+because it doesn't implement all its declared functions.
+
+This interface also uses the @cl{:generic} option
+to declare two @[gfs] that are part of the signature of the interface,
+@cl{empty} and @cl{empty-p}.
+Furthermore, with each function a return value convention may be defined
+as well as a calling convention, and indeed are defined in this case.
+The first function takes no argument beyond the interface;
 the @cl{(values object)} specifies that
 it returns one value named object, and the
 @cl{(:out 0)} specifies that return argument in first position
@@ -337,11 +358,7 @@ and returns one value, an object, of said type.
 Similarly, the second function is a predicate,
 takes one argument of the target type and returns one boolean value.
 
-The functions we associate to interfaces
-and the meta-information associated to these functions
-will matter later on when we automatically transform interfaces.
-For now, they may be considered as mostly documentation
-that trivially expands into according @cl{(defgeneric ...)} statements.
+We will now go over each of these features in more detail.
 
 @subsubsection{Inheritance of Interfaces}
 
@@ -375,8 +392,9 @@ the CLOS metaclass @cl{interface-class}.
 
 As an example of multiple inheritance,
 our @cl{pure:<tree>} map interface inherits from both
-the @cl{interface:<tree>} interface specifying readonly API functions on trees,
-and the @cl{pure:<map>} interface specifying an API for maps
+the @cl{interface:<tree>} interface
+specifying readonly signature functions on trees,
+and the @cl{pure:<map>} interface specifying signature functions for maps
 with pure update as well as mere lookup.
 
 @subsubsection{Interface Mixins}
@@ -385,8 +403,8 @@ Our library also relies on multiple-inheritance extensively
 in the form of mixins:
 small interface classes implement a small aspect of the interface.
 Oftentimes, a mixin will be used to simply deduce
-the implementation of some API functions from other API functions.
-Depending on which API functions are more "primitive" for a given datastructure,
+the implementation of some signature functions from other signature functions.
+Depending on which signature functions are more "primitive" for a given concrete datastructure,
 opposite mixins may be used that deduce some functions from the others or the other way around.
 
 For instance, the @<>{eq} interface actually has two associated functions,
@@ -402,13 +420,7 @@ from @cl{==} while the converse deduction is provided by the mixin
 Interfaces may be parameterized by other interfaces
 as well as by any object.
 
-For instance, association lists depend on a equality predicate
-with which to compare keys so as to lookup a given key.
-Our standard @<>{alist} interface therefore has a slot @cl{key-interface},
-the value of which must inherit from @<>{eq},
-that specifies how to compare keys.
-
-The definition of @<>{alist} in our library currently goes as follows:
+For instance, consider the current definition of @<>{alist} in our library:
 
 @clcode{
 (define-interface <alist>
@@ -419,7 +431,6 @@ The definition of @<>{alist} in our library currently goes as follows:
      map-simple-join/list <map>)
   ((key-interface
     :initarg :key-interface
-    :initform <eql>
     :reader key-interface))
   (:parametric (&optional (eq <eql>))
      (make-interface :key-interface eq))
@@ -427,14 +438,15 @@ The definition of @<>{alist} in our library currently goes as follows:
 
 The super-interface list contains several mixins
 to deduce various methods from primitive methods,
-together with the interface @<>{map} that provides the API.
+together with the interface @<>{map} that provides the signature.
 
-The list of slots contains a single slot @cl{key-interface},
-that has a default value, @<>{eql}, which sports
-the comparison function used as a default
-by all standard @[CL] functions requiring such a function.
-We therefore follow the Lisp convention and tradition in providing
-this default.
+But most importantly,
+The list of slots contains a single slot @cl{key-interface}.
+Indeed, association lists crucially depend on an equality predicate
+with which to compare keys when looking up a given key.
+Our @<>{alist} interface therefore has this slot,
+the value of which must inherit from @<>{eq},
+that will specify how to compare keys.
 
 Slot definitions such as these are how
 we achieve parametric polymorphism in @[IPS]:
@@ -444,13 +456,13 @@ and a method defined on this interface class
 can extract the value in said slot as a parameter to its behavior.
 
 Our definition of @<>{alist} also uses
-two options recognized by @cl{define-interface} and
-not provided by @cl{defclass}.
+two options recognized by @cl{define-interface}
+that are not provided by @cl{defclass}:
+@cl{:parametric} and @cl{:singleton}.
 
-@subsubsection{Parametric Interface Function}
+@subsubsection{Concrete Parametric Interfaces}
 
-The @cl{define-interface} extension option
-@cl{:parametric} automatically generates
+The @cl{:parametric} option automatically generates
 a function to instantiate parameterized interface objects.
 This function further uses memoization so interfaces with identical parameters
 end up being the actual same interface object
@@ -458,7 +470,11 @@ rather than a new object every time.
 
 In the above @<>{alist} example,
 the function takes one optional parameter that defaults to @<>{eql}
-and makes an interface object with it using
+(itself a variable bound to a singleton interface).
+This means that if no @<>{eq} interface is specified,
+we will follow the Lisp convention and tradition in providing
+the @cl{eql} function as the default comparison function.
+The body of the parametric function creates the interface object using
 the locally defined function @cl{make-interface}
 that handles memoization of an underlying CLOS @cl{make-instance}.
 
@@ -483,10 +499,11 @@ to a variant thereof that caches the collation key.
 
 The @cl{define-interface} extension option @cl{:singleton}
 automatically defines a special variable bound
-to a one instance of the interface class
-using default values for the parameters if any.
-It relies on the previous @cl{:parametric} function if explictly defined,
-and otherwise automatically defines a trivial version of it.
+to a one instance of a concrete interface class.
+If a @cl{:parametric} function if explicitly defined,
+it will call this function with default values.
+Otherwise, it automatically defines a trivial version of such a function.
+
 Clients can therefore use the variable @<>{alist}
 to refer to the one default such interface,
 instead of having either to create a new instance every time
@@ -505,8 +522,8 @@ at least not directly,
 as dispatching on the interface would use up the object-oriented ability
 to specialize behavior depending on arguments.
 
-As a simple example, an interface @<>{empty-class}
-could implement @<>{emptyable} as follows,
+As the simplest non-trivial example, an interface @<>{empty-class}
+could implement the @<>{emptyable} signature functions as follows,
 given a class @cl{empty} for its empty objects:
 @clcode{
 (defmethod empty-p ((<i> <empty-class>) (x t))
@@ -519,16 +536,73 @@ while empty objects would be matched by the more specific second method.
 More complex examples could involve more methods,
 with bigger class hierarchies or dispatch on more than two arguments.
 
-@section{Classic Datastructures}
+@subsubsection{Interface Signatures}
+
+To each interface is attached a set of functions declared
+as part of the interface's signature.
+The functions are either inherited from the interface's super-interfaces,
+or directly declared using the @cl{:generic} option of @cl{declare-interface}.
+
+The functions we associate to interfaces
+and the meta-information associated to these functions
+will matter later on when we automatically transform interfaces.
+For now, they may be considered as mostly documentation
+that trivially expands into according @cl{(defgeneric ...)} statements.
+
+Some interfaces, such as @<>{emptyable} above,
+exist for the sole purpose of declaring such functions,
+while leaving full freedom to sub-interfaces as to how to implement them.
+That is why @<>{emptyable} was marked as @cl{:abstract}:
+it is not meant to be instantiated,
+only to be inherited from other interfaces,
+and dispatched upon in some methods.
+
+We saw that some abstract interfaces have the opposite purpose:
+they implement one or several signature functions
+in terms of other signature functions,
+that may be more "primitive" in various concrete interfaces.
+
+Finally, some interfaces do implement the complete declared signature,
+either directly or through inheritance of appropriate mixins.
+They are concrete interfaces meant to be instantiated,
+such as @cl{pure:<alist>} above.
+Instantiation usually happens through a function declared by
+the @cl{:parametric} option
+or a variable declared by the @cl{:singleton} option.
+These options are incompatible with the @cl{:abstract} option.
+
+The fact that some interfaces are concrete makes is one notable difference
+between our interfaces and interfaces in other languages such as Java.
+Another notable difference is that
+interfaces are not to be implemented by a class of objects,
+with the first argument to every function in the signature
+being treated specially and
+having to be of an object class implementing the interface.
+Instead, our signature functions treat all arguments uniformly,
+and none of these arguments have to be restricted to any particular class.
+In particular, there is no problem whatsoever with having "binary methods", and
+no special status is required for "constructor" methods that create an object
+of some target type
+when there was no object yet on which to dispatch interface methods.
+Note that although it helps a lot that we can use multimethods in CLOS,
+the latter properties would still apply in a language we there weren't.
+
+@section{Revisiting Classic Datastructures}
 
 @subsection{Pure and Stateful Datastructures}
 
 @subsubsection{Pure, Stateful, their Intersection, and Beyond}
 
-Developing in @[IPS], we built LIL, the @[LIL],
+We built LIL, the @[LIL],
 with the ambition that it should become
 the definitive library for datastructures in @[CL].
-To be able to improve on all existing libraries, we decided to provide both
+While we initially chose @[IPS] to achieve parametric polymorphism,
+previously unavailable in @[CL],
+this style was also helpful to address other issues
+in developing our library.
+
+For instance, to be able to improve on all existing libraries,
+we decided to provide both
 pure functional (persistent) datastructures and
 stateful (ephemeral) datastructures.
 Furthermore, we decided to do it the Right Way™
@@ -536,6 +610,9 @@ by sharing as much as possible of the interface and implementation
 between the two styles of datastructures,
 with APIs so congruent with each other that it is possible to build
 automated bridges between the two styles.
+
+The interfaces in @[IPS] proved to be a great locus in which formalize both
+the commonalities and divergences between pure and stateful datastructures.
 
 @subsubsection{Common Interfaces: Read-only Access}
 
