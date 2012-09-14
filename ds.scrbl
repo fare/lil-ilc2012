@@ -763,11 +763,7 @@ where no object exists yet on which to dispatch.
 @subsubsection{Bootstrapping Datastructures}
 
 A second advantage of explicit interfaces is that
-different variants of a same interface can apply to the same object.
-You can see an array as a sequence of elements one way, or the reverse way;
-no need to actually reverse the elements in memory,
-just look through the lens of a reversing interface.
-
+different instances of a same interface class can apply to the same object.
 One way that we put this technique to profit on LIL is
 in how we bootstrap pure hash-tables.
 
@@ -812,7 +808,8 @@ but also needed a @cl{pure:<hash-table>}
 as a generic pure map mechanism.
 }}
 
-Our @cl{pure:<hash-table>} is defined parametrically as follows:
+Our @cl{pure:<hash-table>} is defined parametrically as follows
+(the following paragraphs are to be read in package @cl{pure}):
 @clcode{
 (define-interface <hash-table>
     (map-simple-join map-simple-update-key
@@ -856,55 +853,69 @@ Methods are then straightforward, but notice the pun:
 }
 Indeed the very same object @cl{map}
 is passed as an argument to
-the same function @cl{pure:insert} through no fewer than
-three different @cl{pure:<map>} interfaces:
-first the original @cl{<i>} which is a @cl{pure:<hash-table>};
+the same function @cl{insert} through no fewer than
+three different @cl{<map>} interfaces:
+first the original @cl{<i>} which is a @cl{<hash-table>};
 then the outer @cl{(hashmap-interface <i>)},
-which is presumably a @cl{pure:<number-map>},
+which is presumably a @cl{<number-map>},
 to locate the proper hash bucket (if any);
 and finally the inner @cl{(bucketmap-interface <i>)}
-which is presumably a @cl{pure:<alist>},
+which is presumably a @cl{<alist>},
 once the proper bucket has been found or a new empty one created.
 
-We don't need to wrap and unwrap objects
-to see them through a different view point;
-we can simply change the interface,
-and the same object can be punned into meaning usefully different things.
-
-In the future, we would like to bootstrap more datastructures this way,
+In the near future, we would like to bootstrap more datastructures this way,
 for instance following some of the algorithms documented by Chris Okasaki
 in @~cite[Okasaki].
 
 @subsubsection{Same Data, Multiple Interfaces}
 
-Implicit in the above bootstrapping.
+More generally, an object can be in the target type of several interfaces,
+not necessarily instances of the same interface class.
+No need to wrap and unwrap objects
+to see them through a different view point;
+simply change the interface,
+and the same object can be punned into meaning usefully different things.
+For instance, one can see an array as a sequence of elements one way, or the reverse way;
+one can view it as the support for a binary queue or a hash-table.
+No need to shuffle around the array elements in memory,
+just look through the lens of a different interface.
 
-Multiply-indexed-organized tuple store.
-Each node is simultaneously node of multiple trees.
-Depending on which index you're using,
-they have to be viewed as a tree in the according way,
-and appropriate accessors have to be chosen for say subtree access.
-The same tree-manipulation routines can be used on the same tree nodes
-with completely different results depending on which interface you use.
-DISCLAIMER: example TBD.
+We haven't yet implemented any non-trivial example of such heavy punning.
+The following two paragraphs are simply ideas we have for future work.
 
-Because the interface is not tied to the data, the data can remain unchanged
-while the interface changes.
-In some algorithms, you might want to constantly switch
-your point of view on the same data, as for a Necker Cube.
-When using classes to control behavior, this requires
-constant rewriting of the object,
-either by global rewriting
-or by rewrapping and unwrapping.
-If creating new datastructures with these objects,
-this can even leak memory
-(or some kind of memoization must be done,
-either through a table which is somewhat slow,
-or by adding an ad-hoc memoization field to relevant classes,
-neither of which is nice if you wanted to preserve purity from side-effects).
-First class interfaces separate behavior from representation
-and avoid this issue.
-DISCLAIMER: example TBD.
+Because an interface is not tied to the data,
+the data can remain unchanged while the interface changes.
+Some algorithms could be simplified by factoring data access
+through a single more compact datastructure visited
+with a finite or evolving set of interfaces.
+In extreme cases, the naive of wrappers in an interface-less setup
+could turn a working program into one that leaks memory,
+or require a complexifying "optimization" layer in these wrappers.
+
+Punning this way could for instance help build composite datastructures,
+whereby each node in the object graph is part of several structures:
+a hash-table for fast retrieval by key,
+a priority heap for scheduling a job queue,
+a sequence for a consistent enumeration order,
+some lazily balanced tree for retrieval with a more rarely used key,
+etc.
+We suspect that to make not trivial punning easy,
+we will have to build new infrastructure to
+manage the heavily-punned classes that implement such composite structures
+incrementally yet without extra boxing:
+this will involve having a model of class labels associated to an interface,
+and a list of mixins attached to each of these labels;
+when instantiating a concrete interface,
+the system will have to ensure that an actual class exists
+for each of these labels, that inherits from each of these mixins and no more;
+for extra punning, there may be the need to rename
+some of the mixins to avoid clashes.
+
+Obviously, anything that can be done through the formal use of interfaces
+can be done without, in the first come Turing tar-pit of a programming language.
+Still we contend that interfaces can be an elegant solution to many problems,
+particularly in situations where a problem has symmetries and regularities
+that can be expressed as a same interface applying to multiple situations.
 
 @section{Interface Transformations}
 @subsection{Making Interfaces Implicit or Explicit}
