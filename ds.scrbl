@@ -219,10 +219,12 @@ for pure and stateful datastructures, with incompatible invariants,
 our library actually defines two different generic functions,
 @cl{pure:insert} and @cl{stateful:insert},
 each in its own package.
-(Packages are the standard first-class namespace mechanism of @[CL];
-the syntax for a symbol can either leave the package implicit,
+@note{@smaller{
+Packages are the standard first-class namespace mechanism of @[CL].
+The syntax for a symbol can either leave the package implicit,
 or explicitly specify a package name as a prefix
-followed by one or two colons and the symbol name.)
+followed by one or two colons and the symbol name.
+}}
 
 By contrast, there is only one function @cl{interface:lookup}
 that is shared by all pure and stateful interfaces
@@ -287,11 +289,11 @@ between the interfaces being used and datastructures being passed as arguments,
 unspecified behavior may ensue
 (usually resulting in a runtime error at some point),
 as generic functions may or may not check their arguments for consistency.
-While our library's @<>{type} interface does provide
-a signature function @cl{check-invariant}
-that the user may call at the entry points of his code or while debugging,
+While our library does provide a function @cl{check-invariant}
+as part of the signature of interface @<>{type},
 most of the methods we provide do not call said function,
-and instead trust the user to do the right thing.
+and instead trust the user to call as appropriate,
+typically at the entry points of his code or while debugging.
 
 The upside of this lack of automatic type-based interface control is that
 the user can explicitly specify an interface
@@ -378,8 +380,8 @@ and implements equality with the standard @[CL] predicate @cl{equal}
 and @cl{hash} with the standard @[CL] function @cl{sxhash}.
 @<>{eql} is an interface that inherits from @<>{eq},
 and implements equality with the standard @[CL] predicate @cl{eql};
-there is no standard @[CL] hash function that corresponds to it,
-and so it doesn't inherit from @<>{hashable}.
+since there is no standard @[CL] hash function that corresponds to it,
+it doesn't inherit from @<>{hashable}.
 
 @subsubsection{Multiple Inheritance of Interfaces}
 
@@ -393,9 +395,9 @@ the CLOS metaclass @cl{interface-class}.
 
 As an example of multiple inheritance,
 our @cl{pure:<tree>} map interface inherits from both
-the @cl{interface:<tree>} interface
+@cl{interface:<tree>}, an interface
 specifying readonly signature functions on trees,
-and the @cl{pure:<map>} interface specifying signature functions for maps
+and @cl{pure:<map>}, an interface specifying signature functions for maps
 with pure update as well as mere lookup.
 
 @subsubsection{Interface Mixins}
@@ -523,13 +525,15 @@ at least not directly,
 as dispatching on the interface would use up the object-oriented ability
 to specialize behavior depending on arguments.
 
-As the simplest non-trivial example, an interface @<>{empty-class}
+As the simplest example, an interface @<>{empty-object}
 could implement the @<>{emptyable} signature functions as follows,
-given a class @cl{empty} for its empty objects:
+given a class @cl{empty-object} for its empty objects:
 @clcode{
-(defmethod empty-p ((<i> <empty-class>) (x t))
+(defmethod empty-p
+    ((<i> <empty-object>) (x t))
   nil)
-(defmethod empty-p ((<i> <empty-class>) (x empty))
+(defmethod empty-p
+    ((<i> <empty-object>) (x empty-object))
   t)}
 Non-empty objects would be matched by the first method,
 while empty objects would be matched by the more specific second method.
@@ -630,6 +634,8 @@ It also declares a function @cl{alist-map}
 that creates a complete map from an alist,
 and is quite useful for initializing non-empty maps.
 These functions are applicable to pure as well as to stateful maps.
+There are also inherited functions such as @cl{check-invariant},
+@cl{empty} and @cl{empty-p}.
 
 Thus, it is possible to write generic read-only tests for map datastructures
 that work for all map implementations, pure and stateful as well.
@@ -637,16 +643,11 @@ Indeed, LIL includes such a tests in its test suite.
 
 @subsubsection{Interface Divergence: Update}
 
-We already saw that there are two distinct functions @cl{pure:insert}
-and @cl{stateful:insert} with different signatures as far as return values go.
-Other functions that update map datastructures have similar differences
-in their signatures:
-pure methods tend to return updated new maps as additional values,
-whereas stateful methods tend to update existing maps through side-effects
-and not include them amongst return values.
-
-For instance, both @cl{pure:drop} and @cl{stateful:drop}
-have the same input signature
+We mentioned how the two distinct functions @cl{pure:insert}
+and @cl{stateful:insert} have different signatures as far as return values go.
+The same difference exists between the
+@cl{pure:drop} and @cl{stateful:drop} functions:
+both have the same input signature@[linebreak]
 @cl{(<map> map key)} @cl{(:in 1)}.@[linebreak]
 But whereas the former has the output signature@[linebreak]
 @cl{(:values map value foundp)} @cl{(:out 0)},@[linebreak]
@@ -657,10 +658,17 @@ of the original map datastructure as its first return value,
 whereas the stateful function omits this return value and
 instead side-effects the map passed as argument.
 
-There is a sense in which these two functions do the same thing;
+Other functions that update map datastructures
+have similar differences in their signatures:
+pure methods tend to return updated new maps as additional values,
+whereas such return values are omitted by stateful methods
+that instead update existing maps in place through side-effects.
+@XXX{
+Yet there is a sense in which these two functions do the same thing;
 we'll see what that is in detail
 when we discuss automated interface transformations
 in the next section.
+}
 
 @subsubsection{Incremental Layers of Functionality}
 
@@ -725,16 +733,147 @@ two class hierarchies, one for the interfaces, and one for
 each type of object that the interfaces may manipulate.
 We have hopes to eliminate this boilerplate in some future,
 by having @cl{define-interface} manage for each interface
-such a set of object classes, but no actual solution yet.
+such a set of object classes;
+but we have no actual solution yet.
 
-@subsection{Punning Interfaces}
+@subsection{Interface Tricks and Puns}
+
+@subsubsection{Dispatch without Object}
+
+A clear disadvantage of @[IPS],
+as compared to means by which other languages achieve similar expression,
+is that it imposes upon the user the cost of keeping track of
+the interface objects that are passed around.
+But as a tradeoff, there are some advantages to balance the equation.
+We are going to enumerate a few of these advantages,
+from the most trivial to the most advanced.
+
+First, interfaces as a separate detached argument allows
+to manipulate data where there is no object to dispatch on.
+This is very clear in the case of the @cl{pure:<alist>} interface:
+it operates on primitive entities (@cl{cons} cells, @cl{nil})
+without requiring these entities to be full-fledged objects,
+and without requiring the user to retroactively add
+a superclass to these entities for dispatch purposes.
+(Note however that normal CLOS multiple dispatch
+also works without this limitation.)
+This is also clear for constructor functions,
+where no object exists yet on which to dispatch.
 
 @subsubsection{Bootstrapping Datastructures}
 
-Power of Parametric Composition:
-pure hash-tables bootstrapped from pure trees of hash buckets and pure alists as buckets.
+A second advantage of explicit interfaces is that
+different variants of a same interface can apply to the same object.
+You can see an array as a sequence of elements one way, or the reverse way;
+no need to actually reverse the elements in memory,
+just look through the lens of a reversing interface.
 
-Example TBD of bootstrapped datastructure from Okasaki.
+One way that we put this technique to profit on LIL is
+in how we bootstrap pure hash-tables.
+
+The construction is of our @cl{pure:<hash-table>}
+is relatively straightforward:
+from a slow generic map of keys to values
+(generic meaning that keys can be anything),
+and a fast specialized map of key hashes to bucket
+(specialized meaning that keys are integers),
+we bootstrap a fast generic map of keys to values.
+By default our slow generic map is @cl{(<alist> <equal>)}
+and our fast specialized map is @cl{(<avl-tree> <number>)},
+under the nickname @cl{<number-map>};
+but these parameters are under user control.
+@note{
+@smaller{
+A hash-table is generic implementation of a finite map with fast access time,
+supposing the existence of a hash function (typically from keys to integers)
+as well as an equality predicate.
+The hash function, the value of which hopefully can be quickly computed,
+will hopefully distinguish with high probability any two objects
+that may be used as keys in the map.
+The location of the entry mapping the key to its value can then be
+quickly computed from the key hash;
+in case several keys collide (have the same hash),
+some compensation strategy is used,
+such as putting all those keys in the same bucket,
+or using an alternate key.
+In the stateful case, the key-indexed table is typically implemented as
+a random-access array with @math{O(1)} access time.
+In the pure case, the key-indexed table will typically be
+a balanced binary tree, which has slightly worse
+@math{O(log n)} access time but allows for persistent datastructures
+(i.e. old copies are still valid after update).
+
+The @[CL] standard specifies a class @cl{hash-table},
+but this only provides a stateful variant of hash-tables.
+LIL has an interface @cl{stateful:<hash-table>}
+that matches the @cl{stateful:<map>} API
+while using those standard hash-tables underneath,
+but also needed a @cl{pure:<hash-table>}
+as a generic pure map mechanism.
+}}
+
+Our @cl{pure:<hash-table>} is defined parametrically as follows:
+@clcode{
+(define-interface <hash-table>
+    (map-simple-join map-simple-update-key
+     map-simple-map/2 <map>)
+  ((key-interface
+    :reader key-interface
+    :initarg :key)
+   (hashmap-interface
+    :reader hashmap-interface
+    :initarg :hashmap)
+   (bucketmap-interface
+    :reader bucketmap-interface
+    :initarg :bucketmap))
+  (:parametric
+       (&key (key <equal>)
+             (hashmap <number-map>)
+             (bucketmap (<alist> key)))
+     (make-interface :key key
+       :hashmap hashmap :bucketmap bucketmap))
+  (:singleton)
+  (:documentation "pure hash table"))
+}
+
+Methods are then straightforward, but notice the pun:
+@clcode{
+(defmethod insert
+    ((<i> <hash-table>) map key value)
+  (let ((hash (hash (key-interface <i>) key)))
+    (insert
+     (hashmap-interface <i>) map hash
+     (insert
+      (bucketmap-interface <i>)
+      (multiple-value-bind (bucket foundp)
+           (lookup (hashmap-interface <i>)
+	           map hash)
+         (if foundp
+	     bucket
+	     (empty (bucketmap-interface <i>))))
+      key
+      value))))
+}
+Indeed the very same object @cl{map}
+is passed as an argument to
+the same function @cl{pure:insert} through no fewer than
+three different @cl{pure:<map>} interfaces:
+first the original @cl{<i>} which is a @cl{pure:<hash-table>};
+then the outer @cl{(hashmap-interface <i>)},
+which is presumably a @cl{pure:<number-map>},
+to locate the proper hash bucket (if any);
+and finally the inner @cl{(bucketmap-interface <i>)}
+which is presumably a @cl{pure:<alist>},
+once the proper bucket has been found or a new empty one created.
+
+We don't need to wrap and unwrap objects
+to see them through a different view point;
+we can simply change the interface,
+and the same object can be punned into meaning usefully different things.
+
+In the future, we would like to bootstrap more datastructures this way,
+for instance following some of the algorithms documented by Chris Okasaki
+in @~cite[Okasaki].
 
 @subsubsection{Same Data, Multiple Interfaces}
 
