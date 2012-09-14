@@ -222,7 +222,7 @@ each in its own package.
 (Packages are the standard first-class namespace mechanism of @[CL];
 the syntax for a symbol can either leave the package implicit,
 or explicitly specify a package name as a prefix
-followed by a colon and the symbol name.)
+followed by one or two colons and the symbol name.)
 
 By contrast, there is only one function @cl{interface:lookup}
 that is shared by all pure and stateful interfaces
@@ -521,10 +521,13 @@ with bigger class hierarchies or dispatch on more than two arguments.
 
 @section{Classic Datastructures}
 
-@subsection{Pure, Stateful, their Intersection, and Beyond}
+@subsection{Pure and Stateful Datastructures}
+
+@subsubsection{Pure, Stateful, their Intersection, and Beyond}
 
 Developing in @[IPS], we built LIL, the @[LIL],
-that we ambition to become the definitive library for datastructures in @[CL].
+with the ambition that it should become
+the definitive library for datastructures in @[CL].
 To be able to improve on all existing libraries, we decided to provide both
 pure functional (persistent) datastructures and
 stateful (ephemeral) datastructures.
@@ -533,6 +536,46 @@ by sharing as much as possible of the interface and implementation
 between the two styles of datastructures,
 with APIs so congruent with each other that it is possible to build
 automated bridges between the two styles.
+
+@subsubsection{Common Interfaces: Read-only Access}
+
+The @cl{interface::<map>} interface declares the functions
+@cl{lookup}, @cl{first-key-value}, @cl{fold-left}, @cl{fold-right},
+@cl{map-alist} that access an existing map in a read-only way.
+It also declares a function @cl{alist-map} that creates a map from an alist,
+and is quite useful for initializing non-empty maps at build time.
+These functions are applicable to pure as well as to stateful maps.
+
+Thus, it is possible to write generic read-only tests for map datastructures
+that work for all map implementations, pure and stateful as well.
+Indeed, LIL includes such a tests in its test suite.
+
+@subsubsection{Interface Divergence: Update}
+
+We already saw that there are two distinct functions @cl{pure:insert}
+and @cl{stateful:insert} with different signatures as far as return values go.
+Other functions that update map datastructures have similar differences
+in their signatures:
+pure methods tend to return updated new maps as additional values,
+whereas stateful methods tend to update existing maps through side-effects
+and not include them amongst return values.
+
+For instance, both @cl{pure:drop} and @cl{stateful:drop}
+have the same input signature
+@cl{(<map> map key)} @cl{(:in 1)}.@[linebreak]
+But whereas the former has the output signature@[linebreak]
+@cl{(:values map value foundp)} @cl{(:out 0)},@[linebreak]
+the latter has the output signature@[linebreak]
+@cl{(:values value foundp)} @cl{(:out t)}.@[linebreak]
+This means that the pure function returns an updated version
+of the original map datastructure as its first return value,
+whereas the stateful function omits this return value and
+instead side-effects the map passed as argument.
+
+There is a sense in which these two functions do the same thing;
+we'll see what it is in detail
+when we discuss automated interface transformations
+in the next section.
 
 @subsubsection{Incremental Layers of Functionality}
 
@@ -782,16 +825,23 @@ We notably intend to port the algorithms from
 Chris Okasaki's now classic book@~cite[Okasaki]
 and other currently popular pure functional datastructures;
 and of course matching interfaces to well-known stateful variants.
+Also, provisions for safe concurrent access to datastructures
+could be introduced.
 
 Just as obviously, our linguistic features could offer more bells and whistles:
 users could have more flexibility in
 mapping names, parameters and other aspects of their interfaces
 when translating between variants of algorithms,
-pure and stateful, interface-based and class-based.
+pure and stateful, interface-based and class-based,
+single-threaded or concurrent, etc.
 These transformations could be more mindful of interface and class hierarchies
 rather than operate on all the generic functions of one pair of APIs at a time.
 The packaging of the current features could be improved,
 with internals being refactored and exported.
+We could use ContextL@~cite[contextl-soa]
+or similar Context-Oriented Programming techniques
+to dynamically bind extra implicit arguments to our function calls
+to trivially reexpose an @[IPS] API as a classic Object Oriented style API.
 
 However, here are a few less-obvious ways in which we'd like to improve LIL.
 

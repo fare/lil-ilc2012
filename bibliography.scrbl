@@ -65,6 +65,21 @@
   #:date 2005 ; 2005-2011
   #:url "http://common-lisp.net/project/cl-containers/")
 
+(define-bib contextl-soa
+  #:title "Context-Oriented Programming in ContextL"
+  ;; #:subtitle "State of the Art"
+  #:author "Pascal Costanza"
+  ;; "Celebrating the 50th anniversary of Lisp"
+  #:date 2008
+  #:url "http://www.p-cos.net/documents/contextl-soa.pdf")
+  ;; See also http://github.com/madnificent/COPP
+
+(define-bib fmim
+  #:title "Fast Mergable Integer Maps"
+  #:author "Chris Okasaki and Andrew Gill"
+  #:date 1998
+  #:url "http://www.eecs.usma.edu/webs/people/okasaki/ml98maps.ps")
+
 @(XXX #|
 See discussion on 2012-08-03 on #racket
 <asumu> I don't think this combination is used much.
@@ -72,3 +87,7 @@ See discussion on 2012-08-03 on #racket
 <asumu> (to clarify: mixins & units *are* used together, but not in this particular pattern)
 <asumu> (see the DrRacket tool API for an example of their use)
 |#)
+
+;; logic for shared mutable datastructure: separation logic ?
+;; Separation logic: A logic for shared mutable data structures
+;; JC Reynolds - Logic in Computer Science, 2002. Proceedings. …, 2002 - ieeexplore.ieee.org
