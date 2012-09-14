@@ -287,7 +287,8 @@ between the interfaces being used and datastructures being passed as arguments,
 unspecified behavior may ensue
 (usually resulting in a runtime error at some point),
 as generic functions may or may not check their arguments for consistency.
-While our library does provide a signature function @cl{check-invariant}
+While our library's @<>{type} interface does provide
+a signature function @cl{check-invariant}
 that the user may call at the entry points of his code or while debugging,
 most of the methods we provide do not call said function,
 and instead trust the user to do the right thing.
@@ -540,14 +541,9 @@ with bigger class hierarchies or dispatch on more than two arguments.
 
 To each interface is attached a set of functions declared
 as part of the interface's signature.
-The functions are either inherited from the interface's super-interfaces,
-or directly declared using the @cl{:generic} option of @cl{declare-interface}.
-
-The functions we associate to interfaces
-and the meta-information associated to these functions
-will matter later on when we automatically transform interfaces.
-For now, they may be considered as mostly documentation
-that trivially expands into according @cl{(defgeneric ...)} statements.
+The functions from the interface's super-interfaces are inherited;
+additional functions can be directly declared
+using the @cl{:generic} option of @cl{declare-interface}.
 
 Some interfaces, such as @<>{emptyable} above,
 exist for the sole purpose of declaring such functions,
@@ -580,18 +576,25 @@ being treated specially and
 having to be of an object class implementing the interface.
 Instead, our signature functions treat all arguments uniformly,
 and none of these arguments have to be restricted to any particular class.
-In particular, there is no problem whatsoever with having "binary methods",
-no special status is required for "constructor" methods that create an object
-of some target type
-when there was no object yet on which to dispatch interface methods;
-there is no dilemma regarding contravariance or covariance of types
+In particular, there is no problem whatsoever with having "binary methods";
+no special status is required for "constructor" methods
+that create an object of some target type
+when there was no object yet on which to dispatch methods;
+and there is no dilemma regarding contravariance or covariance of types
 when inheriting from a parametric interface.
-Note that many of these issues are already not a big deal in @[CL]
-with its multimethods and dynamic typing;
+Note that many of these issues could be avoided or glossed over @[CL]
+thanks to its multimethods and dynamic typing;
 but the interface-based approach would solve these issues
-even in a language without them.
+even in a language without single dispatch and/or with static typing.
+@XXX{
+The functions that are part of an interfaces' signature
+and the meta-information associated to these functions
+will matter later on when we automatically transform interfaces.
+For now, they may be considered as mostly documentation
+that trivially expands into according @cl{(defgeneric ...)} statements.
+}
 
-@section{Revisiting Classic Datastructures}
+@section{Revisiting Classic Structures}
 
 @subsection{Pure and Stateful Datastructures}
 
@@ -609,7 +612,7 @@ For instance, to be able to improve on all existing libraries,
 we decided to provide both
 pure functional (persistent) datastructures and
 stateful (ephemeral) datastructures.
-Furthermore, we decided to do it the Right Way™
+Furthermore, we decided to do the Right Thing™
 by sharing as much as possible of the interface and implementation
 between the two styles of datastructures,
 with APIs so congruent with each other that it is possible to build
@@ -620,11 +623,12 @@ the commonalities and divergences between pure and stateful datastructures.
 
 @subsubsection{Common Interfaces: Read-Only Access}
 
-The @cl{interface::<map>} interface declares the functions
+The @cl{interface::<map>} interface declares functions
 @cl{lookup}, @cl{first-key-value}, @cl{fold-left}, @cl{fold-right},
 @cl{map-alist} that access an existing map in a read-only way.
-It also declares a function @cl{alist-map} that creates a map from an alist,
-and is quite useful for initializing non-empty maps at build time.
+It also declares a function @cl{alist-map}
+that creates a complete map from an alist,
+and is quite useful for initializing non-empty maps.
 These functions are applicable to pure as well as to stateful maps.
 
 Thus, it is possible to write generic read-only tests for map datastructures
@@ -654,15 +658,74 @@ whereas the stateful function omits this return value and
 instead side-effects the map passed as argument.
 
 There is a sense in which these two functions do the same thing;
-we'll see what it is in detail
+we'll see what that is in detail
 when we discuss automated interface transformations
 in the next section.
 
 @subsubsection{Incremental Layers of Functionality}
 
-Power of CLOS:
-From naive binary trees to balanced binary trees in one method
-(plus a little bit of boilerplate).
+We have strived to implement our datastructures
+in small incremental layers.
+
+For instance, here is the complete implementation
+of stateful AVL (self-balanced) trees on top of previous layers:
+
+@clcode{
+(define-interface <avl-tree>
+    (interface::<avl-tree>
+     <heighted-binary-tree>
+     <post-self-balanced-binary-tree>) ()
+  (:abstract))
+
+(defclass avl-tree-node
+    (interface::avl-tree-node
+     heighted-binary-tree-node) ())
+
+(defmethod node-class ((i <avl-tree>))
+  'avl-tree-node)
+
+(defmethod balance-node ((i <avl-tree>)
+	   		 (node empty-object))
+  (values))
+
+(defmethod balance-node ((i <avl-tree>)
+	   		 (node avl-tree-node))
+  (ecase (node-balance node)
+    ((-1 0 1) ;; already balanced
+     (update-height node))
+    ((-2)
+     (ecase (node-balance (left node))
+       ((-1 0)
+        (rotate-node-right node))
+       ((1)
+        (rotate-node-left (left node))
+        (rotate-node-right node))))
+    ((2)
+     (ecase (node-balance (right node))
+       ((-1)
+        (rotate-node-right (right node))
+        (rotate-node-left node))
+       ((0 1)
+        (rotate-node-left node))))))
+}
+
+The superclasses already handle the read-only aspect of avl-trees
+(mostly invariant checking, in this case),
+and the stateful aspects of maintaining the tree height
+and having to rebalance after updates.
+The only incremental code we need is the specification of
+how to rebalance nodes.
+
+This decomposition of interfaces into lots of incremental interfaces
+makes for a very clean programming style where each interface
+is a small mixin that is quite easy to understand.
+
+Note however the current burden of having to explicitly maintain
+two class hierarchies, one for the interfaces, and one for
+each type of object that the interfaces may manipulate.
+We have hopes to eliminate this boilerplate in some future,
+by having @cl{define-interface} manage for each interface
+such a set of object classes, but no actual solution yet.
 
 @subsection{Punning Interfaces}
 
