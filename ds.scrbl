@@ -1025,32 +1025,49 @@ from there through one of the above or below mechanisms.
 
 @subsection{From Pure to Stateful and Back}
 
-@XXX{
-The functions that are part of an interfaces' signature
-and the meta-information associated to these functions
-will matter later on when we automatically transform interfaces.
-For now, they may be considered as mostly documentation
-that trivially expands into according @cl{(defgeneric ...)} statements.
-}
+@subsubsection{Variants of a Same Structure}
 
-@XXX{
-Yet there is a sense in which these two functions do the same thing;
-we'll see what that is in detail
-when we discuss automated interface transformations
-in the next section.
-}
+In previous sections, we explained how interfaces maintain metainformation
+about the call arguments and return value conventions
+of functions in their signature.
+So far, this metainformation only had value as documentation.
+But we also saw that the signature of pure variant of an interface
+was systematically related to
+the signature of the stateful variant of the "same" interface.
+What if we could formalize this systematic relation?
+We could then implement automatic correspondances
+between pure and stateful variants of some interface.
+This is what we have implemented in LIL.
 
+@subsubsection{Effect Annotations}
 
-Put pure datum in a mutable box. DONE.
+@subsubsection{Pure Interface in a Mutating Box}
 
-Put mutable object in use-once box. DONE.
+Put pure datum in a mutable box.
 
 Provide wrappers for all relevant methods via macros.
 Also need to identify for every method
 which position in argument and/or return values
 holds the object or datum to wrap/unwrap.
 
+@subsubsection{Stateful Interface in a Linear Box}
+
+Put mutable object in use-once box.
+
+@subsubsection{Limits of Our Calculus}
+
+@cl{divide/list}.
+
+Our signature annotations can be seen as some kind of primitive
+first-order type system, from which wrappers can be deduced automatically.
+Though we haven't tried to generalize this type system
+to a richer, higher-order calculus,
+we believe that such a generalization is be possible
+and would be an interesting venue for further research.
+
 @subsection{From Interfaces to Classes and Back}
+
+@subsubsection{Interfaces as Detached Classes}
 
 An interface can be viewed as "detached" class information,
 where an object's "virtual method table" is passed
@@ -1075,11 +1092,18 @@ and your interface's object class
 and by automatically deriving subjective variants
 of the interface-passing style generic functions
 and appropriate wrappers.
-DISCLAIMER: macros TBD.
+
+@subsubsection{Interface-Aware Boxes}
+
+@subsubsection{Parameterized or Fixed Interface}
+
+@subsubsection{The Case of Constructor Methods}
 
 @section{Conclusion}
 
 @subsection{Related Works}
+
+@subsubsection{Many Well-Known Predecessors}
 
 While the underlying principle behind @[IPS] is hardly original,
 we found it an effective tool to implement a generic datastructure library,
@@ -1097,6 +1121,8 @@ ML implements functors@[XXX 'ref :bib]:
 an extra interface argument is implicitly passed around
 to the lower-level functions implementing these various constructs,
 and this extra argument encapsulates the parameters to said constructs.
+
+@subsubsection{@[IPS] Specificities}
 
 However, there are several ways
 in which our @[IPS] differ from any of the above-mentioned systems;
@@ -1175,6 +1201,8 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
 Our solution would fit any other dynamic language,
 especially if it also has multiple dispatch and/or syntax extension facilities.
 
+@subsubsection{Innovation: Interface Transformations}
+
 Thanks to @[CL] syntax extension, we could also achieve
 a few interesting features
 beside the addition of parametric polymorphism to @[CL]:
@@ -1196,6 +1224,8 @@ beside the addition of parametric polymorphism to @[CL]:
 
 @subsection{Current Limitations and Future Work}
 
+@subsubsection{Current Usability Status}
+
 LIL at this point is already a usable datastructure library
 that has contributed features not previously available to @[CL] users:
 not only does it offer infrastructure for users to develop their own
@@ -1211,6 +1241,8 @@ and each of its features is as bare as possible while remaining functional.
 There are thus many axes for development,
 both in terms of actually provided algorithms
 and in terms of linguistic abstraction.
+
+@subsubsection{Obvious Potential Improvements}
 
 Obviously, more known datastructures could be provided:
 Stacks, queues, double-queues, arrays, heaps, sets, multi-sets,
@@ -1237,6 +1269,8 @@ We could use ContextL@~cite[contextl-soa]
 or similar Context-Oriented Programming techniques
 to dynamically bind extra implicit arguments to our function calls
 to trivially reexpose an @[IPS] API as a classic Object Oriented style API.
+
+@subsubsection{More Advanced Projects}
 
 However, here are a few less-obvious ways in which we'd like to improve LIL.
 
@@ -1298,6 +1332,8 @@ If the specifications also include annotations about performance guarantees,
 this opens a venue for a more declarative approach
 to datastructure development.
 
+@subsubsection{Our Vision}
+
 The ultimate goal we would be reaching for
 is that it should be possible to write programs
 out of small individual contributions,
@@ -1316,7 +1352,13 @@ best suits his needs.
 
 @;@section[#:style (style #f '(hidden unnumbered))]{}
 
-@;@bold{Acknowledgment:} Thanks to ...
+@bold{Acknowledgment:}
+Many thanks to my wife Rebecca for supporting me throughout this development,
+to my employer Google and my manager Allan Fraser for bearing with me
+during this digression from my main tasks,
+to Eli Barzilay for the racket scribble system,
+to Jon Rafkind for giving me a template to start from,
+and to Eric O'Connor for kickstarting the development of LIL.
 
 @XXX{
 The call for paper is here:
