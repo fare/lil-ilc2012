@@ -82,7 +82,7 @@ in a way that nicely fits into the language
 and its existing ad-hoc polymorphism,
 taking full advantage of the advanced features of CLOS.
 
-In a first part, we describe
+In section 2, we describe
 the @[IPS] @~cite[Rideau-IPS] in which LIL is written:
 meta-data about the current algorithm is encapsulated
 in a first-class interface object,
@@ -91,7 +91,7 @@ in computations that may require specialization based on it.
 We show basic mechanisms by which this make it possible
 to express both ad-hoc and parametric polymorphism.
 
-In a second part, we demonstrate how we use this style to implement
+In section 3, we demonstrate how we use this style to implement
 a library of classic datastructures, both pure (persistent) and stateful (ephemeral).
 We show how our library makes good use of @[IPS]
 to build up interesting datastructures:
@@ -104,7 +104,7 @@ from simpler but less efficient variants;
 first-class interfaces allow a very same object
 as implementing a given type of interface in different ways.
 
-In a third part, we show how adequate macros allow to bridge
+In section 4, we show how adequate macros can bridge the gap
 between different programming styles.
 We demonstrate macros that bridge between
 syntactically implicit or explicit interfaces.
@@ -590,13 +590,6 @@ Note that many of these issues could be avoided or glossed over @[CL]
 thanks to its multimethods and dynamic typing;
 but the interface-based approach would solve these issues
 even in a language without single dispatch and/or with static typing.
-@XXX{
-The functions that are part of an interfaces' signature
-and the meta-information associated to these functions
-will matter later on when we automatically transform interfaces.
-For now, they may be considered as mostly documentation
-that trivially expands into according @cl{(defgeneric ...)} statements.
-}
 
 @section{Revisiting Classic Structures}
 
@@ -663,12 +656,6 @@ have similar differences in their signatures:
 pure methods tend to return updated new maps as additional values,
 whereas such return values are omitted by stateful methods
 that instead update existing maps in place through side-effects.
-@XXX{
-Yet there is a sense in which these two functions do the same thing;
-we'll see what that is in detail
-when we discuss automated interface transformations
-in the next section.
-}
 
 @subsubsection{Incremental Layers of Functionality}
 
@@ -918,29 +905,141 @@ particularly in situations where a problem has symmetries and regularities
 that can be expressed as a same interface applying to multiple situations.
 
 @section{Interface Transformations}
+
 @subsection{Making Interfaces Implicit or Explicit}
 
-Local bindings with
+@subsubsection{Making Interfaces Implicit in a Scope}
+
+Even though arbitrary first-class interface objects
+can be passed as argument in any function call,
+it is quite often obvious from the context that
+an interface object under consideration is going to be passed around
+in each and every function call or almost so.
+
+Therefore, we provide a macro evaluating a body of code
+in a lexical scope in which it is syntactically implicit that
+a given object @cl{interface}
+is being passed around in all calls to some functions
+specified by @cl{functions-spec}:
 @clcode{
-with-interface (interface functions-spec
-                &key prefix package) &body body
+(with-interface
+  (interface functions-spec &key prefix package)
+  &body body)
+}
+The @cl{functions-spec} can be a list of function names,
+but is more often the name of single interface class,
+in which case it signifies all the names of the functions
+declared as part of that class's signature.
+Other keyword arguments provide control over
+which package is to be used for fast aliases
+(by default the current one, for shorter names)
+and what optional prefix to use
+(by default none as that would defeat the purpose).
+
+For instance, the following code implements
+an insertion sort for number-indexed alists:
+@clcode{
+(defun mysort (alist)
+  (with-interface (<number-map> <map>)
+    (let ((m (alist-map alist)))
+      (fold-right m 'acons nil))))
+}
+Notice how @<>{number-map} was implicitly passed
+to calls to two functions in the @<>{map} interface,
+@cl{alist-map} and @cl{fold-right}.
+(Interestingly, this function works in both
+pure and stateful contexts.)
+
+@subsubsection{Implicit Interface in Method Definition}
+
+Because many interfaces have methods implementing their declared functions
+in the context of which this situation definitely applies,
+@cl{define-interface} also has an option @cl{:method} to define such methods.
+For instance, here is the definition of the previously mentioned
+@<>{eq-from-==} mixin:
+@clcode{
+(define-interface <eq-from-==> (<eq>) ()
+  (:abstract)
+  (:method eq-function ()
+    #'(lambda (x y) (== x y))))
+}
+Notice how the interface argument is omitted from the lambda-list.
+Notice also how no interface argument is explicitly passed to @cl{==}.
+
+In case the interface is needed for some explicit call,
+the argument is bound to the symbol naming the interface
+(in this case @<>{eq-from-==}),
+rather than to a special symbol such as @cl{self}
+as in other languages.
+In case one of the shadowed functions is needed for some call
+with an explicit interface different from the implicit one,
+the symbol naming this function can be called
+(in this case @cl{'eq-function}),
+since in @[CL] its global binding isn't shadowed.
+Obviously, the adaptation of this syntactic facility
+to a language different from @[CL] would require a different solution,
+such as requiring use of a name prefix when invoking the long-form functions.
+
+@subsubsection{Global Elision of Interface Argument}
+
+Once you have bootstrapped the perfect interface
+for a lot of your algorithms,
+instead of passing it around over and over,
+you can make it altogether globally implicit.
+Choose a package and/or a prefix, and use the macro:
+@clcode{
+(define-interface-specialized-functions
+  interface functions-spec &key prefix package)
 }
 
-Global definitions with
-@clcode{
-define-interface-specialized-functions
-  interface functions-spec &key prefix package
-}
+It will create in the specified package some global functions
+that implicitly pass around your global interface object
+to specified interface functions with optional prefix added.
 
-Define methods with
+For instance, if you find yourself using pure hash-tables a whole lot,
+you could create a package @cl{pure-hash-table} in which you'd evaluate:
 @clcode{
-(define-interface-methods (i <myinterface>)
-  (:method ...) ...)
+(define-interface-specialized-functions
+  pure:<hash-table> pure:<map>)
 }
+and voilà, all these functions are there for you to use in that package.
 
-Example TBD of how to build an implicit interface from explicit functions.
+@subsubsection{Making Interfaces Explicit}
+
+It might happen that you have some classes that implement
+in a classic object-oriented style
+some interface that you are interested in using as a parameter.
+Then you may have to define a singleton interface
+with wrapper methods adapting between the two APIs.
+
+If it happened that the APIs were indeed identical but for the extra argument,
+a macro could be trivially written to automatically provide for the adaptation.
+However, in practice, the case doesn't happen,
+because odds are low a legacy or third-party object oriented interface
+will match exactly your modern @[IPS] signature.
+And odds are similarly low that if you're interested in the flexibility of interfaces,
+you would start with the more rigid object-oriented style
+and convert to the more flexible @[IPS],
+rather than start with @[IPS] and extract an object-oriented API
+from there through one of the above or below mechanisms.
 
 @subsection{From Pure to Stateful and Back}
+
+@XXX{
+The functions that are part of an interfaces' signature
+and the meta-information associated to these functions
+will matter later on when we automatically transform interfaces.
+For now, they may be considered as mostly documentation
+that trivially expands into according @cl{(defgeneric ...)} statements.
+}
+
+@XXX{
+Yet there is a sense in which these two functions do the same thing;
+we'll see what that is in detail
+when we discuss automated interface transformations
+in the next section.
+}
+
 
 Put pure datum in a mutable box. DONE.
 
@@ -1218,7 +1317,6 @@ best suits his needs.
 @;@section[#:style (style #f '(hidden unnumbered))]{}
 
 @;@bold{Acknowledgment:} Thanks to ...
-
 
 @XXX{
 The call for paper is here:
