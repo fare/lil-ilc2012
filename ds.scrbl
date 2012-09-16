@@ -1140,7 +1140,9 @@ our model cannot express effects on
 @note{@smaller{In @[CL], the list specifying how arguments are bound
 to what variables when a function is invoked is called a lambda-list.
 A lambda-list may specify required arguments,
-then optional arguments, then a rest argument, then keyword arguments.
+then may specify optional arguments introduced by @cl{&optional},
+then may specify a rest argument introduced by @cl{&rest},
+then may specify keyword arguments introduced by @cl{&key}.
 We remember the lambda-list of the input arguments the function accepts,
 and we record a lambda-list of the output values it returns
 which may be considered as the lambda-list of the function's continuation.
@@ -1148,10 +1150,6 @@ which may be considered as the lambda-list of the function's continuation.
 
 This model is as simple as can be, and yet
 it fits most of the functions in our map API.
-The only functions we initially came up with
-that don't fit are
-@cl{join/list} and @cl{divide/list} that respectively
-take as argument and return a list of map objects.
 
 @subsubsection{Pure Interface in a Mutating Box}
 
@@ -1164,7 +1162,10 @@ implements its underlying operations:
 @clcode{
 (define-mutating-interface
   <mutating-map> (stateful:<map>) (pure:<map>)
-  () ...)
+  ()
+  ...
+  (:parametric (interface)
+    (make-interface :pure-interface interface)))
 }
 The first argument is the name of the new interface.
 The second argument is a list of super-interfaces
@@ -1173,9 +1174,10 @@ The third argument is a list of super-interfaces
 of the underlying pure interfaces being wrapped.
 The fourth argument is a list of slot definitions and overrides
 for parameterization, completing what's implicit in mutating.
-What remains (and is elided in the example above)
-is a list of manual method definitions for functions
-that our macro fails to automatically wrap.
+What remains is a list of options to @cl{define-interface};
+elided are several manual method definitions for functions
+that our macro fails to automatically wrap;
+included is a @cl{:parametric} function definition.
 
 The macro defines a new interface class,
 and wrapper methods for all declared interface functions
@@ -1183,6 +1185,13 @@ with a matching name between the pure and stateful packages
 that also have declared effects as per our model.
 
 Values are put into an object box containing the current value.
+As seen in the examples below, we use a function @cl{box!}
+that takes one argument and creates a box object
+with a mutable slot @cl{value} initialized with the argument;
+the slot can be read with @cl{box-value} which takes
+the box as argument and returns its value;
+they can be written with @cl{set-box-value} which takes
+the value and the box as arguments and sets the box value.
 
 The wrapping of a read-only function works by extracting
 the value from the box and passing it to the pure function.
@@ -1194,13 +1203,17 @@ so they are more explanatory.
 The actual macroexpansion has
 @cl{(declare (ignore ...))} clauses;
 We omit such clauses when no variable was ignored.
-Return values also involve a @cl{let*} clause
-that we omit when it introduces no binding.
+The macroexpansion also include trivial renaming of variables
+to bridge between the calling conventions
+of the inner and outer functions;
+we beta-expand these renamings away,
+and omit binding forms without non-trivial bindings.
 In presence of rest or keyword arguments,
 the macroexpansion uses @cl{apply}
 for the inner function and/or for @cl{values};
 it uses @cl{funcall} in absence of such arguments;
-we simply the @cl{funcall} case into a direct call.
+we simplify the @cl{funcall} case into a direct call,
+and do away with unnecessary @cl{values} statements.
 Finally, we omit some the package of symbols
 where it isn't relevant to our explanation.
 }}
@@ -1210,16 +1223,12 @@ macroexpansion of the wrapping for @cl{lookup} is as follows:
     ((<interface> <mutating-map>) map key)
   (let* ((<pure-interface>
            (pure-interface <interface>))
-         (pure-map (box-value map))
-	 (pure-key key))
+         (pure-map (box-value map)))
     (multiple-value-bind
-           (pure-value pure-foundp)
+           (value foundp)
         (lookup <pure-interface>
-	        pure-map pure-key)
-      (let* ((value pure-value)
-             (foundp pure-foundp))
-        (values value foundp)))))
-}
+	        pure-map key)
+        (values value foundp))))}
 
 When a function updates an old value into a new one,
 we simply extract the updated value from the pure function's results
@@ -1230,11 +1239,10 @@ For instance, the cleaned up wrapper for @cl{insert} is:
     ((<interface> <mutating-map>) map key value)
   (let* ((<pure-interface>
            (pure-interface <interface>))
-         (pure-map (box-value map))
-	 (pure-key key)
-	 (pure-value value))
+         (pure-map (box-value map)))
     (multiple-value-bind (updated-map)
-        (pure:insert <pure-interface> pure-map pure-key pure-value)
+        (pure:insert <pure-interface>
+		     pure-map key value)
       (set-box-value pure-map map)
       (values))))
 }
@@ -1250,23 +1258,180 @@ and put it in a box, such as in this wrapper for @cl{empty}:
     (multiple-value-bind (pure-empty)
         (pure:empty <pure-interface>)
       (let* ((empty-object (box! pure-empty)))
-        (values empty-object)))))
+        empty-object))))
 }
+
+@subsubsection{Manual Method Transformation}
+
+Unhappily, our very simple model for effects
+cannot cover methods with more advanced calling conventions.
+Our transformation macros allow for users to manually specify
+methods where our automation falls short or fails.
+
+Interestingly, amongst the many functions we initially came up with
+while developing our map API,
+the only that didn't fit this simplest of models were
+@cl{join/list} and @cl{divide/list}.
+These functions respectively
+take as argument and return a list of map objects.
+
+Here is a how we manually wrap @cl{divide/list}:
+@clcode{
+(:method stateful:divide/list (map)
+   (let ((list
+         (pure:divide/list
+           (pure-interface <mutating-map>)
+           (box-value map))))
+       (and list
+            (progn
+              (set-box-value (first list) map)
+              (cons map (mapcar 'box! (rest list)))))))}
+
+Note how the first element in the list is special in that
+it shares the identity of the map being divided,
+which is part of the contract of @cl{divide/list}.
+(LIL, following @[CL] tradition, neither imposes nor provides any means
+to automate the enforcement of these contracts.)
 
 @subsubsection{Stateful Interface in a Linear Box}
 
-Put mutable object in use-once box.
+The reverse transformation works in a very similar way.
+For instance, stateful map interfaces are transformed into
+linearized pure map interfaces as follows:
+@clcode{
+(define-linearized-interface
+  <linearized-map> (pure:<map>) (stateful:<map>)
+  ()
+  (:method join/list (list) ...)
+  (:method divide/list (map)
+     (let ((list
+            (stateful:divide/list
+             (stateful-interface <linearized-map>)
+             (box-ref map))))
+       (and list
+            (mapcar 'one-use-value-box list))))
+  (:parametric (interface)
+    (make-interface :stateful-interface interface)))
+}
 
-@subsubsection{Limits of Our Calculus}
+Everything works in a way similar to the mutating transformation.
+We elide the body of the @cl{join/list} manual method,
+but offer the @cl{divide/list} manual method for contrast
+with the reverse transformation.
 
-@cl{divide/list}.
+Note that @cl{one-use-value-box} is a one-argument function
+that creates a box with a slot value initialized to that argument,
+that can be read many times with @cl{box-value},
+but is used up and not further readable
+when read by @cl{box-ref}.
+We use the latter function before any operation
+that modifies the contents of the box;
+therefore, it is invalid to try to access an old version of the wrapped object,
+unless its contents were explicitly copied beforehand into a new object.
 
-Our signature annotations can be seen as some kind of primitive
-first-order type system, from which wrappers can be deduced automatically.
-Though we haven't tried to generalize this type system
-to a richer, higher-order calculus,
-we believe that such a generalization is be possible
-and would be an interesting venue for further research.
+Here are the cleaned up macroexpansions for the wrappers around
+@cl{lookup}, @cl{insert} and @cl{empty} respectively:
+
+@clcode{
+(defmethod lookup
+    ((<interface> <linearized-map>) map key)
+  (let* ((<stateful-interface>
+           (stateful-interface <interface>))
+         (stateful-map (box-value map)))
+    (multiple-value-bind (value foundp)
+        (lookup <stateful-interface>
+	        stateful-map key)
+      (values value foundp))))
+}
+
+@clcode{
+(defmethod pure:insert
+    ((<interface> <linearized-map>) map key value)
+  (let* ((<stateful-interface>
+           (stateful-interface <interface>))
+         (stateful-map (box-value map)))
+     (stateful:insert <stateful-interface>
+                      stateful-map key value)
+     (let* ((updated-map
+              (one-use-value-box stateful-map)))
+       updated-map)))
+}
+
+@clcode{
+(defmethod empty
+    ((<interface> <linearized-map>))
+  (let* ((<stateful-interface>
+           (stateful-interface <interface>)))
+    (multiple-value-bind (empty-object)
+        (empty <stateful-interface>)
+      (let* ((one-use-empty
+               (one-use-value-box empty-object)))
+	one-use-empty))))
+}
+
+@subsubsection{Using Transformed Maps}
+
+Mutating or linearized interfaces are not just a mathematical curiosity,
+they have applications to actual systems.
+
+For instance, a stateful algorithm may sometime involve
+snapshotting the state of objects;
+if the objects are big or if snapshotting happens often enough,
+the usual stateful datastructures can be prohibitively expensive;
+but by simply wrapping a purely functional persistent datastructure
+designed for to make copying essentially free,
+you can remove such a speed or space bottleneck.
+And all you need to do is to start using a mutating interface
+instead of the vanilla stateful interface.
+Using @[IPS], you can also easily defer this kind of decision
+until you know enough about the constraints of your application,
+and revise the decision after these constraints evolve.
+
+Conversely, you may have great algorithms developed in a functional style
+that allow them to combine easily and to apply to situations
+beyond the limitations of linear state.
+Yet, some of these algorithms may also apply
+within the limitations of linear state,
+in which case you may want to use them together
+with the less cumbersome stateful programming style.
+A linearized interface allows you to use your functional library
+with your stateful datastructures.
+@XXX{
+
+If you find yourself using a particular mutating interface often enough,
+instead of using a parameterized version
+of the generic @<>{mutating-map} interface,
+you can define a specialized version using a CLOS override of a
+slot with @cl{:class} allocation, as follows:
+@clcode{
+(define-interface <mutating-number-map>
+    (<mutating-map>)
+  ((pure-interface
+    :initform pure:<number-map>
+    :allocation :class)))
+}
+}
+
+@subsubsection{Limits of Our Effect Model}
+
+Our effect model is sufficient to cover a complete API
+for the manipulation of maps, both pure or stateful.
+Indeed, the @cl{divide/list} and @cl{join/list} functions,
+which it did not cover,
+can be considered as convenience optimizations for what
+can be done without, using fixed-arity functions
+@cl{divide} and @cl{join}.
+Still, we have already reached the the limits of our model,
+and we must mention how our model may be fixed to handle such cases.
+
+Our signature annotations can be seen as some very simple
+first-order linear type system.
+We believe that our automatic transformations can be formalized as functors,
+and that it is possible to generalize both our model and our transformations
+as part of some higher-order type system rooted in Linear Logic.
+Efforts toward such a generalization would probably be
+an interesting venue for further research,
+but are beyond the scope of our current projects.
 
 @subsection{From Interfaces to Classes and Back}
 
@@ -1308,13 +1473,16 @@ and appropriate wrappers.
 
 @subsubsection{Many Well-Known Predecessors}
 
-While the underlying principle behind @[IPS] is hardly original,
-we found it an effective tool to implement a generic datastructure library,
-and a particularly good fit to @[CL]
-thanks to the way we can leverage CLOS and macros.
+@[IPS] is a novel tool, that has proven particularly effective
+to implement a generic datastructure library in @[CL].
+Indeed, @[IPS] was developed specifically to fit
+both the shortcomings and the assets of @[CL].
+But the underlying ideas are hardly original;
+both the interface aspect and the passing-style aspect of @[IPS]
+have many predecessors in the tradition of programming languages.
 
-As for its lack of originality,
-@[IPS] is typically how existing implementations
+The runtime objects that we expose as explicit user-visible interfaces
+are typically how existing implementations
 of languages with parametric polymorphism
 have implicitly implemented this feature for decades, under the hood.
 For instance, that is how
@@ -1324,6 +1492,14 @@ ML implements functors@[XXX 'ref :bib]:
 an extra interface argument is implicitly passed around
 to the lower-level functions implementing these various constructs,
 and this extra argument encapsulates the parameters to said constructs.
+
+As for passing-style, people who study the semantics of computer programs
+have long practiced the principle of reifying
+some previously implicit aspect of their programs
+into new explicit objects that are passed around,
+as a means to formalize the meaning of their computations.
+Continuation Passing Style is a famous instance this practice,
+as are all kinds of environment passing styles.
 
 @subsubsection{@[IPS] Specificities}
 
