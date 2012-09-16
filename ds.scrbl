@@ -1155,12 +1155,103 @@ take as argument and return a list of map objects.
 
 @subsubsection{Pure Interface in a Mutating Box}
 
-Put pure datum in a mutable box.
+LIL includes a macro to automatically transform
+a pure interface into a stateful interface.
+For instance, here is how we define
+a mutating map interface,
+parameterized by the pure map interface that
+implements its underlying operations:
+@clcode{
+(define-mutating-interface
+  <mutating-map> (stateful:<map>) (pure:<map>)
+  () ...)
+}
+The first argument is the name of the new interface.
+The second argument is a list of super-interfaces
+of the new stateful interface being created by mutating.
+The third argument is a list of super-interfaces
+of the underlying pure interfaces being wrapped.
+The fourth argument is a list of slot definitions and overrides
+for parameterization, completing what's implicit in mutating.
+What remains (and is elided in the example above)
+is a list of manual method definitions for functions
+that our macro fails to automatically wrap.
 
-Provide wrappers for all relevant methods via macros.
-Also need to identify for every method
-which position in argument and/or return values
-holds the object or datum to wrap/unwrap.
+The macro defines a new interface class,
+and wrapper methods for all declared interface functions
+with a matching name between the pure and stateful packages
+that also have declared effects as per our model.
+
+Values are put into an object box containing the current value.
+
+The wrapping of a read-only function works by extracting
+the value from the box and passing it to the pure function.
+For instance, the cleaned up@note{@smaller{
+The clean up we did is for readability only.
+The actual macroexpansion uses gensyms;
+instead we renamed gensyms and other symbols
+so they are more explanatory.
+The actual macroexpansion has
+@cl{(declare (ignore ...))} clauses;
+We omit such clauses when no variable was ignored.
+Return values also involve a @cl{let*} clause
+that we omit when it introduces no binding.
+In presence of rest or keyword arguments,
+the macroexpansion uses @cl{apply}
+for the inner function and/or for @cl{values};
+it uses @cl{funcall} in absence of such arguments;
+we simply the @cl{funcall} case into a direct call.
+Finally, we omit some the package of symbols
+where it isn't relevant to our explanation.
+}}
+macroexpansion of the wrapping for @cl{lookup} is as follows:
+@clcode{
+(defmethod lookup
+    ((<interface> <mutating-map>) map key)
+  (let* ((<pure-interface>
+           (pure-interface <interface>))
+         (pure-map (box-value map))
+	 (pure-key key))
+    (multiple-value-bind
+           (pure-value pure-foundp)
+        (lookup <pure-interface>
+	        pure-map pure-key)
+      (let* ((value pure-value)
+             (foundp pure-foundp))
+        (values value foundp)))))
+}
+
+When a function updates an old value into a new one,
+we simply extract the updated value from the pure function's results
+and store it into the box.
+For instance, the cleaned up wrapper for @cl{insert} is:
+@clcode{
+(defmethod stateful:insert
+    ((<interface> <mutating-map>) map key value)
+  (let* ((<pure-interface>
+           (pure-interface <interface>))
+         (pure-map (box-value map))
+	 (pure-key key)
+	 (pure-value value))
+    (multiple-value-bind (updated-map)
+        (pure:insert <pure-interface> pure-map pure-key pure-value)
+      (set-box-value pure-map map)
+      (values))))
+}
+
+Finally, if a new object is created,
+we grab the value returned by the pure function
+and put it in a box, such as in this wrapper for @cl{empty}:
+@clcode{
+(defmethod stateful:empty
+    ((<interface> <mutating-map>))
+  (let* ((<pure-interface>
+           (pure-interface <interface>)))
+    (multiple-value-bind (pure-empty)
+        (pure:empty <pure-interface>)
+      (let* ((empty-object (box! pure-empty)))
+        (values empty-object)))))
+}
 
 @subsubsection{Stateful Interface in a Linear Box}
 
