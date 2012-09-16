@@ -1027,19 +1027,131 @@ from there through one of the above or below mechanisms.
 
 @subsubsection{Variants of a Same Structure}
 
-In previous sections, we explained how interfaces maintain metainformation
+In previous sections, we explained how interfaces maintain meta-information
 about the call arguments and return value conventions
 of functions in their signature.
-So far, this metainformation only had value as documentation.
-But we also saw that the signature of pure variant of an interface
+We also saw that the signature of the pure variant of an interface
 was systematically related to
 the signature of the stateful variant of the "same" interface.
 What if we could formalize this systematic relation?
-We could then implement automatic correspondances
-between pure and stateful variants of some interface.
-This is what we have implemented in LIL.
+Then this meta-information would be more than mere documentation:
+we could implement automatic correspondances
+between the pure and stateful variants of an interface.
 
-@subsubsection{Effect Annotations}
+This is what we have implemented in LIL:
+we built a model of what effects declared interface functions have
+on objects of the interface type;
+based on this model, we can automatically emit wrappers
+that convert between pure and stateful interfaces,
+within limitations.
+
+@subsubsection{Mutating and Linearized}
+
+In a pure (functional) interface to a persistent datastructure
+input arguments are values that are never modified;
+some functions have output values that represent
+an updated value for the "same" notional object
+as one of the input values.
+In a stateful (imperative) interface to an ephemeral datastructure,
+input arguments are objects may be inspected read-only or modified in-place;
+functions that update an object modify it in place
+and do not return a new object.
+
+The correspondances between the two are as follow.
+From a pure interface, a stateful interface may be deduced
+by putting the persistent values in a mutating box
+that stores the current value of the object;
+given a box, a value is extracted from the box into the input,
+and an update value if any is put back into the box on output.
+From a stateful interface, a pure interface may be deduced
+by putting ephemeral values in a linearized box
+that ensures any value is only modified once, and not used thereafter;
+the object is extracted from the box into the input,
+and is invalidated if there are any modifications,
+while a fresh box is created to hold the object in its new state if modified.
+
+Interestingly,
+a stateful datastructure linearized then mutating
+is isomorphic to the original datastructure,
+but a pure datastructure mutating then linearized
+isn't isomorphic to the original,
+unless we require that users should make an explicitly copy
+of the datastructure each time it may be used more than once,
+as per Linear Logic.
+Indeed, the mutating transform is all about introducing the discipline
+of an object having a single current value that is only used once
+to produce the new current value (unless explicitly copied),
+and the linearized transform is all about enforcing this discipline
+that any value may only be used once (unless explicitly copied).
+Now, the entire point of (pure) persistent datastructures is usually
+that that make copying a value practically free, and that
+using it multiple times is made free by copying it implicitly as needed;
+therefore this limitation in how the two transforms aren't quite inverse
+of each other is as designed.
+
+@subsubsection{Trivially Modeling Effects}
+
+LIL has a very simple model of the effects that a function may have,
+the simplest with which we could get results:
+@itemlist[
+ @item{
+   Some input arguments and output values are marked
+   as being of the interface-targeted type.
+ }
+ @item{
+   Each input argument is put in correspondance with
+   either an output value or @cl{nil} or @cl{t}.
+ }
+ @item{
+   An output value can be in correspondance with one input argument only;
+   it can be in correspondance with none or equivalently with @cl{nil}.
+ }
+ @item{
+   A correspondance between input argument and output value means
+   that the output has the same identity
+   as the input after possible modifications.
+ }
+ @item{
+   A correspondance between an input argument and @cl{nil} means
+   that the argument may be read but not modified.
+ }
+ @item{
+   A correspondance between an input argument and @cl{t} means
+   that the argument may be modified.
+ }
+ @item{
+   A correspondance between an output value and @cl{nil} means
+  that the value is created.
+}]
+
+Syntactically, the marking happens in the @cl{:generic} declaration
+of @cl{define-interface}.
+A @cl{:in} keyword introduces a list of input arguments or @cl{nil} markers.
+A @cl{:out} keyword introduces a list of output values
+or @cl{nil} or @cl{t} markers.
+The correspondance is simply that the nth element in one list
+corresponds to the nth element in the other,
+or @cl{nil} if the other list is shorter.
+
+Keeping things really simple,
+this model only considers effects on required arguments;
+our model cannot express effects on
+@cl{&optional} arguments, @cl{&rest} arguments, @cl{&key}word arguments.
+@note{@smaller{In @[CL], the list specifying how arguments are bound
+to what variables when a function is invoked is called a lambda-list.
+A lambda-list may specify required arguments,
+then optional arguments, then a rest argument, then keyword arguments.
+We remember the lambda-list of the input arguments the function accepts,
+and we record a lambda-list of the output values it returns
+which may be considered as the lambda-list of the function's continuation.
+}}.
+
+This model is as simple as can be, and yet
+it fits most of the functions in our map API.
+The only functions we initially came up with
+that don't fit are
+@cl{join/list} and @cl{divide/list} that respectively
+take as argument and return a list of map objects.
 
 @subsubsection{Pure Interface in a Mutating Box}
 
@@ -1332,14 +1444,14 @@ If the specifications also include annotations about performance guarantees,
 this opens a venue for a more declarative approach
 to datastructure development.
 
-@subsubsection{Our Vision}
+@subsubsection{Towards Better Abstraction of State}
 
-The ultimate goal we would be reaching for
-is that it should be possible to write programs
-out of small individual contributions,
-each written in the style its author considers simplest
-to express what he means.
-These contributions should be automatically aligned
+The goal we are aiming for is the automated unification
+of different programming styles:
+programmers shall be able to write incremental contributions
+each in a style most suited to expressing its meaning,
+yet be able to combine them all despite their being written in different styles.
+The program fragments would be automatically aligned
 along a common semantic framework thanks to declarative specifications
 of the style in which they are intended
 (some more constrained bits of code can be viewed in many ways).
