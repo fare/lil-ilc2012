@@ -470,12 +470,12 @@ a function to instantiate parameterized interface objects.
 This function further uses memoization so interfaces with identical parameters
 end up being the actual same interface object
 rather than a new object every time.@note{@smaller{
-That this memoization is useful reflects how interfaces,
-that embody behavioral meta-information notionally meant to be expanded
-before any code is actually run,
-don't actually have intensional identity,
+This memoization is effectively a hash-consing strategy.
+It works because interfaces don't actually have intensional identity,
 only extensional content.
-See in later sections how interfaces compare to traditional objects.
+Indeed, they embody behavioral meta-information notionally meant
+to be expanded before any code is actually run.
+See in latter sections how interfaces compare to traditional objects.
 }}
 
 In the above @<>{alist} example,
@@ -613,7 +613,7 @@ We built LIL, the @[LIL],
 with the ambition that it should become
 the definitive library for datastructures in @[CL].
 While we initially chose @[IPS] to achieve parametric polymorphism,
-which was previously unavailable in @[CL],
+which was not previously available in @[CL],
 this style was also helpful to address other issues
 in developing our library.
 
@@ -633,7 +633,7 @@ the commonalities and divergences between pure and stateful datastructures.
 @subsubsection{Common Interfaces: Read-Only Access}
 
 The @cl{interface::<map>} interface directly declares functions
-@cl{lookup}, @cl{first-key-value}, @cl{fold-left}, @cl{fold-right},
+@cl{lookup}, @cl{first-key-value}, @cl{fold-left}, @cl{fold-right} and
 @cl{map-alist} that access an existing map in a read-only way.
 It also declares a function @cl{alist-map}
 that creates a map initialized from an alist,
@@ -676,7 +676,7 @@ in small incremental layers.
 
 For instance, here is the complete implementation
 of stateful AVL (self-balanced) trees on top of previous layers:
-
+@[linebreak]@[linebreak]
 @clcode{
 (define-interface <avl-tree>
     (interface::<avl-tree>
@@ -764,23 +764,7 @@ where no object exists yet on which to dispatch.
 A second advantage of explicit interfaces is that
 different instances of a same interface class can apply to the same object.
 One way that we put this technique to profit on LIL is
-in how we bootstrap pure hash-tables.
-
-The construction of our @cl{pure:<hash-table>}
-is relatively straightforward:
-from a slow but generic map interface mapping keys to values
-(generic meaning that keys can be anything),
-and a fast but specialized map interface mapping key hashes to key buckets
-(specialized meaning that keys are integers),
-we bootstrap a fast generic map interface mapping of keys to values;
-we achieve this by composing the above together in a simple way,
-with the fast implementation handling the common case
-and the slow implementation handling the collisions.
-By default our slow generic map implementation is @cl{(<alist> <equal>)}
-and our fast specialized map implementation is @cl{(<avl-tree> <number>)},
-under the nickname @cl{<number-map>};
-but these parameters are under user control.
-@note{@smaller{
+in how we bootstrap pure hash-tables.@note{@smaller{
 A hash-table is a generic implementation of a finite map with fast access time,
 supposing the existence of a fast hash function (typically from keys to integers)
 as well as an equality predicate.
@@ -793,7 +777,9 @@ in case several keys collide (have the same hash),
 some compensation strategy is used,
 such as putting all those keys in the same bucket,
 or using an alternate key.
-In the stateful case, the key-indexed table is typically implemented as
+
+In the well-known stateful case,
+the key-indexed table is typically implemented as
 a random-access array with @math{O(1)} access time.
 In the pure case, the key-indexed table will typically be
 a balanced binary tree, which has slightly worse
@@ -808,6 +794,21 @@ while using those standard hash-tables underneath,
 but also needed a @cl{pure:<hash-table>}
 as a generic pure map mechanism.
 }}
+
+The construction of our @cl{pure:<hash-table>}
+is relatively straightforward:
+from a slow but generic map interface mapping keys to values
+(generic meaning that keys can be anything),
+and a fast but specialized map interface mapping key hashes to key buckets
+(specialized meaning that keys are integers),
+we bootstrap a fast generic map interface mapping of keys to values;
+we achieve this by composing the above together
+with the fast implementation handling the common case
+and the slow implementation handling the collisions.
+By default our slow generic map implementation is @cl{(<alist> <equal>)}
+and our fast specialized map implementation is @cl{(<avl-tree> <number>)},
+under the nickname @cl{<number-map>};
+but these parameters are under user control.
 
 Our @cl{pure:<hash-table>} is defined parametrically as follows
 (the following paragraphs are to be read in package @cl{pure}):
@@ -836,6 +837,7 @@ Our @cl{pure:<hash-table>} is defined parametrically as follows
 
 Methods are then straightforward.
 For instance see the @cl{insert} method, and notice the pun:
+@[linebreak]@[linebreak]@[linebreak]@[linebreak]@[linebreak]@[linebreak]
 @clcode{
 (defmethod insert
     ((<i> <hash-table>) map key value)
@@ -984,7 +986,7 @@ an insertion sort for number-indexed alists:
 Notice how @<>{number-map} was implicitly passed
 to calls to two functions in the @<>{map} interface,
 @cl{alist-map} and @cl{fold-right}.
-(Interestingly, because we insert through the generic function
+(Interestingly, since we insert through the generic function
 @cl{alist-map}, this function works in both pure and stateful contexts.)
 
 @subsubsection{Implicit Interface in Method Definition}
@@ -994,6 +996,7 @@ in the context of which this situation definitely applies,
 @cl{define-interface} also has an option @cl{:method} to define such methods.
 For instance, here is the definition of the previously mentioned
 @<>{eq-from-==} mixin:
+@[linebreak]@[linebreak]
 @clcode{
 (define-interface <eq-from-==> (<eq>) ()
   (:abstract)
@@ -1255,7 +1258,6 @@ Finally, we omit some the package of symbols
 where it isn't relevant to our explanation.
 }}
 macroexpansion of the wrapping for @cl{lookup} is as follows:
-@[linebreak]
 @clcode{
 (defmethod lookup
     ((<interface> <mutating-map>) map key)
@@ -1380,7 +1382,6 @@ unless its contents were explicitly copied beforehand into a new object.
 
 Here are the cleaned up macroexpansions for the wrappers around
 @cl{lookup}, @cl{insert} and @cl{empty} respectively:
-
 @clcode{
 (defmethod lookup
     ((<interface> <linearized-map>) map key)
@@ -1392,7 +1393,7 @@ Here are the cleaned up macroexpansions for the wrappers around
 	        stateful-map key)
       (values value foundp))))
 }
-
+@[linebreak]@[linebreak]
 @clcode{
 (defmethod pure:insert
     ((<interface> <linearized-map>) map key value)
@@ -1404,9 +1405,7 @@ Here are the cleaned up macroexpansions for the wrappers around
      (let* ((updated-map
               (one-use-value-box stateful-map)))
        updated-map)))
-}
 
-@clcode{
 (defmethod empty
     ((<interface> <linearized-map>))
   (let* ((<stateful-interface>
@@ -1545,6 +1544,7 @@ from which the user may extract the interface and/or the object class.
 
 For instance, here is how we export our stateful @<>{map} interface parametrically
 into a @cl{>map<} class API (in package @cl{classified}):
+@[linebreak]@[linebreak]
 @clcode{
 (define-classified-interface-class
   >map< (object-box) stateful:<map>
@@ -1647,7 +1647,6 @@ using the power of parametric polymorphism,
 composing simple parametric interfaces into more elaborate ones,
 and yet expose the result as a traditional Object-Oriented API,
 so users do not even have to know that @[IPS] was used internally.
-@[linebreak]
 
 @section{Conclusion}
 
@@ -1788,7 +1787,6 @@ by people familiar with the theory of programming language,
 we are not aware of any previous programming language
 and library in such a language
 that could in practice leverage those ideas.
-@[linebreak]@[linebreak]
 
 @subsection{Current Limitations and Future Work}
 
@@ -1802,8 +1800,8 @@ it sports a generic map interface with pure and stateful variants,
 and implementations as balanced binary trees, hash-tables or patricia trees.
 
 Yet, in many ways, LIL is still in its early stages;
-at the current moment it is a usable proof-of-concept
-rather than full-fledged library.
+at the current moment it is a usable proof of concept
+more so than a full-fledged library.
 It sports as few usable features as necessary to illustrate its concepts,
 and each of its features is as bare as possible while remaining functional.
 There are thus many axes for development,
