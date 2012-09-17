@@ -89,11 +89,12 @@ meta-data about the current algorithm is encapsulated
 in a first-class interface object,
 and this object is then explicitly passed around
 in computations that may require specialization based on it.
-We show basic mechanisms by which this make it possible
+We show basic mechanisms by which this makes it possible
 to express both ad-hoc and parametric polymorphism.
 
 In section 3, we demonstrate how we use this style to implement
-a library of classic datastructures, both pure (persistent) and stateful (ephemeral).
+a library of classic datastructures,
+both pure (persistent) and stateful (ephemeral).
 We show how our library makes good use of @[IPS]
 to build up interesting datastructures:
 ad-hoc polymorphism allows us to share code fragments through mixins;
@@ -106,18 +107,15 @@ first-class interfaces allow a very same object
 as implementing a given type of interface in different ways.
 
 In section 4, we show how adequate macros can bridge the gap
-between different programming styles.
-We demonstrate macros that bridge between
-syntactically implicit or explicit interfaces,
-macros that bridge between
-pure functional and stateful datastructures
-based on metadata describing effects of methods
-according to a simple model of such effects,
-and macros that bridge between
-"detached" interfaces and "subjective" objects.
+between different programming styles:
+between syntactically implicit or explicit interfaces,
+between pure functional and stateful datastructures,
+between interface-passing and object-oriented style.
 All these macros allow programmers to choose a programming style
 that best fit the problem at hand and their own tastes
 while still enjoying the full benefits of @[IPS] libraries.
+They work based on a model of the effects of interface functions
+according to a simple type system rooted in linear logic.
 
 We conclude about
 how @[IPS] in Lisp relates to idioms in other programming languages
@@ -1477,16 +1475,23 @@ operating on objects, objects having both at the same time
 identity, data content, and behavior attached to them;
 behavior of generic functions happen by dispatching
 on the class of the first object (and sometimes those of subsequent objects).
-An Interface-Passing API is a set of interfaces
+An Interface-Passing API is a set of interfaces,
 datatypes and generic functions operating on data
 that may or may not have identity;
 behavior is attached to interfaces, and generic functions dispatch primarily
 on the first interface (and sometimes subsequent interfaces).
 
+One way of looking at things is by distinguishing
+concerns of behavior (code and meta-data) and state (data and identity).
+@[IPS] separates them, with the interface carrying only the behavior.
+Object-Oriented Style conflates them, with an object carrying all of it.
 A correspondance can be drawn between @[IPS]
 and traditional Object-Oriented Style
 by viewing an interface as "detached" class information,
-or an object as a "subjective" interface.
+as the part of an object that doesn't include its state,
+and by viewing an object as a "subjective" interface,
+one where some state has been moved into the interface.
+
 Using this view point, it is possible to mechanically derive
 an Interface-Passing API from an Object-Oriented API or
 an Object-Oriented API from an Interface-Passing API.
@@ -1546,7 +1551,6 @@ from which the user may extract the interface and/or the object class.
 
 For instance, here is how we export our @cl{stateful:<map>} interface parametrically
 into a @cl{>map<} class API, evaluating this in package @cl{classified}:
-@[linebreak]@[linebreak]
 @clcode{
 (define-classified-interface-class
   >map< (object-box) stateful:<map>
@@ -1836,7 +1840,7 @@ to trivially reexpose an @[IPS] API as a classic Object-Oriented style API.
 
 @subsubsection{More Advanced Projects}
 
-However, here are a few less-obvious ways in which we'd like to improve LIL.
+Now, here are a few less-obvious ways in which we'd like to improve LIL.
 
 Firstly, we'd like to explore how algorithms can be developed in terms
 of combining small individual features, each embodied in an interface mixin:
@@ -1896,7 +1900,19 @@ If the specifications also include annotations about performance guarantees,
 this opens a venue for a more declarative approach
 to datastructure development.
 
-@subsubsection{Towards Better Abstraction of State}
+@subsubsection{Why And Wherefore}
+
+The proximate trigger for the ideas that became this article was
+a study we made on how to introduce modularity in the overly monolithic mess
+that had become the QRes code base at ITA.
+Interestingly, though, the idea of detaching behavioral meta-data about objects
+in an entity separate from their state data and passed as an extra argument
+dates from our very first dabbling in implementing
+an Object Oriented language;
+indeed, our dissatisfaction with how traditional Object-Oriented style conflates
+behavior and state in the same "object" package-deal
+dates from the same time, as we were trying to figure out semantics
+for object systems and ways to modularly express mathematical concepts.
 
 The goal we are aiming for is the automated unification
 of different programming styles:
@@ -1912,7 +1928,9 @@ these contributions into a common result,
 made available to the user according to whichever point of view
 best suits his needs.
 
-@subsection{Credits}
+@(generate-bib)
+
+@section[#:style (style #f '(hidden unnumbered))]{Credits}
 
 Many thanks to my wife Rebecca for supporting me throughout this development,
 to my employer Google and my manager Allan Fraser for bearing with me
@@ -1923,20 +1941,6 @@ to Eric O'Connor for kickstarting the development of LIL
 as an independent library,
 to Zach Beane for being a one-man Release and QA system for @[CL] libraries,
 to my reviewers and proofreaders for their feedback.
-
-The proximate trigger for the ideas that became this article was
-a study I made on how to introduce modularity in the overly monolithic mess
-that had become the QRes code base at ITA.
-Interestingly, though, the idea of detaching meta-information about objects
-in a separate entity passed as an extra argument
-dates from my very first dabbling in implementing
-an Object Oriented language;
-and my dissatisfaction with how traditional Object-Oriented style conflates
-behavioral, identity and data in the same "object" package-deal
-dates from the same time, as I was trying to figure out semantics
-for object systems and ways to modularly express mathematical concepts.
-
-@(generate-bib)
 
 @XXX{
 The call for paper is here:
