@@ -1883,7 +1883,7 @@ best suits his needs.
 
 @(generate-bib)
 
-@;@section[#:style (style #f '(hidden unnumbered))]{}
+@section[#:style (style #f '(hidden unnumbered))]{}
 
 @bold{Acknowledgment:}
 Many thanks to my wife Rebecca for supporting me throughout this development,
