@@ -10,6 +10,8 @@ It describes the Lisp Interface Library, or LIL, that can be found there:
 The home page for this article is at:
 	http://github.com/fare/lil-ilc2012/
 
-Draft versions of the compiled PDF and html results are here:
+A PDF of a draft version of this article is here:
 	http://common-lisp.net/~frideau/lil-ilc2012/lil-ilc2012.pdf
+
+An HTML of a draft version of this article is here:
 	http://common-lisp.net/~frideau/lil-ilc2012/lil-ilc2012.html
