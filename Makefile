@@ -5,9 +5,11 @@ LILSRC = ds.scrbl bibliography.scrbl utils.rkt
 
 export PLTCOLLECTS:=$(shell pwd):${PLTCOLLECTS}
 
-all: ${LIL}.pdf ${LIL}.PDF
-abstract: ${LILA}.pdf ${LILA}.html ${LILA}.PDF
+all: pdf PDF
 html: ${LIL}.html # ${LILA}.html
+pdf: ${LIL}.pdf
+PDF: ${LIL}.PDF
+abstract: ${LILA}.pdf ${LILA}.html ${LILA}.PDF
 
 %.W: %.html
 	w3m -T text/html $<
