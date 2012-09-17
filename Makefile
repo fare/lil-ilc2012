@@ -30,5 +30,8 @@ abstract: ${LILA}.pdf ${LILA}.html ${LILA}.PDF
 	scribble --latex --dest tmp $<
 
 clean:
-	rm ${LIL}.pdf ${LIL}.html ${LILA}.pdf ${LILA}.html
+	rm -f ${LIL}.pdf ${LIL}.html ${LILA}.pdf ${LILA}.html *.css *.js
 	rm -rf tmp
+
+mrproper:
+	git clean -xfd

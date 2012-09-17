@@ -91,3 +91,5 @@ See discussion on 2012-08-03 on #racket
 ;; logic for shared mutable datastructure: separation logic ?
 ;; Separation logic: A logic for shared mutable data structures
 ;; JC Reynolds - Logic in Computer Science, 2002. Proceedings. …, 2002 - ieeexplore.ieee.org
+
+;; Mention traits?

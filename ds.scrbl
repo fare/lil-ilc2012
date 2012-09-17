@@ -1719,7 +1719,7 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
    @emph{We make it easy for users to hide these interfaces in usual cases}
    thanks to @[CL] macros,
    with facilities both syntactic (such as @cl{with-interface})
-   and semantic (such as our macros TBD to go from interfaces to classes).
+   and semantic (such as our macros to go from interfaces to classes).
    In common cases, we can therefore eschew the burden
    of explicitly passing around interface objects.}
  @item{
