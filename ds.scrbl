@@ -20,11 +20,12 @@
 
 @abstract{
 LIL, the @[LIL],
-uses an explicit @[IPS]
+uses an @[IPS]
 to implement an algorithmic datastructure library.
 By separating algorithmic information
 from the concrete representation of data
 and encapsulating it in first-class interface objects,
+and by explicitly passing around these interface objects as arguments to generic functions,
 LIL simultaneously allows for both parametric polymorphism
 (abstracting over types, classes, functions, data)
 and ad-hoc polymorphism
@@ -780,8 +781,8 @@ and our fast specialized map implementation is @cl{(<avl-tree> <number>)},
 under the nickname @cl{<number-map>};
 but these parameters are under user control.
 @note{@smaller{
-A hash-table is generic implementation of a finite map with fast access time,
-supposing the existence of a hash function (typically from keys to integers)
+A hash-table is a generic implementation of a finite map with fast access time,
+supposing the existence of a fast hash function (typically from keys to integers)
 as well as an equality predicate.
 The hash function, the value of which hopefully can be quickly computed,
 will hopefully distinguish with high probability any two unequal objects
@@ -1304,9 +1305,10 @@ indeed, the naive direct implementation of alists without boxing
 falls short when you want to add entries to an empty list,
 for whereas non-empty alists are @cl{cons} cells with state and identity,
 the empty list is represented as @cl{nil} which has neither.
-Boxing is the correct way to do stateful alists,
-and our transformer is the way to do it which minimizes
-the need to write redundant code.
+Boxing is the correct way to do stateful alists:
+it has essentially the same performance profile,
+doesn't require ugly hacks to specially handle empty alists,
+and with our transformer, it minimizes the need to write redundant code.
 
 @subsubsection{Manual Method Transformation}
 
@@ -1914,14 +1916,17 @@ these contributions into a common result,
 made available to the user according to whichever point of view
 best suits his needs.
 
-@subsubsection{Credits}
+@subsection{Credits}
 
 Many thanks to my wife Rebecca for supporting me throughout this development,
 to my employer Google and my manager Allan Fraser for bearing with me
 during this digression from my main tasks,
-to Eli Barzilay for the racket scribble system,
+to Eli Barzilay for the Racket Scribble system,
 to Jon Rafkind for giving me a template to start from,
-and to Eric O'Connor for kickstarting the development of LIL.
+to Eric O'Connor for kickstarting the development of LIL
+as an independent library,
+to Zach Beane for being a one-man Release and QA system for @[CL] libraries,
+to my reviewers and proofreaders for their feedback.
 
 The proximate trigger for the ideas that became this article was
 a study I made on how to introduce modularity in the overly monolithic mess
@@ -1931,9 +1936,9 @@ in a separate entity passed as an extra argument
 dates from my very first dabbling in implementing
 an Object Oriented language;
 and my dissatisfaction with how traditional Object-Oriented style conflates
-behavioral, identity and data in the same notion of "object" dates from the
-same time, as I was trying to figure out semantics for object systems
-and ways to modularly express mathematical concepts.
+behavioral, identity and data in the same "object" package-deal
+dates from the same time, as I was trying to figure out semantics
+for object systems and ways to modularly express mathematical concepts.
 
 @(generate-bib)
 
