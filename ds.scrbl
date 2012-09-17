@@ -343,15 +343,15 @@ Finally, the @cl{define-interface} macro accepts a list of options,
 always like @cl{defclass}. But it also accepts additional options
 not part of the @cl{defclass} specification.
 For instance, this interface uses the @cl{:abstract} option,
-and should not be instantiated,
-because it doesn't implement all its declared functions.
+to signal it doesn't implement all its declared functions
+and must not be instantiated.
 
 This interface also uses the @cl{:generic} option
 to declare two @[gfs] that are part of the signature of the interface,
 @cl{empty} and @cl{empty-p}.
-Furthermore, with each function a return value convention may be defined
-as well as a calling convention, and indeed are defined in this case.
-The first function takes no argument beyond the interface;
+Furthermore, for each function, a return value convention may be defined
+as well as a calling convention. Indeed they are defined in this case:
+the first function takes no argument beyond the interface;
 the @cl{(values object)} specifies that
 it returns exactly one value, named object, and the
 @cl{(:out 0)} specifies that return argument in first position
