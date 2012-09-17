@@ -294,7 +294,7 @@ While our library does provide a function @cl{check-invariant}
 as part of the signature of interface @<>{type},
 most of the methods we provide do not call said function, which may be expensive,
 and instead trust the user to call as appropriate,
-typically at the entry points of his code or while debugging.
+typically at the entry points of his code or while testing or debugging.
 
 The upside of this lack of automatic type-based interface control is that
 the user can explicitly specify an interface
@@ -471,7 +471,7 @@ This function further uses memoization so interfaces with identical parameters
 end up being the actual same interface object
 rather than a new object every time.@note{@smaller{
 This memoization is effectively a hash-consing strategy.
-It works because interfaces don't actually have intensional identity,
+It works because interfaces don't usually have intensional identity,
 only extensional content.
 Indeed, they embody behavioral meta-information notionally meant
 to be expanded before any code is actually run.
@@ -695,7 +695,8 @@ of stateful AVL (self-balanced) trees on top of previous layers:
 	   		 (node empty-object))
   (values))
 
-(defmethod balance-node ((i <avl-tree>) (node avl-tree-node))
+(defmethod balance-node
+    ((i <avl-tree>) (node avl-tree-node))
   (ecase (node-balance node)
     ((-1 0 1) ;; already balanced
      (update-height node))
@@ -1563,18 +1564,14 @@ respectively as follows:
     (multiple-value-bind (value foundp)
         (interface:lookup <interface> map key)
       (values value foundp))))
-}
 
-@clcode{
 (defmethod insert
     ((map >map<) key value)
   (let* ((<interface> (class-interface map))
          (map-data (box-ref map)))
     (stateful:insert <interface> map key value)
     (values)))
-}
 
-@clcode{
 (defmethod empty (<interface>)
   (multiple-value-bind (empty-data)
       (interface:empty <interface>)
