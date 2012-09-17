@@ -1015,7 +1015,7 @@ with wrapper methods adapting between the two APIs.
 If it happened that the APIs were indeed identical but for the extra argument,
 a macro could be trivially written to automatically provide for the adaptation.
 However, in practice, the case doesn't happen,
-because odds are low a legacy or third-party object oriented interface
+because odds are low a legacy or third-party object-oriented interface
 will match exactly your modern @[IPS] signature.
 And odds are similarly low that if you're interested in the flexibility of interfaces,
 you would start with the more rigid object-oriented style
@@ -1437,19 +1437,50 @@ but are beyond the scope of our current projects.
 
 @subsubsection{Interfaces as Detached Classes}
 
-An interface can be viewed as "detached" class information,
-where an object's "virtual method table" is passed
-as an explicit "self" argument.
-From any object-oriented API
-(set of classes and generic functions that dispatch on objects),
-you can therefore mechanically derive an interface-passing API
-(set of interfaces and generic functions that dispatch on interfaces),
-simply by passing around the object itself as the interface
-that drives the dispatch.
+An Object-Oriented API is a set of classes and generic functions
+operating on objects, objects having both at the same time
+identity, data content, and behavior attached to them;
+behavior of generic functions happen by dispatching
+on the class of the first object (and sometimes those of subsequent objects).
+An Interface-Passing API is a set of interfaces
+datatypes and generic functions operating on data
+that may or may not have identity;
+behavior is attached to interfaces, and generic functions dispatch primarily
+on the first interface (and sometimes subsequent interfaces).
 
-Conversely, you can view classes as "subjective" interfaces,
+A correspondance can be drawn between @[IPS]
+and traditional Object-Oriented Style
+by viewing an interface as "detached" class information,
+or an object as a "subjective" interface.
+Using this view point, it is possible to mechanically derive
+an Interface-Passing API from an Object-Oriented API or
+an Object-Oriented API from an Interface-Passing API.
+To go from one style to the other is a matter of splitting or joining back
+the behavior, identity and data aspects
+that the respective other style preferred to join or split.
+Depending on whether joining or splitting makes more sense for a given API,
+it can be written in the style that yields the cleanest code,
+yet used by clients using the other style if needed.
+
+An interface can be seen as an object that doesn't carry
+any identity or data but only class-related behavioral information.
+Any data slot of interface objects is then seen as a class parameter
+(as in a C++ template parameters),
+and dynamically created interface objects are akin
+to dynamically created first-class classes.
+Explicitly passing the interface around is as if
+an object's "virtual method table" or equivalent
+were passed as a separate argument.
+This is somewhat similar related to the "self" argument of many object systems,
+except than an interface includes all the meta-level class information
+but none of the identity and runtime data associated with the object.
+And it applies even when there is no self object (yet)
+with the identity or data to dispatch on (e.g. for constructor methods).
+
+Conversely, you can view traditional objects as "subjective" interfaces,
 where no explicit state object is passed, but rather
 where any state has been moved inside the interface itself.
+@XXX{
 Once you build an elaborate interface API
 by composing several parametric interfaces,
 you can obtain a class-style API by having a class
@@ -1460,12 +1491,135 @@ and your interface's object class
 and by automatically deriving subjective variants
 of the interface-passing style generic functions
 and appropriate wrappers.
+}
+
+To extract an Interface-Passing API from an Object-Oriented API is easy:
+it suffices to introduce a dummy interface object,
+which can be done as per the above subsubsection "Making Interfaces Explicit".
+
+To extract an Object-Oriented API from an Interface-Passing API is harder,
+but we can reuse the same effect system we developed above for that purpose:
+our objects will be boxes that at the same time have their identity,
+an attached data value, and a reference to the interface
+that is being transformed to Object-Oriented Style.
+Function dispatch happens by locating the first object,
+extracting the interface,
+applying the corresponding interface function to the unboxed data,
+and wrapping new objects into boxes as appropriate.
 
 @subsubsection{Interface-Aware Boxes}
 
-@subsubsection{Parameterized or Fixed Interface}
+LIL includes a macro to automatically transform
+a stateful interface into an Object-Oriented API.
+However, this macro requires a little bit of configuration by the user
+to deal with constructor methods for which there isn't an object to dispatch on.
+The user may opt to create an Object-Oriented API for a singleton interface;
+then the constructor functions will take no extra argument
+and always build objects of the given class wrapping the given interface.
+Or the user may opt to create an Object-Oriented API
+for a parameterized family of interfaces;
+then the constructor functions will take an extra argument
+from which the user may extract the interface and/or the object class.
 
-@subsubsection{The Case of Constructor Methods}
+For instance, here is how we export our stateful @<>{map} interface parametrically
+into a @cl{>map<} class API (in package @cl{classified}):
+@clcode{
+(define-classified-interface-class
+  >map< (object-box) stateful:<map>
+  ((interface :initarg :interface))
+  (:interface-argument stateful:<map>))
+}
+
+Wrappers for @cl{lookup}, @cl{insert} and @cl{empty} are then
+respectively as follows:
+@clcode{
+(defmethod lookup
+    ((map >map<) key)
+  (let* ((<interface> (class-interface map))
+         (map-data (box-ref map)))
+    (multiple-value-bind (value foundp)
+        (interface:lookup <interface> map key)
+      (values value foundp))))
+}
+
+@clcode{
+(defmethod insert
+    ((map >map<) key value)
+  (let* ((<interface> (class-interface map))
+         (map-data (box-ref map)))
+    (stateful:insert <interface> map key value)
+    (values)))
+}
+
+@clcode{
+(defmethod empty (<interface>)
+  (multiple-value-bind (empty-data)
+      (interface:empty <interface>)
+    (let* ((object (make-instance '>map<
+                    :interface <interface>
+		    :value empty-data)))
+      object)))
+}
+
+@subsubsection{Parametric of Singleton Classification}
+
+In the above example, the @cl{:interface-argument} option
+was telling LIL that constructor functions will take that extra argument,
+which will become the interface to be attached to the constructed object.
+How the interface is extracted from that argument (or lack thereof)
+could have been overridden with the @cl{:extract-interface} option (see below).
+
+If instead we wanted to create an API for a singleton class,
+say @cl{stateful:<number-map>}, then in its own package
+@cl{classified-number-map} we could evaluate:
+@clcode{
+(define-classified-interface-class
+  >nm< (object-box) stateful:<number-map>
+  ((interface :initform stateful:<number-map>
+  	      :allocation :class))
+  (:interface-keyword nil)
+  (:extract-interface stateful:<number-map>))
+}
+
+Here the @cl{:allocation} @cl{:class} means
+that the interface slot is the same for all objects of that class.
+Indeed, when classifying an interface API,
+instance-specific data of the interface become
+class-specific data of the class of the manipulated objects.
+The @cl{:extract-interface} option tells us how to get the interface
+in constructor methods despite the absence of extra interface argument.
+The @cl{:interface-keyword} option,
+being overridden to @cl{nil} instead of the default @cl{:interface},
+tells us that we don't need to provide
+an interface argument to the internal @cl{make-instance} constructor,
+since it is a class constant rather than an object-specific parameter.@;@note{
+@;@smaller{
+We could have further customized object wrapping and unwrapping with the
+@cl{:wrap} and @cl{:unwrap} options, defaulting respectively to
+@cl{`(make-instance ',class)} and @cl{`(box-ref)},
+specifying the prefix of a form to build the object from interface data
+or extract the interface data from the object respectively;
+in the default wrapper, @cl{,class} will actually be
+the name of the class being defined by @cl{define-classified-interface-class}.
+@;}}
+
+With the definition above,
+the wrapper for the @cl{empty} constructor will then be:
+@clcode{
+(defmethod empty ()
+  (let* ((<interface> <number-map>))
+    (multiple-value-bind (empty-data)
+        (interface:empty <interface>)
+      (let* ((object (make-instance '>nm<
+      	    	        :value empty-data)))
+        object))))}
+
+With such transformations of singleton interfaces,
+it becomes possible to develop libraries
+using the power of parametric polymorphism,
+composing simple parametric interfaces into more elaborate ones,
+and yet expose the result as a traditional object-oriented API,
+so users do not even have to know that @[IPS] was used internally.
 
 @section{Conclusion}
 
@@ -1647,7 +1801,7 @@ with internals being refactored and exported.
 We could use ContextL@~cite[contextl-soa]
 or similar Context-Oriented Programming techniques
 to dynamically bind extra implicit arguments to our function calls
-to trivially reexpose an @[IPS] API as a classic Object Oriented style API.
+to trivially reexpose an @[IPS] API as a classic Object-Oriented style API.
 
 @subsubsection{More Advanced Projects}
 
