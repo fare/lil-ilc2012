@@ -695,25 +695,22 @@ of stateful AVL (self-balanced) trees on top of previous layers:
 	   		 (node empty-object))
   (values))
 
-(defmethod balance-node ((i <avl-tree>)
-	   		 (node avl-tree-node))
+(defmethod balance-node ((i <avl-tree>) (node avl-tree-node))
   (ecase (node-balance node)
     ((-1 0 1) ;; already balanced
      (update-height node))
     ((-2)
      (ecase (node-balance (left node))
-       ((-1 0)
-        (rotate-node-right node))
+       ((-1 0))
        ((1)
-        (rotate-node-left (left node))
-        (rotate-node-right node))))
+        (rotate-node-left (left node))))
+     (rotate-node-right node))
     ((2)
      (ecase (node-balance (right node))
        ((-1)
-        (rotate-node-right (right node))
-        (rotate-node-left node))
-       ((0 1)
-        (rotate-node-left node))))))
+        (rotate-node-right (right node)))
+       ((0 1)))
+     (rotate-node-left node))))
 }
 
 The superclasses already handle the read-only aspect of avl-trees
@@ -764,15 +761,18 @@ where no object exists yet on which to dispatch.
 A second advantage of explicit interfaces is that
 different instances of a same interface class can apply to the same object.
 One way that we put this technique to profit on LIL is
-in how we bootstrap pure hash-tables.@note{@smaller{
-A hash-table is a generic implementation of a finite map with fast access time,
-supposing the existence of a fast hash function (typically from keys to integers)
+in how we bootstrap pure hash-tables.
+@;@note{@smaller{
+
+A hash-table is a generic implementation
+of a finite map with fast access time,
+supposing the existence of a hopely fast hash function
+(typically mapping keys to integers)
 as well as an equality predicate.
-The hash function, the value of which hopefully can be quickly computed,
-will hopefully distinguish with high probability any two unequal objects
-that may be used as keys in the map.
-The location of the entry mapping the key to its value can then be
-quickly computed from the key hash;
+The hash function will hopefully distinguish with high probability
+any two unequal objects that may be used as keys in the map.
+The location of the entry mapping the key to its value
+can then be quickly computed from the key hash;
 in case several keys collide (have the same hash),
 some compensation strategy is used,
 such as putting all those keys in the same bucket,
@@ -788,15 +788,15 @@ a balanced binary tree, which has slightly worse
 
 The @[CL] standard specifies a class @cl{hash-table},
 but this only provides a stateful variant of hash-tables.
-LIL has an interface @cl{stateful:<hash-table>}
-that matches the @cl{stateful:<map>} API
+We build an interface @cl{stateful:<hash-table>}
+that matches the signature of @cl{stateful:<map>} 
 while using those standard hash-tables underneath,
 but also needed a @cl{pure:<hash-table>}
 as a generic pure map mechanism.
-}}
+@;}}
 
-The construction of our @cl{pure:<hash-table>}
-is relatively straightforward:
+Our @cl{pure:<hash-table>} is constructed in a straightforward way
+from the principles we recalled above:
 from a slow but generic map interface mapping keys to values
 (generic meaning that keys can be anything),
 and a fast but specialized map interface mapping key hashes to key buckets
@@ -837,7 +837,7 @@ Our @cl{pure:<hash-table>} is defined parametrically as follows
 
 Methods are then straightforward.
 For instance see the @cl{insert} method, and notice the pun:
-@[linebreak]@[linebreak]@[linebreak]@[linebreak]@[linebreak]@[linebreak]
+@[linebreak]@[linebreak]
 @clcode{
 (defmethod insert
     ((<i> <hash-table>) map key value)
@@ -1333,10 +1333,10 @@ Here is a how we manually wrap @cl{divide/list}:
          (pure:divide/list
            (pure-interface <mutating-map>)
            (box-value map))))
-       (and list
-            (progn
-              (set-box-value (first list) map)
-              (cons map (mapcar 'box! (rest list)))))))}
+     (and list
+          (progn
+            (set-box-value (first list) map)
+            (cons map (mapcar 'box! (rest list)))))))}
 
 Note how the first element in the list is special in that
 it shares the identity of the map being divided,
@@ -1362,7 +1362,8 @@ linearized pure map interfaces as follows:
        (and list
             (mapcar 'one-use-value-box list))))
   (:parametric (interface)
-    (make-interface :stateful-interface interface)))
+    (make-interface
+      :stateful-interface interface)))
 }
 
 Everything works in a way similar to the mutating transformation.
@@ -1393,7 +1394,7 @@ Here are the cleaned up macroexpansions for the wrappers around
 	        stateful-map key)
       (values value foundp))))
 }
-@[linebreak]@[linebreak]
+@[linebreak]
 @clcode{
 (defmethod pure:insert
     ((<interface> <linearized-map>) map key value)
@@ -1542,8 +1543,8 @@ for a parameterized family of interfaces;
 then the constructor functions will take an extra argument
 from which the user may extract the interface and/or the object class.
 
-For instance, here is how we export our stateful @<>{map} interface parametrically
-into a @cl{>map<} class API (in package @cl{classified}):
+For instance, here is how we export our @cl{stateful:<map>} interface parametrically
+into a @cl{>map<} class API, evaluating this in package @cl{classified}:
 @[linebreak]@[linebreak]
 @clcode{
 (define-classified-interface-class
