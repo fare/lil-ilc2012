@@ -672,7 +672,7 @@ that instead update existing data structures in place through side-effects.
 
 We have striven to implement our data structures
 in small incremental layers by taking full advantage
-of CLOS such as multiple inheritance,
+of CLOS features such as multiple inheritance,
 multiple dispatch and method combinations.
 
 For instance, here is the complete implementation
@@ -731,14 +731,12 @@ is a small mixin that is quite easy to understand.
 Note however the current burden of having to explicitly maintain
 two class hierarchies, one for the interfaces, and one for
 each type of object that the interfaces may manipulate.
-We have hopes of eliminating this boilerplate in some future,
+We have hopes of eliminating this boilerplate in the future,
 by having @cl{define-interface} manage for each interface
 such a set of object classes;
 but we have no actual solution yet.
 
 @subsection{Interface Tricks and Puns}
-
-@subsubsection{Dispatch without Object}
 
 A clear disadvantage of @[IPS],
 as compared to means by which other languages achieve similar expression,
@@ -748,7 +746,9 @@ But as a trade-off, there are some advantages to balance the equation.
 We are going to enumerate a few of these advantages,
 from the most trivial to the most advanced.
 
-As a first advantage, interfaces as a separate detached argument
+@subsubsection{Dispatch without Object}
+
+As a first advantage, interfaces as separate detached arguments
 allow users to manipulate data where there is no object to dispatch on.
 This is very clear in the case of the @cl{pure:<alist>} interface:
 it operates on primitive entities (@cl{cons} cells, @cl{nil})
@@ -792,7 +792,7 @@ a balanced binary tree, which has slightly worse
 
 The @[CL] standard specifies a class @cl{hash-table},
 but this only provides a stateful variant of hash-tables.
-We build an interface @cl{stateful:<hash-table>}
+We built an interface @cl{stateful:<hash-table>}
 that matches the signature of @cl{stateful:<map>}
 while using those standard hash-tables underneath,
 but also needed a @cl{pure:<hash-table>}
@@ -802,7 +802,7 @@ as a generic pure map mechanism.
 Our @cl{pure:<hash-table>} is constructed in a straightforward way
 from the principles we recalled above:
 from a slow but generic map interface mapping keys to values
-(generic meaning that keys can be anything),
+(generic meaning that keys can be anything)
 and a fast but specialized map interface mapping key hashes to key buckets
 (specialized meaning that keys are integers),
 we bootstrap a fast generic map interface mapping of keys to values;
@@ -874,7 +874,7 @@ or a new empty bucket if none was found.
 
 Note, however, that even though the punning is nice,
 and can potentially save both in memory and in API complexity,
-systems that disallow punning might allow to express the same concepts
+systems that disallow punning might allow us to express the same concepts
 via an indirection.
 For instance, in Haskell, you could hide the "same" underlying structures
 under different unary constructors
@@ -970,7 +970,8 @@ specified by @cl{functions-spec}:
   (interface functions-spec &key prefix package)
   &body body)
 }
-The @cl{functions-spec} can be a list of function names,
+The @cl{functions-spec} is a compile-time constant that
+can be a list of function names,
 but more often than not is the name of single interface class,
 in which case it denotes all the names of the functions
 declared as part of the signature of that interface class.
@@ -988,17 +989,20 @@ an insertion sort for number-indexed alists:
     (let ((m (alist-map alist)))
       (fold-right m 'acons nil))))
 }
-Notice how @<>{number-map} was implicitly passed
-to calls to two functions in the @<>{map} interface,
+Notice how the @<>{number-map} interface object was implicitly passed
+to calls to two functions in the @<>{map} interface class,
 @cl{alist-map} and @cl{fold-right}.
 (Interestingly, since we insert through the generic function
 @cl{alist-map}, this function works in both pure and stateful contexts.)
 
 @subsubsection{Implicit Interface in Method Definition}
 
-Because many interfaces have methods implementing their declared functions
-in the context of which this situation definitely applies,
-@cl{define-interface} also has an option @cl{:method} to define such methods.
+Many interfaces have methods implementing their declared functions
+in the context of which this situation definitely applies:
+the interface argument will be passed unchanged
+to other methods in the interface signature.
+Therefore @cl{define-interface} also has an option @cl{:method}
+that defines methods with an implicit @cl{with-interface}.
 For instance, here is the definition of the previously mentioned
 @<>{eq-from-==} mixin:
 @clcode{
@@ -1038,7 +1042,7 @@ Choose a package and/or a prefix, and use the macro:
 It will create in the current or specified package some global functions
 (with optional prefix added to their name)
 that internally call the specified interface functions,
-implicitly pass around your global interface object.
+implicitly passing around your global interface object.
 
 For instance, if you find yourself using pure hash-tables a whole lot,
 you could create a package @cl{pure-hash-table} in which you would evaluate:
@@ -1060,19 +1064,14 @@ If it happened that the APIs were indeed identical but for the extra argument,
 a macro could be trivially written to automatically provide for the adaptation.
 However, in practice, the case doesn't happen,
 because odds are low a legacy or third-party object-oriented interface
-will match exactly your modern @[IPS] signature.
+will exactly match your modern @[IPS] signature.
 And odds are similarly low that if you're interested in the flexibility of interfaces,
 you would start with the more rigid object-oriented style
 and need to convert to the more flexible @[IPS],
 rather than start with @[IPS] and extract an object-oriented API
 from there through one of the above or below mechanisms.
-@[pdflinebreak]@[pdflinebreak]
-@[pdflinebreak]@[pdflinebreak]
-@[pdflinebreak]@[pdflinebreak]
 
 @subsection{From Pure to Stateful and Back}
-
-@subsubsection{Variants of a Data Structure}
 
 In previous sections, we explained how interfaces maintain meta-information
 about the call arguments and return value conventions
@@ -1109,19 +1108,23 @@ by putting the persistent values in a mutating box
 that stores the current value of the object;
 given a box, a value is extracted from the box into the input,
 and an update value if any is put back into the box on output.
+We call the above transformation mutating
+and its result the @emph{mutating} interface.
 From a stateful interface, a pure interface may be deduced
 by putting ephemeral values in a linearized box
 that ensures any value is only modified once, and not used thereafter;
 the object is extracted from the box into the input,
 and is invalidated if there are any modifications,
 while a fresh box is created to hold the object in its new state if modified.
+We call the above transformation linearize
+and its result or argument (depending on context) the @emph{linearized} interface.
 
 Interestingly,
 a stateful data structure linearized then mutating
 is isomorphic to the original data structure,
 but a pure data structure mutating then linearized
 isn't isomorphic to the original,
-unless we require that users should make an explicitly copy
+unless we require that users should make an explicit copy
 of the data structure each time it may be used more than once,
 as per Linear Logic.
 Indeed, the mutating transform is all about introducing the discipline
@@ -1249,8 +1252,8 @@ instead we renamed gensyms and other symbols
 so they are more explanatory.
 The actual macroexpansion has
 @cl{(declare (ignore ...))} clauses;
-We omit such clauses when no variable was ignored.
-The macroexpansion also include trivial renaming of variables
+we omit such clauses when no variable was ignored.
+The macroexpansion also includes trivial renaming of variables
 to bridge between the calling conventions
 of the inner and outer functions;
 we beta-expand these renamings away,
@@ -1439,7 +1442,7 @@ snapshotting the state of objects;
 if the objects are big or if snapshotting happens often enough,
 the usual stateful data structures can be prohibitively expensive;
 but by simply wrapping a purely functional persistent data structure
-designed for to make copying essentially free,
+designed to make copying essentially free,
 you can remove such a speed or space bottleneck.
 And all you need to do is to start using a mutating interface
 instead of the vanilla stateful interface.
@@ -1607,7 +1610,7 @@ it has nothing to dispatch from where there is no object yet,
 and therefore has to treat constructors differently.
 
 Since in this case we are transforming an abstract interface,
-each object need to carry in a slot a parameter
+each object needs to carry in a slot a parameter
 for the actual concrete interface with which the object was created.
 When creating the object, we need to supply this interface;
 the @cl{:interface-argument} option in
@@ -1681,12 +1684,12 @@ so users do not even have to know that @[IPS] was used internally.
 
 @section{Conclusion}
 
-@subsection{Related Works}
+@subsection{Related Work}
 
 @subsubsection{Many Well-Known Predecessors}
 
-@[IPS] is a novel tool, that has proven particularly effective
-to implement a generic data structure library in @[CL].
+@[IPS] is a novel tool that has proven particularly effective
+for implementing a generic data structure library in @[CL].
 Indeed, @[IPS] was developed specifically to fit
 both the shortcomings and the assets of @[CL].
 But the underlying ideas are hardly original;
@@ -1716,7 +1719,7 @@ as are all kinds of environment passing styles.
 @subsubsection{@[IPS] Specificities}
 
 However, there are several ways
-in which our @[IPS] differ from any of the above-mentioned systems;
+in which our @[IPS] differs from any of the above-mentioned systems;
 these ways, some of them innovative, are all related to our embracing
 the powers and limitations of @[CL] in implementing parametric polymorphism:
 @itemlist[
@@ -1757,7 +1760,7 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
    These interfaces need not be uniform dictionaries
    (like the implicit arguments in the respective implementations
    of the above-mentioned systems),
-   but can objects of arbitrary user-defined classes,
+   but can be objects of arbitrary user-defined classes,
    subject to the usual object-oriented dispatch techniques.}
  @item{
    @emph{Our ad-hoc polymorphism is scoped outside of parameters, not inside}.
@@ -1769,7 +1772,7 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
    and dynamic instantiation of new interface objects with runtime parameters.
    Note that this starkly contrasts with classes inside parameterized units,
    as done in the PLT unit article @~cite[MOOPUM],
-   where parameterized class are statically linked and strict scoped
+   where parameterized class are statically linked and strictly scoped
    via an assemblage of units;
    though the PLT approach allows for dynamic instantiation of unit assemblages
    with runtime parameters, any such assemblage is semantically sealed
@@ -1800,7 +1803,7 @@ beside the addition of parametric polymorphism to @[CL]:
 
 @itemlist[
  @item{
-   Our library provides both pure and stateful data structures,
+   Our library provides both pure and stateful data structures
    that share a common interface for read-only methods.}
  @item{
    Macros make interfaces implicit again in the usual cases.}
@@ -1859,7 +1862,7 @@ when translating between variants of algorithms,
 pure and stateful, interface-based and class-based,
 single-threaded or concurrent, etc.
 These transformations could be more mindful of interface and class hierarchies
-rather than operate on all the generic functions of one pair of APIs at a time.
+rather than operating on all the generic functions of one pair of APIs at a time.
 The packaging of the current features could be improved,
 with internals being refactored and exported.
 We could use ContextL@~cite[contextl-soa]
@@ -1907,7 +1910,7 @@ between original and new objects.
 The pure variant would just create new values and drop the identities.
 A stateful variant would clobber old identities
 using change-class on previous nodes.
-New variants could purely pass around or statefully effect
+New variants could purely pass around or statefully side-effect
 an additional explicit store object.
 The main ambition though is that a single specification should simply
 make all the variants possible, so that each user may
@@ -1932,8 +1935,8 @@ to data structure development.
 @subsubsection{Why And Wherefore}
 
 The proximate trigger for the ideas that became this article was
-a study we made on how to introduce modularity in the overly monolithic mess
-that had become the QRes code base at ITA.
+a study we made on how to introduce modularity
+in the overly monolithic code base of QRes at ITA.
 Interestingly, though, the idea of detaching behavioral meta-data about objects
 in an entity separate from their state data and passed as an extra argument
 dates from our very first dabbling in implementing
@@ -1943,8 +1946,8 @@ behavior and state in the same "object" package-deal
 dates from the same time, as we were trying to figure out semantics
 for object systems and ways to modularly express mathematical concepts.
 
-The goal we are aiming for is the automated unification
-of different programming styles:
+As for the goal we are aiming for,
+it is the automated unification of different programming styles:
 programmers shall be able to write incremental contributions
 each in a style most suited to expressing its meaning,
 yet be able to combine them all despite their being written in different styles.
@@ -1970,4 +1973,5 @@ to Jon Rafkind for giving me a template to start from,
 to Eric O'Connor for kickstarting the development of LIL
 as an independent library,
 to Zach Beane for being a one-man Release and QA system for @[CL] libraries,
-to my reviewers and proofreaders for their feedback.
+to Arthur Gleckler for his careful proofreading,
+to my anonymous reviewers and my many other proofreaders for their feedback.
