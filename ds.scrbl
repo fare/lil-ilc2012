@@ -10,11 +10,11 @@
 @(provide doc)
 
 @pdfonly[
-   @title{LIL: CLOS meets higher-order datastructures
+   @title{LIL: CLOS meets higher-order data structures
    	       @[linebreak]@larger{@larger{@larger{@bold{@sf{
 	    and has a transforming experience}}}}}}]
 @htmlonly[
-   @title{LIL: CLOS meets higher-order datastructures
+   @title{LIL: CLOS meets higher-order data structures
    	       @[linebreak]
 	    and has a transforming experience}]
 
@@ -28,7 +28,7 @@
 @abstract{
 LIL, the @[LIL],
 uses an @[IPS]
-to implement an algorithmic datastructure library.
+to implement an algorithmic data structure library.
 By separating algorithmic information
 from the concrete representation of data
 and encapsulating it in first-class interface objects,
@@ -38,7 +38,7 @@ LIL simultaneously allows for both parametric polymorphism
 and ad-hoc polymorphism
 (sharing of code and data fragments through CLOS inheritance and mixins).
 LIL provides interfaces to both
-pure functional (persistent) and stateful (ephemeral) datastructures,
+pure functional (persistent) and stateful (ephemeral) data structures,
 with a common fragment for read-only methods.
 Based on meta-data modeling the side-effects of methods,
 macros can transform pure interfaces into stateful interfaces
@@ -56,7 +56,7 @@ programmers usually rely on ad-hoc polymorphism
 to provide a uniform interface to multiple kinds of situations:
 a given function can accept arguments of many types thanks to dynamic typing,
 then dispatch on the type of these arguments to select an appropriate behavior.
-Object-Oriented programming via user-defined classes or prototypes
+Object-oriented programming via user-defined classes or prototypes
 may then provide extension mechanisms
 by which new types of objects may be specified that fit existing interfaces;
 this extension can be incremental through the use of inheritance
@@ -100,23 +100,23 @@ We show basic mechanisms by which this makes it possible
 to express both ad-hoc and parametric polymorphism.
 
 In section 3, we demonstrate how we use this style to implement
-a library of classic datastructures,
+a library of classic data structures,
 both pure (persistent) and stateful (ephemeral).
 We show how our library makes good use of @[IPS]
-to build up interesting datastructures:
+to build up interesting data structures:
 ad-hoc polymorphism allows us to share code fragments through mixins;
 various tree implementations can thus share most of their code
 yet differ where it matters;
-parametric polymorphism allows the composition of datastructures
+parametric polymorphism allows the composition of data structures
 and the bootstrapping of more efficient ones
 from simpler but less efficient variants;
-first-class interfaces allow a very same object
-as implementing a given type of interface in different ways.
+first-class interfaces allow the very same object
+to implement a given type of interface in different ways.
 
 In section 4, we show how adequate macros can bridge the gap
 between different programming styles:
 between syntactically implicit or explicit interfaces,
-between pure functional and stateful datastructures,
+between pure functional and stateful data structures,
 between interface-passing and object-oriented style.
 All these macros allow programmers to choose a programming style
 that best fit the problem at hand and their own tastes
@@ -124,7 +124,7 @@ while still enjoying the full benefits of @[IPS] libraries.
 They work based on a model of the effects of interface functions
 according to a simple type system rooted in linear logic.
 
-We conclude about
+We conclude by describing
 how @[IPS] in Lisp relates to idioms in other programming languages
 and compares to existing or potential mechanisms
 for polymorphism in these languages or to their underlying implementation,
@@ -141,7 +141,7 @@ interfaces are just one extra argument (more rarely, two or more)
 passed as the first argument (or arguments) to appropriate function calls.
 Each such interface argument provides these functions with
 some contextual information about
-which specific variant of some algorithm or datastructure is being used.
+which specific variant of some algorithm or data structure is being used.
 
 As a syntactic convention followed by our library,
 symbols that denote interface classes,
@@ -158,7 +158,7 @@ i.e. a finite set of mappings from keys to values.
 Our examples will mainly draw from this API.
 Maps notably include traditional Lisp alists (association lists) and hash-tables.
 
-Thus, whereas a traditional Object-Oriented API might feature a function
+Thus, whereas a traditional object-oriented API might feature a function
 @clcode{(lookup map key)}
 that would dispatch on the class of the object @cl{map}
 to determine how said map associates a value to the given @cl{key},
@@ -183,7 +183,7 @@ you would call a function
 and depending on what interface @cl{<i>} you specified,
 the generic function (in the sense of CLOS)
 would select an algorithm and appropriately update
-the datastructure bound to variable @cl{map},
+the data structure bound to variable @cl{map},
 returning the expected results.
 
 @subsubsection{Pure vs Stateful Interfaces}
@@ -221,7 +221,7 @@ the function @cl{insert} would have returned no values,
 instead modifying the existing hash-table in place.
 
 Because @cl{insert} means something quite different
-for pure and stateful datastructures, with incompatible invariants,
+for pure and stateful data structures, with incompatible invariants,
 our library actually defines two different generic functions,
 @cl{pure:insert} and @cl{stateful:insert},
 each in its own package.
@@ -250,7 +250,7 @@ create new interface objects, etc.
 By abstracting over the interface object,
 accepting it as an argument and passing it to other functions,
 you can write algorithms that are independent of the specifics
-of the underlying datastructure.
+of the underlying data structure.
 
 For instance, you can write functions that fold over a map (reduce it)
 without knowing how the map is implemented internally
@@ -291,7 +291,7 @@ the user is given both full control and full responsibility
 with respect to passing around appropriate interfaces.
 
 The downside is that if the user fails to ensure consistency
-between the interfaces being used and datastructures being passed as arguments,
+between the interfaces being used and data structures being passed as arguments,
 unspecified behavior may ensue
 (usually resulting in a runtime error at some point),
 as generic functions may or may not check their arguments for consistency.
@@ -412,7 +412,7 @@ in the form of mixins:
 small interface classes implement a small aspect of the interface.
 Oftentimes, a mixin will be used to simply deduce
 the implementation of some signature functions from other signature functions.
-Depending on which signature functions are more "primitive" for a given concrete datastructure,
+Depending on which signature functions are more "primitive" for a given concrete data structure,
 opposite mixins may be used that deduce some functions from the others or the other way around.
 
 For instance, the @<>{eq} interface actually has two associated functions,
@@ -493,7 +493,7 @@ The body of the parametric function creates the interface object using
 the locally defined function @cl{make-interface}
 that handles memoization of an underlying CLOS @cl{make-instance}.
 
-Our library implements datastructures more elaborate than alists.
+Our library implements data structures more elaborate than alists.
 For instance, you could use balanced binary tree, in which case
 you would have to provide the tree interface with
 a parameter @cl{key-interface} that inherits from @<>{order},
@@ -514,27 +514,26 @@ to a variant thereof that caches the collation key.
 
 The @cl{define-interface} extension option @cl{:singleton}
 automatically defines a special variable bound
-to a one instance of a concrete interface class.
-If a @cl{:parametric} function if explicitly defined,
-this function will be called with default values.
+to a canonical instance of a concrete interface class.
+If a @cl{:parametric} option was provided,
+its function will be called with default values.
 Otherwise, a trivial version of such a function will be defined and used.
 
 Clients can therefore use the variable @<>{alist}
 to refer to the one default such interface,
-instead of having either to create a new instance every time
-with @cl{(make-instance '<alist>)}
-or to call function @cl{(<alist>)}
-with the default equality interface @<>{eql}.
+instead of having either to create a new instance every time,
+be it with @cl{(<alist>)}
+or directly using @cl{(make-instance '<alist> :key-interface <eq>)}.
 
 @subsubsection{Multiple Dispatch}
 
 Because CLOS has multiple dispatch,
 our generic functions can dispatch on more than the first argument,
-thus preserving the language's Object-Oriented style
+thus preserving the language's object-oriented style
 on arguments beyond the initial interface argument.
 In a language with single-dispatch, we couldn't do that,
 at least not directly,
-as dispatching on the interface would use up the Object-Oriented ability
+as dispatching on the interface would use up the object-oriented ability
 to specialize behavior depending on arguments.
 
 As the simplest example, an interface @<>{empty-object}
@@ -604,19 +603,18 @@ Note that many of these issues could be avoided or glossed over in @[CL]
 thanks to its multimethods and dynamic typing;
 however, our approach could solve these issues
 even in a language without single dispatch and/or with static typing.
-Indeed, an equivalent approach already solves these issues
-in Haskell or ML.
-@pdfonly{@[linebreak]@[linebreak]}
+Indeed, an equivalent approach already solves these issues in Haskell.
+@[pdflinebreak]@[pdflinebreak]
 
 @section{Revisiting Classic Structures}
 
-@subsection{Pure and Stateful Datastructures}
+@subsection{Pure and Stateful Data Structures}
 
 @subsubsection{Pure, Stateful, their Intersection, and Beyond}
 
 We built LIL, the @[LIL],
 with the ambition that it should become
-the definitive library for datastructures in @[CL].
+the definitive library for data structures in @[CL].
 While we initially chose @[IPS] to achieve parametric polymorphism,
 which was not previously available in @[CL],
 this style was also helpful to address other issues
@@ -624,16 +622,16 @@ in developing our library.
 
 For instance, so that we may improve on all existing libraries,
 we decided to provide both
-pure (functional) (persistent) datastructures and
-stateful (imperative) (ephemeral) datastructures.
+pure (functional) (persistent) data structures and
+stateful (imperative) (ephemeral) data structures.
 Furthermore, we decided to do the Right Thing™
 by sharing as much as possible of the interface and implementation
-between these two styles of datastructures,
+between these two styles of data structures,
 with APIs congruent enough with each other that it is possible to build
 automated bridges between the two styles.
 
 The interfaces in @[IPS] proved to be a great locus at which to formalize both
-the commonalities and divergences between pure and stateful datastructures.
+the commonalities and divergences between pure and stateful data structures.
 
 @subsubsection{Common Interfaces: Read-Only Access}
 
@@ -647,7 +645,7 @@ These functions are applicable to pure as well as to stateful maps.
 There are also inherited functions such as @cl{check-invariant},
 @cl{empty} and @cl{empty-p}.
 
-Thus, it is possible to write generic read-only tests for map datastructures
+Thus, it is possible to write generic read-only tests for map data structures
 that work for all map implementations, pure as well as stateful.
 Indeed, LIL includes such tests in its test suite.
 
@@ -664,19 +662,19 @@ But whereas the former has the output signature@[linebreak]
 the latter has the output signature@[linebreak]
 @cl{(:values value foundp)} @cl{(:out t)}.@[linebreak]
 This means that the pure function returns an updated version
-of the original map datastructure as its first return value,
+of the original map data structure as its first return value,
 whereas the stateful function omits this return value and
 instead side-effects the map passed as input argument.
 
-Other functions that update datastructures
+Other functions that update data structures
 have similar differences in their signatures:
-pure methods tend to return new updated datastructures as additional values,
+pure methods tend to return new updated data structures as additional values,
 whereas such return values are omitted by stateful methods
-that instead update existing datastructures in place through side-effects.
+that instead update existing data structures in place through side-effects.
 
 @subsubsection{Incremental Layers of Functionality}
 
-We have striven to implement our datastructures
+We have striven to implement our data structures
 in small incremental layers by taking full advantage
 of CLOS such as multiple inheritance,
 multiple dispatch and method combinations.
@@ -766,7 +764,7 @@ also works without this limitation.)
 This is also clear for constructor functions,
 where no object exists yet on which to dispatch.
 
-@subsubsection{Bootstrapping Datastructures}
+@subsubsection{Bootstrapping Data Structures}
 
 A second advantage of explicit interfaces is that
 different instances of a given interface class can apply to the same object.
@@ -793,7 +791,7 @@ the key-indexed table is typically implemented as
 a random-access array with @math{O(1)} access time.
 In the pure case, the key-indexed table will typically be
 a balanced binary tree, which has slightly worse
-@math{O(log n)} access time but allows for persistent datastructures
+@math{O(log n)} access time but allows for persistent data structures
 (i.e. old copies are still valid after update).
 
 The @[CL] standard specifies a class @cl{hash-table},
@@ -891,7 +889,7 @@ You can build new interfaces by composing existing interfaces,
 abstracting away patterns and reproduce them automatically;
 you are not limited to agglutinating exponentially ever more unrelatable cases.
 
-In the near future, we would like to bootstrap more datastructures this way,
+In the near future, we would like to bootstrap more data structures this way,
 for instance following some of the algorithms documented by Chris Okasaki
 in @~cite[Okasaki].
 
@@ -918,7 +916,7 @@ The following two paragraphs are simply ideas we have for future work.
 Because an interface is not tied to the data,
 the data can remain unchanged while the interface changes.
 This way, some algorithms can be simplified by factoring data access
-through a single more compact datastructure visited
+through a single more compact data structure visited
 with a finite or evolving set of interfaces.
 In extreme cases, punning data with multiple interfaces
 can make a program work simply
@@ -926,7 +924,7 @@ where naive wrappers would fail by leaking memory,
 and where non-leaky wrappers would require additional complexity
 through layers of "optimization" or memoization in such wrappers.
 
-Punning data with multiple interfaces could also help build composite datastructures,
+Punning data with multiple interfaces could also help build composite data structures,
 whereby each node in the object graph is part of several structures:
 a hash-table for fast retrieval by key,
 a priority heap for scheduling a job queue,
@@ -1057,7 +1055,7 @@ and voilà, all the functions you need are there for you to use in that package.
 @subsubsection{Making Interfaces Explicit}
 
 It might happen that you have some classes that implement
-in a classic Object-Oriented style
+in a classic object-oriented style
 some interface that you are interested in using as a parameter.
 Then you may have to define a singleton interface
 with wrapper methods adapting between the two APIs.
@@ -1065,17 +1063,20 @@ with wrapper methods adapting between the two APIs.
 If it happened that the APIs were indeed identical but for the extra argument,
 a macro could be trivially written to automatically provide for the adaptation.
 However, in practice, the case doesn't happen,
-because odds are low a legacy or third-party Object-Oriented interface
+because odds are low a legacy or third-party object-oriented interface
 will match exactly your modern @[IPS] signature.
 And odds are similarly low that if you're interested in the flexibility of interfaces,
-you would start with the more rigid Object-Oriented style
+you would start with the more rigid object-oriented style
 and need to convert to the more flexible @[IPS],
-rather than start with @[IPS] and extract an Object-Oriented API
+rather than start with @[IPS] and extract an object-oriented API
 from there through one of the above or below mechanisms.
+@[pdflinebreak]@[pdflinebreak]
+@[pdflinebreak]@[pdflinebreak]
+@[pdflinebreak]@[pdflinebreak]
 
 @subsection{From Pure to Stateful and Back}
 
-@subsubsection{Variants of a Datastructure}
+@subsubsection{Variants of a Data Structure}
 
 In previous sections, we explained how interfaces maintain meta-information
 about the call arguments and return value conventions
@@ -1094,20 +1095,14 @@ have on objects of the targeted interface type.
 Within the constraints of this model, we can automatically emit wrappers
 that convert between pure and stateful interfaces.
 
-Note that as a limitation in our current transformation macros,
-methods in the original and transformed APIs are simply matched by name.
-In the future, it would be easy to allow the user to customize
-the way method names are processed, transformed or overridden
-during these transformations.
-
 @subsubsection{Mutating and Linearized}
 
-In a pure (functional) interface implementing a persistent datastructure,
+In a pure (functional) interface implementing a persistent data structure,
 input arguments are values that are never modified.
 Instead, some functions have output values that represent
 an updated value for the "same" notional object
 as one of the input values.
-In a stateful (imperative) interface to an ephemeral datastructure,
+In a stateful (imperative) interface to an ephemeral data structure,
 input arguments are objects may be inspected read-only or modified in-place;
 functions that update an object modify it in place
 and do not return a new object.
@@ -1126,21 +1121,21 @@ and is invalidated if there are any modifications,
 while a fresh box is created to hold the object in its new state if modified.
 
 Interestingly,
-a stateful datastructure linearized then mutating
-is isomorphic to the original datastructure,
-but a pure datastructure mutating then linearized
+a stateful data structure linearized then mutating
+is isomorphic to the original data structure,
+but a pure data structure mutating then linearized
 isn't isomorphic to the original,
 unless we require that users should make an explicitly copy
-of the datastructure each time it may be used more than once,
+of the data structure each time it may be used more than once,
 as per Linear Logic.
 Indeed, the mutating transform is all about introducing the discipline
 of an object having a single current value that is only used once
 to produce the new current value (unless explicitly copied),
 and the linearized transform is all about enforcing this discipline
 that any value may only be used once (unless explicitly copied).
-Now, the entire point of (pure) persistent datastructures is usually
-that they make copying a datastructure practically free, and that
-using a datastructure multiple times is made free
+Now, the entire point of (pure) persistent data structures is usually
+that they make copying a data structure practically free, and that
+using a data structure multiple times is made free
 by copying it implicitly as needed;
 therefore this limitation in how the two transforms aren't quite inverse
 of each other is as designed.
@@ -1360,6 +1355,12 @@ which is part of the contract of @cl{divide/list}.
 (LIL, following @[CL] tradition, neither imposes nor provides any means
 to automate the enforcement of these contracts.)
 
+Also note that as a limitation in our current transformation macros,
+methods in the original and transformed APIs are simply matched by name.
+In the future, it would be easy to allow the user to customize
+the way method names are processed, transformed or overridden
+during these transformations.
+
 @subsubsection{Stateful Interface in a Linear Box}
 
 The reverse transformation works in a very similar way.
@@ -1409,8 +1410,7 @@ Here are the cleaned up macroexpansions for the wrappers around
         (lookup <stateful-interface>
 	        stateful-map key)
       (values value foundp))))
-}
-@clcode{
+
 (defmethod pure:insert
     ((<interface> <linearized-map>) map key value)
   (let* ((<stateful-interface>
@@ -1441,8 +1441,8 @@ they have applications to actual systems.
 For instance, a stateful algorithm may sometime involve
 snapshotting the state of objects;
 if the objects are big or if snapshotting happens often enough,
-the usual stateful datastructures can be prohibitively expensive;
-but by simply wrapping a purely functional persistent datastructure
+the usual stateful data structures can be prohibitively expensive;
+but by simply wrapping a purely functional persistent data structure
 designed for to make copying essentially free,
 you can remove such a speed or space bottleneck.
 And all you need to do is to start using a mutating interface
@@ -1459,7 +1459,7 @@ within the limitations of linear state,
 in which case you may want to use them together
 with the less cumbersome stateful programming style.
 A linearized interface allows you to use your functional library
-with your stateful datastructures.
+with your stateful data structures.
 
 @subsubsection{Limits of Our Effect Model}
 
@@ -1486,7 +1486,7 @@ but are beyond the scope of our current projects.
 
 @subsubsection{Interfaces as Detached Classes}
 
-An Object-Oriented API is a set of classes and generic functions
+An object-oriented API is a set of classes and generic functions
 operating on objects, objects having both at the same time
 identity, data content, and behavior attached to them;
 behavior of generic functions happen by dispatching
@@ -1500,17 +1500,17 @@ on the first interface (and sometimes subsequent interfaces).
 One way of looking at things is by distinguishing
 concerns of behavior (code and meta-data) and state (data and identity).
 @[IPS] separates them, with the interface carrying only the behavior.
-Object-Oriented Style conflates them, with an object carrying all of it.
+Object-oriented Style conflates them, with an object carrying all of it.
 A correspondence can be drawn between @[IPS]
-and traditional Object-Oriented Style
+and traditional object-oriented Style
 by viewing an interface as "detached" class information,
 as the part of an object that doesn't include its state,
 and by viewing an object as a "subjective" interface,
 one where some state has been moved into the interface.
 
 Using this view point, it is possible to mechanically derive
-an Interface-Passing API from an Object-Oriented API or
-an Object-Oriented API from an Interface-Passing API.
+an Interface-Passing API from an object-oriented API or
+an object-oriented API from an Interface-Passing API.
 To go from one style to the other is a matter of splitting or joining back
 the behavior, identity and data aspects
 that the respective other style preferred to join or split.
@@ -1537,15 +1537,15 @@ Conversely, you can view traditional objects as "subjective" interfaces,
 where no explicit state object is passed, but rather
 where any state has been moved inside the interface itself.
 
-To extract an Interface-Passing API from an Object-Oriented API is easy:
+To extract an Interface-Passing API from an object-oriented API is easy:
 it suffices to introduce a dummy interface object,
 which can be done as per the above subsubsection "Making Interfaces Explicit".
 
-To extract an Object-Oriented API from an Interface-Passing API is harder,
+To extract an object-oriented API from an Interface-Passing API is harder,
 but we can reuse the same effect system we developed above for that purpose:
 our objects will be boxes that at the same time have their identity,
 an attached data value, and a reference to the interface
-that is being transformed to Object-Oriented Style.
+that is being transformed to object-oriented style.
 Function dispatch happens by locating the first object,
 extracting the interface,
 applying the corresponding interface function to the unboxed data,
@@ -1554,13 +1554,13 @@ and wrapping new objects into boxes as appropriate.
 @subsubsection{Parametric Classification}
 
 LIL includes a macro to automatically transform
-a stateful interface into an Object-Oriented API,
+a stateful interface into an object-oriented API,
 a process we dub "classification".
 However, this macro requires a little bit of configuration by the user
 to deal with constructor methods for which there isn't an object to dispatch on.
 
 Let us first examine the case where we want to generate
-a general-purpose Object-Oriented API out of
+a general-purpose object-oriented API out of
 a general-purpose abstract interface.
 For instance, here is how we export our @cl{stateful:<map>} interface parametrically
 into a @cl{>map<} class API, evaluating this in package @cl{classified}:
@@ -1589,7 +1589,7 @@ Wrappers for @cl{lookup}, @cl{insert} are then as follows:
     (values)))
 }
 
-So far, so good: in good Object-Oriented style,
+So far, so good: in good object-oriented style,
 the behavior is controlled by the first object supplied,
 from which the interface was extracted.
 However, the wrapper for @cl{empty} is awkwardly different:
@@ -1604,8 +1604,8 @@ However, the wrapper for @cl{empty} is awkwardly different:
 }
 
 This difference reflects a general problem
-that Object-Oriented style has with constructors.
-Because Object-Oriented style locates class dispatch information
+that object-oriented style has with constructors.
+Because object-oriented style locates class dispatch information
 in the first object,
 it has nothing to dispatch from where there is no object yet,
 and therefore has to treat constructors differently.
@@ -1624,7 +1624,7 @@ but it defaults to using it directly.
 
 @subsubsection{Singleton Classification}
 
-The user may opt to create an Object-Oriented API
+The user may opt to create an object-oriented API
 out of a singleton concrete interface.
 Then, constructor functions do not need an extra argument
 to be supplied the interface:
@@ -1680,7 +1680,7 @@ With such transformations of singleton interfaces,
 it becomes possible to develop libraries
 using the power of parametric polymorphism,
 composing simple parametric interfaces into more elaborate ones,
-and yet expose the result as a traditional Object-Oriented API,
+and yet expose the result as a traditional object-oriented API,
 so users do not even have to know that @[IPS] was used internally.
 
 @section{Conclusion}
@@ -1690,7 +1690,7 @@ so users do not even have to know that @[IPS] was used internally.
 @subsubsection{Many Well-Known Predecessors}
 
 @[IPS] is a novel tool, that has proven particularly effective
-to implement a generic datastructure library in @[CL].
+to implement a generic data structure library in @[CL].
 Indeed, @[IPS] was developed specifically to fit
 both the shortcomings and the assets of @[CL].
 But the underlying ideas are hardly original;
@@ -1742,7 +1742,7 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
    This gives our library a low-level flavor of control and responsibility;
    while the responsibility is indeed sometimes burdensome,
    we can take advantage of that control to access
-   the same datastructure through multiple interfaces.}
+   the same data structure through multiple interfaces.}
  @item{
    @emph{Our interfaces can be parameterized by arbitrary first-class data}.
    The parameters are not constrained to be second-class entities
@@ -1762,7 +1762,7 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
    (like the implicit arguments in the respective implementations
    of the above-mentioned systems),
    but can objects of arbitrary user-defined classes,
-   subject to the usual Object-Oriented dispatch techniques.}
+   subject to the usual object-oriented dispatch techniques.}
  @item{
    @emph{Our ad-hoc polymorphism is scoped outside of parameters, not inside}.
    This lambda lifting of interface objects matters a lot for @[CL],
@@ -1782,7 +1782,7 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
    }
  @item{
    @emph{We rely on multiple-dispatch to
-   not sacrifice Object-Oriented style when using interface dispatch}.
+   not sacrifice object-oriented style when using interface dispatch}.
    In a language with single-dispatch,
    dispatch on our explicit interface argument will use up
    the programmer's ability to rely on ad-hoc polymorphism
@@ -1790,7 +1790,7 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
    In LIL, we leverage the multimethod capabilities of CLOS
    to dispatch on our interface objects and
    still be able to dispatch on further arguments
-   as per normal Object-Oriented style.}
+   as per normal object-oriented style.}
 ]
 
 Our solution would fit any other dynamic language,
@@ -1804,7 +1804,7 @@ beside the addition of parametric polymorphism to @[CL]:
 
 @itemlist[
  @item{
-   Our library provides both pure and stateful datastructures,
+   Our library provides both pure and stateful data structures,
    that share a common interface for read-only methods.}
  @item{
    Macros make interfaces implicit again in the usual cases.}
@@ -1814,7 +1814,7 @@ beside the addition of parametric polymorphism to @[CL]:
    Additionally, we annotate @[gfs] with trivial metadata about their side-effects.}
  @item{
    Based on such metadata, macros to automate bridging between
-   pure (persistent) and corresponding stateful (ephemeral) datastructure.}
+   pure (persistent) and corresponding stateful (ephemeral) data structure.}
 ]
 
 While the ideas behind these features will sound quite well understood
@@ -1827,10 +1827,10 @@ that could in practice leverage those ideas.
 
 @subsubsection{Current Usability Status}
 
-LIL at this point is already a usable datastructure library
+LIL at this point is already a usable data structure library
 that has contributed features not previously available to @[CL] users:
 not only does it offer infrastructure for users to develop their own
-parametrically polymorphic datastructures,
+parametrically polymorphic data structures,
 it sports a generic map interface with pure and stateful variants,
 and implementations as balanced binary trees, hash-tables or Patricia trees.
 
@@ -1845,15 +1845,15 @@ and in terms of linguistic abstraction.
 
 @subsubsection{Obvious Potential Improvements}
 
-Obviously, more known datastructures could be provided:
+Obviously, more known data structures could be provided:
 Stacks, queues, double-queues, arrays, heaps, sets, multi-sets,
 both pure and stateful,
 could be fit in the existing framework.
 We notably intend to port the algorithms from
 Chris Okasaki's now classic book@~cite[Okasaki]
-and other currently popular pure functional datastructures;
+and other currently popular pure functional data structures;
 and of course matching interfaces to well-known stateful variants.
-Also, provisions for safe concurrent access to datastructures
+Also, provisions for safe concurrent access to data structures
 could be introduced.
 
 Just as obviously, our linguistic features could offer more bells and whistles:
@@ -1869,7 +1869,7 @@ with internals being refactored and exported.
 We could use ContextL@~cite[contextl-soa]
 or similar Context-Oriented Programming techniques
 to dynamically bind extra implicit arguments to our function calls
-to trivially reexpose an @[IPS] API as a classic Object-Oriented style API.
+to trivially reexpose an @[IPS] API as a classic object-oriented style API.
 
 @subsubsection{More Advanced Projects}
 
@@ -1881,10 +1881,10 @@ controlling whether any given property is implemented
 as a slot or a user-defined method;
 controlling whether some data is indirectly accessible through a box
 or inlined in the current object;
-combining multiple datastructures to achieve better access guarantees
+combining multiple data structures to achieve better access guarantees
 (i.e. records are both nodes of a hash-table for constant-time lookup
 and of a doubly-linked list for preserving insertion order),
-or implementing the same datastructure twice with a different view
+or implementing the same data structure twice with a different view
 (i.e. records are part of several trees that index several fields
 or computed expressions from fields).
 Mixins would be combined in the style of
@@ -1931,8 +1931,7 @@ could in some cases be automatically extracted
 from the API specification itself.
 If the specifications also include annotations about performance guarantees,
 this opens a venue for a more declarative approach
-to datastructure development.
-@[pdflinebreak]
+to data structure development.
 
 @subsubsection{Why And Wherefore}
 
@@ -1943,7 +1942,7 @@ Interestingly, though, the idea of detaching behavioral meta-data about objects
 in an entity separate from their state data and passed as an extra argument
 dates from our very first dabbling in implementing
 an Object Oriented language;
-indeed, our dissatisfaction with how traditional Object-Oriented style conflates
+indeed, our dissatisfaction with how traditional object-oriented style conflates
 behavior and state in the same "object" package-deal
 dates from the same time, as we were trying to figure out semantics
 for object systems and ways to modularly express mathematical concepts.
