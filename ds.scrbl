@@ -677,11 +677,14 @@ that instead update existing datastructures in place through side-effects.
 @subsubsection{Incremental Layers of Functionality}
 
 We have striven to implement our datastructures
-in small incremental layers.
+in small incremental layers by taking full advantage
+of CLOS such as multiple inheritance,
+multiple dispatch and method combinations.
 
 For instance, here is the complete implementation
-of stateful AVL (self-balanced) trees on top of previous layers:
-@[pdflinebreak]@[pdflinebreak]
+of stateful AVL trees on top of previous layers,
+one of which implements self-balancing as two @cl{:after} methods,
+on @cl{insert} and @cl{drop}:
 
 @clcode{
 (define-interface <avl-tree>
@@ -863,15 +866,17 @@ For instance see the @cl{insert} method, and notice the pun:
 }
 Indeed the very same object @cl{map}
 is passed as an argument to
-the same function @cl{insert} through no fewer than
-three different @cl{<map>} interfaces:
-first the original @cl{<i>} which is a @cl{<hash-table>};
-then the outer @cl{(hashmap-interface <i>)},
-which is presumably a @cl{<number-map>},
-to locate the proper hash bucket (if any);
-and finally the inner @cl{(bucketmap-interface <i>)}
-which is presumably a @cl{<alist>},
-once the proper bucket has been found or a new empty one created.
+the same function @cl{insert} through two
+different @cl{<map>} interfaces:
+the outer one is the original @cl{<i>} which is a @cl{<hash-table>};
+the inner map is @cl{(hashmap-interface <i>)},
+which is presumably a @cl{<number-map>}.
+There is a third call to @cl{insert},
+with the interface @cl{(bucketmap-interface <i>)}
+which is presumably a @cl{<alist>};
+however, this time its argument is not @cl{map} but the proper hash bucket,
+which was a value in the @cl{map} object seen with the inner interface,
+or a new empty bucket if none was found.
 
 Note, however, that even though the punning is nice,
 and can potentially save both in memory and in API complexity,
@@ -1002,7 +1007,6 @@ in the context of which this situation definitely applies,
 @cl{define-interface} also has an option @cl{:method} to define such methods.
 For instance, here is the definition of the previously mentioned
 @<>{eq-from-==} mixin:
-@[pdflinebreak]@[pdflinebreak]
 @clcode{
 (define-interface <eq-from-==> (<eq>) ()
   (:abstract)
