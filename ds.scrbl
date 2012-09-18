@@ -299,10 +299,10 @@ typically at the entry points of his code or while testing or debugging.
 
 The upside of this lack of automatic type-based interface control is that
 the user can explicitly specify an interface
-in some uncommon cases where the "canonical" interface
+in some uncommon cases where the @q{canonical} interface
 that could have been deduced by type inference isn't what he wants,
 and even in cases where
-there isn't any such "canonical" interface to begin with.
+there isn't any such @q{canonical} interface to begin with.
 
 @subsection{Defining Interfaces}
 
@@ -408,7 +408,7 @@ in the form of mixins:
 small interface classes implement a small aspect of the interface.
 Oftentimes, a mixin will be used to simply deduce
 the implementation of some signature functions from other signature functions.
-Depending on which signature functions are more "primitive" for a given concrete data structure,
+Depending on which signature functions are more @q{primitive} for a given concrete data structure,
 opposite mixins may be used that deduce some functions from the others or the other way around.
 
 For instance, the @<>{eq} interface actually has two associated functions,
@@ -567,7 +567,7 @@ and dispatched upon in some methods.
 We saw that some abstract interfaces have the opposite purpose:
 they implement one or several signature functions
 in terms of other signature functions,
-that may be more "primitive" in various concrete interfaces.
+that may be more @q{primitive} in various concrete interfaces.
 
 Finally, some interfaces do implement the complete declared signature,
 either directly or through inheritance of appropriate mixins.
@@ -589,8 +589,8 @@ Instead, our signature functions treat all arguments uniformly,
 and none of these arguments have to be restricted to any particular class.
 
 In particular, with our approach of detached interfaces,
-there is no problem whatsoever with having "binary methods";
-no special status is required for "constructor" methods
+there is no problem whatsoever with having @q{binary methods};
+no special status is required for @q{constructor} methods
 that create an object of some target type
 when there was no object yet on which to dispatch methods;
 and there is no dilemma regarding contravariance or covariance of types
@@ -876,7 +876,7 @@ Note, however, that even though the punning is nice,
 and can potentially save both in memory and in API complexity,
 systems that disallow punning might allow us to express the same concepts
 via an indirection.
-For instance, in Haskell, you could hide the "same" underlying structures
+For instance, in Haskell, you could hide the @q{same} underlying structures
 under different unary constructors
 to distinguish the various stages of such a bootstrap.
 The important property of parametric polymorphism is that
@@ -918,7 +918,7 @@ In extreme cases, punning data with multiple interfaces
 can make a program work simply
 where naive wrappers would fail by leaking memory,
 and where non-leaky wrappers would require additional complexity
-through layers of "optimization" or memoization in such wrappers.
+through layers of @q{optimization} or memoization in such wrappers.
 
 Punning data with multiple interfaces could also help build composite data structures,
 whereby each node in the object graph is part of several structures:
@@ -1078,7 +1078,7 @@ about the call arguments and return value conventions
 of functions in their signature.
 We also saw that the signature of the pure variant of an interface
 was systematically related to
-the signature of the stateful variant of the "same" interface.
+the signature of the stateful variant of the @q{same} interface.
 What if we could formalize this systematic relation?
 Then this meta-information would be more than mere documentation:
 we could implement automatic correspondences
@@ -1095,7 +1095,7 @@ that convert between pure and stateful interfaces.
 In a pure (functional) interface implementing a persistent data structure,
 input arguments are values that are never modified.
 Instead, some functions have output values that represent
-an updated value for the "same" notional object
+an updated value for the @q{same} notional object
 as one of the input values.
 In a stateful (imperative) interface to an ephemeral data structure,
 input arguments are objects may be inspected read-only or modified in-place;
@@ -1392,10 +1392,12 @@ that creates a box with a slot value initialized to that argument,
 that can be read many times with @cl{box-value},
 but is used up and not further readable
 when read by @cl{box-ref}.
-We use the latter function before any operation
+We use the latter invalidating read function before any operation
 that modifies the contents of the box;
-therefore, it is invalid to try to access an old version of the wrapped object,
-unless its contents were explicitly copied beforehand into a new object.
+therefore, it is invalid to try to access an old version of the wrapped object.
+If you want to keep a version of an object for future use,
+you explicit copy its contents into a new object before you make any modification,
+as per Linear Logic.
 
 Here are the cleaned up macroexpansions for the wrappers around
 @cl{lookup}, @cl{insert} and @cl{empty} respectively:
@@ -1502,9 +1504,9 @@ concerns of behavior (code and meta-data) and state (data and identity).
 Object-oriented Style conflates them, with an object carrying all of it.
 A correspondence can be drawn between @[IPS]
 and traditional object-oriented Style
-by viewing an interface as "detached" class information,
+by viewing an interface as @q{detached} class information,
 as the part of an object that doesn't include its state,
-and by viewing an object as a "subjective" interface,
+and by viewing an object as a @q{subjective} interface,
 one where some state has been moved into the interface.
 
 Using this view point, it is possible to mechanically derive
@@ -1524,21 +1526,23 @@ Any data slot of interface objects is then seen as a class parameter
 and dynamically created interface objects are akin
 to dynamically created first-class classes.
 Explicitly passing the interface around is as if
-an object's "virtual method table" or equivalent
+an object's @q{virtual method table} or equivalent
 were passed as a separate argument.
-This is somewhat similar related to the "self" argument of many object systems,
+This is somewhat similar related to
+the @emph{self} argument of many object systems,
 except than an interface includes all the meta-level class information
 but none of the identity and runtime data associated with the object.
 And it applies even when there is no self object (yet)
 with the identity or data to dispatch on (e.g. for constructor methods).
 
-Conversely, you can view traditional objects as "subjective" interfaces,
+Conversely, you can view traditional objects as @q{subjective} interfaces,
 where no explicit state object is passed, but rather
 where any state has been moved inside the interface itself.
 
 To extract an Interface-Passing API from an object-oriented API is easy:
 it suffices to introduce a dummy interface object,
-which can be done as per the above subsubsection "Making Interfaces Explicit".
+which can be done as per the above subsubsection
+@emph{Making Interfaces Explicit}.
 
 To extract an object-oriented API from an Interface-Passing API is harder,
 but we can reuse the same effect system we developed above for that purpose:
@@ -1554,7 +1558,7 @@ and wrapping new objects into boxes as appropriate.
 
 LIL includes a macro to automatically transform
 a stateful interface into an object-oriented API,
-a process we dub "classification".
+a process we dub @emph{classification}.
 However, this macro requires a little bit of configuration by the user
 to deal with constructor methods for which there isn't an object to dispatch on.
 
@@ -1567,21 +1571,19 @@ into a @cl{>map<} class API, evaluating this in package @cl{classified}:
 (define-classified-interface-class
   >map< (object-box) stateful:<map>
   ((interface :initarg :interface))
-  (:interface-argument <interface>))
+  (:interface-argument (<interface> stateful:<map>)))
 }
 
 Wrappers for @cl{lookup}, @cl{insert} are then as follows:
 @clcode{
-(defmethod lookup
-    ((map >map<) key)
+(defmethod lookup ((map >map<) key)
   (let* ((<interface> (class-interface map))
          (map-data (box-ref map)))
     (multiple-value-bind (value foundp)
         (interface:lookup <interface> map key)
       (values value foundp))))
 
-(defmethod insert
-    ((map >map<) key value)
+(defmethod insert ((map >map<) key value)
   (let* ((<interface> (class-interface map))
          (map-data (box-ref map)))
     (stateful:insert <interface> map key value)
@@ -1593,7 +1595,7 @@ the behavior is controlled by the first object supplied,
 from which the interface was extracted.
 However, the wrapper for @cl{empty} is awkwardly different:
 @clcode{
-(defmethod empty (<interface>)
+(defmethod empty ((<interface> stateful:<map>))
   (multiple-value-bind (empty-data)
       (interface:empty <interface>)
     (let* ((object (make-instance '>map<
@@ -1606,20 +1608,42 @@ This difference reflects a general problem
 that object-oriented style has with constructors.
 Because object-oriented style locates class dispatch information
 in the first object,
-it has nothing to dispatch from where there is no object yet,
-and therefore has to treat constructors differently.
+it has nothing to dispatch from where there is no object yet.
+That is why object-oriented style has to treat constructors differently.
+In CLOS, objects are constructed by the @cl{make-instance} function,
+which is special in that it takes
+a class name or class meta-object as its first argument.
+@[IPS] is more uniform there,
+but transformation from @[IPS] to object-oriented style has to do something.
 
 Since in this case we are transforming an abstract interface,
-each object needs to carry in a slot a parameter
+each object needs to carry in a parameter
 for the actual concrete interface with which the object was created.
-When creating the object, we need to supply this interface;
-the @cl{:interface-argument} option in
+We use the slot @cl{interface} for that,
+and the above definition overrides its default definition
+so it may be initialized with keyword @cl{:interface}.
+This keyword is also the default value of the @cl{:interface-keyword} option
+(which we don't override), and that tells our transformer
+how to pass the interface in its call to @cl{make-instance}.
+When creating the object,
+we need to supply this interface to constructor functions.
+The @cl{:interface-argument} option in
 @cl{define-classified-interface-class},
 tells constructors such as @cl{empty} to accept an extra argument
 which will become the interface to be attached to the constructed object.
 How the interface is extracted from that argument
 could have been overridden with the @cl{:extract-interface} option,
-but it defaults to using it directly.
+but we rely on the default, which is to use it directly.
+All this customization was necessary to generate the @cl{empty} wrapper above.
+
+Also note how, in this example,
+we constrain argument to be of type @cl{stateful:<map>}
+before we construct a @cl{>map<} object,
+so that other methods of @cl{empty} could construct
+other kind of empty objects based on a different interface.
+Thus, the API we extract from our parametric classification
+is truly object-oriented, and can be extended,
+or shared with other classes beyond our transformed interfaces.
 
 @subsubsection{Singleton Classification}
 
@@ -1679,8 +1703,20 @@ With such transformations of singleton interfaces,
 it becomes possible to develop libraries
 using the power of parametric polymorphism,
 composing simple parametric interfaces into more elaborate ones,
-and yet expose the result as a traditional object-oriented API,
+and yet expose the result as a traditional API
 so users do not even have to know that @[IPS] was used internally.
+
+Note however that unless you follow some protocol to parameterize
+your constructors as in our parametric classification above,
+your API will not be object-oriented but simply imperative.
+Indeed, if constructors do not take an extra parameter
+but instantiate a constant class and interface,
+this part of the API is not extensible and
+cannot be shared with other classes.
+A future version of our library might have an option
+to add a prefix or suffix to names of constructor methods,
+so normal methods can be part of an object-oriented API
+without a clash because of unsharable constructors.
 
 @section{Conclusion}
 
@@ -1752,7 +1788,7 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
    @emph{We make it easy for users to hide these interfaces in usual cases}
    thanks to @[CL] macros,
    with facilities both syntactic (such as @cl{with-interface})
-   and semantic (such as our macros to go from interfaces to classes).
+o   and semantic (such as our macros to go from interfaces to classes).
    In common cases, we can therefore eschew the burden
    of explicitly passing around interface objects.}
  @item{
@@ -1765,8 +1801,8 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
  @item{
    @emph{Our ad-hoc polymorphism is scoped outside of parameters, not inside}.
    This lambda lifting of interface objects matters a lot for @[CL],
-   for @[CL] doesn't have first-class class combinators
-   or cheap portable anonymous classes,
+   because @[CL] has neither first-class class combinators
+   nor cheap portable anonymous classes,
    but instead has a global public namespace
    that favors dynamic linking of new methods to existing generic functions
    and dynamic instantiation of new interface objects with runtime parameters.
@@ -1777,8 +1813,7 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
    though the PLT approach allows for dynamic instantiation of unit assemblages
    with runtime parameters, any such assemblage is semantically sealed
    and unextensible after instantiation.
-   Once again, the @[CL] approach has a lower-level feel overall.
-   }
+   Once again, the @[CL] approach has a lower-level feel overall.}
  @item{
    @emph{We rely on multiple-dispatch to
    not sacrifice object-oriented style when using interface dispatch}.
@@ -1794,6 +1829,15 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
 
 Our solution would fit any other dynamic language,
 especially if it also has multiple dispatch and/or syntax extension facilities.
+
+Our base design could also fit a static language,
+but it would be extremely painful
+unless the static type system were expressive enough,
+at which point language designers probably already have
+solutions to the issues we address.
+At that point, our contribution would probably be limited to
+inspiring the development of @[IPS] libraries
+as an alternative to traditional object-oriented style.
 
 @subsubsection{Innovation: Interface Transformations}
 
@@ -1812,15 +1856,21 @@ beside the addition of parametric polymorphism to @[CL]:
  @item{
    Additionally, we annotate @[gfs] with trivial metadata about their side-effects.}
  @item{
-   Based on such metadata, macros to automate bridging between
-   pure (persistent) and corresponding stateful (ephemeral) data structure.}
-]
+   Based on such effect types, we could implement automated transformations
+   bridging between pure (persistent) and corresponding
+   stateful (ephemeral) data structure.}
+ @item{
+   Based on the same effect types, we could implement automated transformations
+   bridging between @[IPS] and traditional object-oriented style.}]
 
 While the ideas behind these features will sound quite well understood
-by people familiar with the theory of programming language,
-we are not aware of any previous programming language
-and library in such a language
-that could in practice leverage those ideas.
+by people familiar with programming language theory,
+we are not aware of any existing library in any previous programming language
+that could or would in practice leverage those ideas.
+
+We hope our success will generate more widespread interest
+in supporting multiple programming styles
+with automated library transformations.
 
 @subsection{Current Limitations and Future Work}
 
@@ -1895,7 +1945,7 @@ but first-class reflection.
 Some protocol would manage the several classes of objects
 associated to an interface, and combine them all (or the relevant subset)
 with additional mixins when such mixins are specified;
-this would also be used extracting "classified" APIs from @[IPS] APIs.
+this would also be used extracting @q{classified} APIs from @[IPS] APIs.
 Possibly, we could also provide some way for abstract interfaces
 to provide a default concrete implementations;
 thus, in simple cases one could obtain a full implementation
@@ -1916,10 +1966,10 @@ The main ambition though is that a single specification should simply
 make all the variants possible, so that each user may
 fine-tuning which variant makes sense for him
 while being able to share his algorithms with other users that
-need the "same" algorithm viewed from a totally different angle.
+need the @q{same} algorithm viewed from a totally different angle.
 
 Third, and relatedly, we'd like to explore how to improve
-the so far trivial language by which we currently express "effects"
+the so far trivial language by which we currently express @q{effects}
 of API functions.
 The current first-order specifications can probably be generalized
 into some kind of higher-order type system.
@@ -1942,7 +1992,7 @@ in an entity separate from their state data and passed as an extra argument
 dates from our very first dabbling in implementing
 an Object Oriented language;
 indeed, our dissatisfaction with how traditional object-oriented style conflates
-behavior and state in the same "object" package-deal
+behavior and state in the same @q{object} package-deal
 dates from the same time, as we were trying to figure out semantics
 for object systems and ways to modularly express mathematical concepts.
 

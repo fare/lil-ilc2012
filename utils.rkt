@@ -17,7 +17,7 @@
   cl clcode clblock <>
   ~cite define-bib generate-bib
   long short abstract-only backend sf
-  pdfonly htmlonly pdflinebreak)
+  pdfonly htmlonly pdflinebreak q)
 
 ;;(define-syntax-rule (~cite what ...) "")
 
@@ -71,3 +71,7 @@
 
 (define (sf . str) (make-element 'sf (decode-content str)))
 
+(define (ldquo) 'ldquo) ;;(make-element 'ldquo '()))
+(define (rdquo) 'rdquo) ;;(make-element 'rdquo '()))
+
+(define (q . content) (list (ldquo) content (rdquo)))
