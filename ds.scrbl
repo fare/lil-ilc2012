@@ -1,6 +1,6 @@
 #lang sigalternate @nocopyright
 
-@;;(display "In ds!\n")
+@(printf "ds.scrbl backend: ~a\n" (backend))
 
 @(require scribble/base scribble/manual
           scriblib/autobib scriblib/footnote
@@ -9,7 +9,14 @@
 
 @(provide doc)
 
-@title{LIL: higher-order datastructures meet CLOS}
+@pdfonly[
+   @title{LIL: CLOS meets higher-order datastructures
+   	       @[linebreak]@larger{@larger{@larger{@bold{@sf{
+	    and has a transforming experience}}}}}}]
+@htmlonly[
+   @title{LIL: CLOS meets higher-order datastructures
+   	       @[linebreak]
+	    and has a transforming experience}]
 
 @authorinfo["François-René Rideau" "Google" "tunes@google.com"]
 @;@authorinfo["Eric O'Connor" "Mercer University" "oconnore@gmail.com"]
@@ -33,7 +40,7 @@ and ad-hoc polymorphism
 LIL provides interfaces to both
 pure functional (persistent) and stateful (ephemeral) datastructures,
 with a common fragment for read-only methods.
-Based on metadata modeling the side-effects of methods,
+Based on meta-data modeling the side-effects of methods,
 macros can transform pure interfaces into stateful interfaces
 and the other way around,
 automatically wrapping methods with proper boxing.
@@ -232,7 +239,7 @@ Indeed, lookup has the same specification in both cases:
 it takes an interface, a map and a key as parameters, and
 it returns two values,
 the value associated to the given key if a mapping was found,
-and a boolean that it true iff a mapping was found.
+and a boolean that is true if and only if a mapping was found.
 
 @subsubsection{First-Class Interfaces}
 
@@ -394,7 +401,7 @@ the CLOS metaclass @cl{interface-class}.
 As an example of multiple inheritance,
 our @cl{pure:<tree>} map interface inherits from both
 @cl{interface:<tree>}, an interface
-specifying readonly signature functions on trees,
+specifying read-only signature functions on trees,
 and @cl{pure:<map>}, an interface specifying signature functions for maps
 with pure update as well as mere lookup.
 
@@ -599,7 +606,7 @@ however, our approach could solve these issues
 even in a language without single dispatch and/or with static typing.
 Indeed, an equivalent approach already solves these issues
 in Haskell or ML.
-@[linebreak]@[linebreak]
+@pdfonly{@[linebreak]@[linebreak]}
 
 @section{Revisiting Classic Structures}
 
@@ -669,12 +676,13 @@ that instead update existing datastructures in place through side-effects.
 
 @subsubsection{Incremental Layers of Functionality}
 
-We have strived to implement our datastructures
+We have striven to implement our datastructures
 in small incremental layers.
 
 For instance, here is the complete implementation
 of stateful AVL (self-balanced) trees on top of previous layers:
-@[linebreak]@[linebreak]
+@[pdflinebreak]@[pdflinebreak]
+
 @clcode{
 (define-interface <avl-tree>
     (interface::<avl-tree>
@@ -739,7 +747,7 @@ A clear disadvantage of @[IPS],
 as compared to means by which other languages achieve similar expression,
 is that it imposes upon the user the cost of keeping track of
 the interface objects that are passed around.
-But as a tradeoff, there are some advantages to balance the equation.
+But as a trade-off, there are some advantages to balance the equation.
 We are going to enumerate a few of these advantages,
 from the most trivial to the most advanced.
 
@@ -765,7 +773,7 @@ in how we bootstrap pure hash-tables.
 
 A hash-table is a generic implementation
 of a finite map with fast access time,
-supposing the existence of a hopely fast hash function
+supposing the existence of a hopefully fast hash function
 (typically mapping keys to integers)
 as well as an equality predicate.
 The hash function will hopefully distinguish with high probability
@@ -788,7 +796,7 @@ a balanced binary tree, which has slightly worse
 The @[CL] standard specifies a class @cl{hash-table},
 but this only provides a stateful variant of hash-tables.
 We build an interface @cl{stateful:<hash-table>}
-that matches the signature of @cl{stateful:<map>} 
+that matches the signature of @cl{stateful:<map>}
 while using those standard hash-tables underneath,
 but also needed a @cl{pure:<hash-table>}
 as a generic pure map mechanism.
@@ -836,7 +844,6 @@ Our @cl{pure:<hash-table>} is defined parametrically as follows
 
 Methods are then straightforward.
 For instance see the @cl{insert} method, and notice the pun:
-@[linebreak]@[linebreak]
 @clcode{
 (defmethod insert
     ((<i> <hash-table>) map key value)
@@ -995,7 +1002,7 @@ in the context of which this situation definitely applies,
 @cl{define-interface} also has an option @cl{:method} to define such methods.
 For instance, here is the definition of the previously mentioned
 @<>{eq-from-==} mixin:
-@[linebreak]@[linebreak]
+@[pdflinebreak]@[pdflinebreak]
 @clcode{
 (define-interface <eq-from-==> (<eq>) ()
   (:abstract)
@@ -1074,7 +1081,7 @@ was systematically related to
 the signature of the stateful variant of the "same" interface.
 What if we could formalize this systematic relation?
 Then this meta-information would be more than mere documentation:
-we could implement automatic correspondances
+we could implement automatic correspondences
 between the pure and stateful variants of an interface.
 
 This is what we have implemented in LIL:
@@ -1082,6 +1089,12 @@ we have built a model of what effects declared interface functions
 have on objects of the targeted interface type.
 Within the constraints of this model, we can automatically emit wrappers
 that convert between pure and stateful interfaces.
+
+Note that as a limitation in our current transformation macros,
+methods in the original and transformed APIs are simply matched by name.
+In the future, it would be easy to allow the user to customize
+the way method names are processed, transformed or overridden
+during these transformations.
 
 @subsubsection{Mutating and Linearized}
 
@@ -1095,7 +1108,7 @@ input arguments are objects may be inspected read-only or modified in-place;
 functions that update an object modify it in place
 and do not return a new object.
 
-The correspondances between these two styles are as follow.
+The correspondences between these two styles are as follow.
 From a pure interface, a stateful interface may be deduced
 by putting the persistent values in a mutating box
 that stores the current value of the object;
@@ -1138,28 +1151,28 @@ the simplest with which we could get results:
    as being of the interface-targeted type.
  }
  @item{
-   Each input argument is put in correspondance with
+   Each input argument is put in correspondence with
    either an output value or @cl{nil} or @cl{t}.
  }
  @item{
-   An output value can be in correspondance with one input argument only;
-   it can be in correspondance with none or equivalently with @cl{nil}.
+   An output value can be in correspondence with one input argument only;
+   it can be in correspondence with none or equivalently with @cl{nil}.
  }
  @item{
-   A correspondance between input argument and output value means
+   A correspondence between input argument and output value means
    that the output has the same identity
    as the input after possible modifications.
  }
  @item{
-   A correspondance between an input argument and @cl{nil} means
+   A correspondence between an input argument and @cl{nil} means
    that the argument may be read but not modified.
  }
  @item{
-   A correspondance between an input argument and @cl{t} means
+   A correspondence between an input argument and @cl{t} means
    that the argument may be modified.
  }
  @item{
-   A correspondance between an output value and @cl{nil} means
+   A correspondence between an output value and @cl{nil} means
   that the value is created.
 }]
 
@@ -1168,7 +1181,7 @@ of @cl{define-interface}.
 A @cl{:in} keyword introduces a list of input arguments or @cl{nil} markers.
 A @cl{:out} keyword introduces a list of output values
 or @cl{nil} or @cl{t} markers.
-The correspondance is simply that the nth element in one list
+The correspondence is simply that the nth element in one list
 corresponds to the nth element in the other,
 or @cl{nil} if the other list is shorter.
 
@@ -1212,7 +1225,7 @@ of the new stateful interface being created by mutating.
 The third argument is a list of super-interfaces
 of the underlying pure interfaces being wrapped.
 The fourth argument is a list of slot definitions and overrides
-for parameterization, completing what's implicit in mutating.
+for parametrization, completing what's implicit in mutating.
 What remains is a list of options to @cl{define-interface};
 elided are several manual method definitions for functions
 that our macro fails to automatically wrap;
@@ -1393,7 +1406,6 @@ Here are the cleaned up macroexpansions for the wrappers around
 	        stateful-map key)
       (values value foundp))))
 }
-@[linebreak]
 @clcode{
 (defmethod pure:insert
     ((<interface> <linearized-map>) map key value)
@@ -1485,7 +1497,7 @@ One way of looking at things is by distinguishing
 concerns of behavior (code and meta-data) and state (data and identity).
 @[IPS] separates them, with the interface carrying only the behavior.
 Object-Oriented Style conflates them, with an object carrying all of it.
-A correspondance can be drawn between @[IPS]
+A correspondence can be drawn between @[IPS]
 and traditional Object-Oriented Style
 by viewing an interface as "detached" class information,
 as the part of an object that doesn't include its state,
@@ -1535,31 +1547,27 @@ extracting the interface,
 applying the corresponding interface function to the unboxed data,
 and wrapping new objects into boxes as appropriate.
 
-@subsubsection{Interface-Aware Boxes}
+@subsubsection{Parametric Classification}
 
 LIL includes a macro to automatically transform
-a stateful interface into an Object-Oriented API.
+a stateful interface into an Object-Oriented API,
+a process we dub "classification".
 However, this macro requires a little bit of configuration by the user
 to deal with constructor methods for which there isn't an object to dispatch on.
-The user may opt to create an Object-Oriented API for a singleton interface;
-then the constructor functions will take no extra argument
-and always build objects of the given class wrapping the given interface.
-Or the user may opt to create an Object-Oriented API
-for a parameterized family of interfaces;
-then the constructor functions will take an extra argument
-from which the user may extract the interface and/or the object class.
 
+Let us first examine the case where we want to generate
+a general-purpose Object-Oriented API out of
+a general-purpose abstract interface.
 For instance, here is how we export our @cl{stateful:<map>} interface parametrically
 into a @cl{>map<} class API, evaluating this in package @cl{classified}:
 @clcode{
 (define-classified-interface-class
   >map< (object-box) stateful:<map>
   ((interface :initarg :interface))
-  (:interface-argument stateful:<map>))
+  (:interface-argument <interface>))
 }
 
-Wrappers for @cl{lookup}, @cl{insert} and @cl{empty} are then
-respectively as follows:
+Wrappers for @cl{lookup}, @cl{insert} are then as follows:
 @clcode{
 (defmethod lookup
     ((map >map<) key)
@@ -1575,7 +1583,13 @@ respectively as follows:
          (map-data (box-ref map)))
     (stateful:insert <interface> map key value)
     (values)))
+}
 
+So far, so good: in good Object-Oriented style,
+the behavior is controlled by the first object supplied,
+from which the interface was extracted.
+However, the wrapper for @cl{empty} is awkwardly different:
+@clcode{
 (defmethod empty (<interface>)
   (multiple-value-bind (empty-data)
       (interface:empty <interface>)
@@ -1585,22 +1599,37 @@ respectively as follows:
       object)))
 }
 
-Note that this transformation macro as in previous ones,
-methods in the original and transformed signatures are simply matched by name.
-In the future, it would be easy to allow the user to customize
-the way method names are processed in these transformations.
+This difference reflects a general problem
+that Object-Oriented style has with constructors.
+Because Object-Oriented style locates class dispatch information
+in the first object,
+it has nothing to dispatch from where there is no object yet,
+and therefore has to treat constructors differently.
 
-@subsubsection{Parametric of Singleton Classification}
-
-In the above example, the @cl{:interface-argument} option
-was telling LIL that constructor functions will take that extra argument,
+Since in this case we are transforming an abstract interface,
+each object need to carry in a slot a parameter
+for the actual concrete interface with which the object was created.
+When creating the object, we need to supply this interface;
+the @cl{:interface-argument} option in
+@cl{define-classified-interface-class},
+tells constructors such as @cl{empty} to accept an extra argument
 which will become the interface to be attached to the constructed object.
-How the interface is extracted from that argument (or lack thereof)
-could have been overridden with the @cl{:extract-interface} option (see below).
+How the interface is extracted from that argument
+could have been overridden with the @cl{:extract-interface} option,
+but it defaults to using it directly.
 
-If instead we wanted to create an API for a singleton class,
-say @cl{stateful:<number-map>}, then in its own package
-@cl{classified-number-map} we could evaluate:
+@subsubsection{Singleton Classification}
+
+The user may opt to create an Object-Oriented API
+out of a singleton concrete interface.
+Then, constructor functions do not need an extra argument
+to be supplied the interface:
+the interface is a constant that is wired into the function.
+We can specify it with the @cl{:extract-interface} option,
+though there is no interface argument from which to extract it.
+For instance, we could create an API for a singleton interface
+@cl{stateful:<number-map>}, by evaluating the following form
+in its own package @cl{classified-number-map}:
 @clcode{
 (define-classified-interface-class
   >nm< (object-box) stateful:<number-map>
@@ -1704,7 +1733,7 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
    a restriction on the capabilities of our technique, or as
    the absence of a restriction on its applicability.}
  @item{
-   @emph{Interface arguments are explicit passed around rather than implicitly}.
+   @emph{Interface arguments are passed around explicitly rather than implicitly}.
    We embrace the opening up of what in other systems is an implementation detail.
    This gives our library a low-level flavor of control and responsibility;
    while the responsibility is indeed sometimes burdensome,
@@ -1738,7 +1767,7 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
    but instead has a global public namespace
    that favors dynamic linking of new methods to existing generic functions
    and dynamic instantiation of new interface objects with runtime parameters.
-   Note that this starkly constrasts with classes inside parameterized units,
+   Note that this starkly contrasts with classes inside parameterized units,
    as done in the PLT unit article @~cite[MOOPUM],
    where parameterized class are statically linked and strict scoped
    via an assemblage of units;
@@ -1799,7 +1828,7 @@ that has contributed features not previously available to @[CL] users:
 not only does it offer infrastructure for users to develop their own
 parametrically polymorphic datastructures,
 it sports a generic map interface with pure and stateful variants,
-and implementations as balanced binary trees, hash-tables or patricia trees.
+and implementations as balanced binary trees, hash-tables or Patricia trees.
 
 Yet, in many ways, LIL is still in its early stages;
 at the current moment it is a usable proof of concept
@@ -1899,6 +1928,7 @@ from the API specification itself.
 If the specifications also include annotations about performance guarantees,
 this opens a venue for a more declarative approach
 to datastructure development.
+@[pdflinebreak]
 
 @subsubsection{Why And Wherefore}
 
@@ -1930,7 +1960,8 @@ best suits his needs.
 
 @(generate-bib)
 
-@section[#:style (style #f '(hidden unnumbered))]{Credits}
+@section[#:style (style #f '(hidden unnumbered))]{}
+@larger{@bold{Credits}}
 
 Many thanks to my wife Rebecca for supporting me throughout this development,
 to my employer Google and my manager Allan Fraser for bearing with me

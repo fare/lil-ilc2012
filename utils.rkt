@@ -4,6 +4,8 @@
 ;;(display "In utils.rkt!\n")
 
 (require
+  scribble/core
+  scribble/decode
   scribble/base
   scriblib/autobib
   scribble/manual
@@ -14,12 +16,14 @@
   XXX IPS CL gf gfs LIL
   cl clcode clblock <>
   ~cite define-bib generate-bib
-  long short abstract-only)
+  long short abstract-only backend sf
+  pdfonly htmlonly pdflinebreak)
 
 ;;(define-syntax-rule (~cite what ...) "")
 
 
 (define abstract-only (make-parameter #f))
+(define backend (make-parameter '#:pdf))
 (define-syntax-rule (long x ...) (unless (abstract-only) (list x ...)))
 (define-syntax-rule (short x ...) (when (abstract-only) (list x ...)))
 
@@ -49,6 +53,13 @@
 
 (define-syntax-rule (<> x) (cl (string-append "<" x ">")))
 
+(define-syntax-rule (pdfonly body ...)
+  (case (backend) ((#:pdf) body ...)))
+(define-syntax-rule (htmlonly body ...)
+  (case (backend) ((#:html) body ...)))
+
+(define (pdflinebreak) (pdfonly (linebreak)))
+
 (define-cite ~cite cite-noun generate-bib)
 
 (define-syntax-rule (define-bib name stuff ...)
@@ -57,3 +68,6 @@
 ;;(define-syntax-rule (p+ x ...) (list x ...))
 
 (define-syntax-rule (XXX x ...) '())
+
+(define (sf . str) (make-element 'sf (decode-content str)))
+
