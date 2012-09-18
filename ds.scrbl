@@ -9,14 +9,11 @@
 
 @(provide doc)
 
-@pdfonly[
-   @title{LIL: CLOS meets higher-order data structures
-   	       @[linebreak]@larger{@larger{@larger{@bold{@sf{
-	    and has a transforming experience}}}}}}]
-@htmlonly[
-   @title{LIL: CLOS meets higher-order data structures
-   	       @[linebreak]
-	    and has a transforming experience}]
+@(define title1 "LIL: CLOS reaches higher-order, sheds identity")
+@(define title2 "and has a transformative experience")
+
+@(pdfonly (title title1 (linebreak) (larger(larger(larger(bold(sf title2)))))))
+@(htmlonly (title title1 ", " title2))
 
 @authorinfo["François-René Rideau" "Google" "tunes@google.com"]
 @;@authorinfo["Eric O'Connor" "Mercer University" "oconnore@gmail.com"]
@@ -26,35 +23,34 @@
 @;@copyrightdata{123-4-5678-9012-3/45/67}
 
 @abstract{
-LIL, the @[LIL],
-uses an @[IPS]
-to implement an algorithmic data structure library.
-By separating algorithmic information
-from the concrete representation of data
-and encapsulating it in first-class interface objects,
-and by explicitly passing around these interface objects as arguments to generic functions,
-LIL simultaneously allows for both parametric polymorphism
-(abstracting over types, classes, functions, data)
-and ad-hoc polymorphism
-(sharing of code and data fragments through CLOS inheritance and mixins).
-LIL provides interfaces to both
-pure functional (persistent) and stateful (ephemeral) data structures,
-with a common fragment for read-only methods.
-Based on meta-data modeling the side-effects of methods,
-macros can transform pure interfaces into stateful interfaces
-and the other way around,
-automatically wrapping methods with proper boxing.
-Finally, judicious Lisp macros allow developers to avoid boilerplate and
+LIL, the @[LIL], is a data structure library based on @[IPS].
+This programming style was designed to allow for parametric polymorphism
+(abstracting over types, classes, functions, data) as well as
+ad-hoc polymorphism
+(incremental development with inheritance and mixins).
+It consists in isolating algorithmic information into first-class interfaces,
+explicitly passed around as arguments dispatched upon by generic functions.
+As compared to traditional objects,
+these interfaces typically lack identity and state,
+while they manipulate data structures without intrinsic behavior.
+This style makes it just as easy to use
+pure functional persistent data structures without identity or state
+as to use stateful imperative ephemeral data structures.
+Judicious Lisp macros allow developers to avoid boilerplate and
 to abstract away interface objects to expose classic-looking Lisp APIs.
+Using on a very simple linear type system to model the side-effects of methods,
+it is even possible to transform pure interfaces into stateful interfaces
+or the other way around, or to transform a stateful interface
+into a traditional object-oriented API.
 }
 
 @section{Introduction}
 
 In dynamically typed languages such as @[CL] or Python
-(but also in some statically typed languages like the original C++),
+(but also in some statically typed languages like the initial C++),
 programmers usually rely on ad-hoc polymorphism
 to provide a uniform interface to multiple kinds of situations:
-a given function can accept arguments of many types thanks to dynamic typing,
+a given function can accept arguments of many types
 then dispatch on the type of these arguments to select an appropriate behavior.
 Object-oriented programming via user-defined classes or prototypes
 may then provide extension mechanisms
@@ -64,7 +60,7 @@ in a class (or prototype) hierarchy.
 More advanced object systems such as the @[CL] Object System (CLOS)
 have further mechanisms such as multiple inheritance,
 multiple dispatch, and method combinations,
-that allow for a more decentralized specification of program behavior.
+that allow for a more decentralized specification of behavior.
 
 In statically typed languages such as ML or Haskell
 (but also in some dynamically typed languages such as
@@ -1975,15 +1971,3 @@ to Eric O'Connor for kickstarting the development of LIL
 as an independent library,
 to Zach Beane for being a one-man Release and QA system for @[CL] libraries,
 to my reviewers and proofreaders for their feedback.
-
-@XXX{
-The call for paper is here:
-http://international-lisp-conference.org/2012/call-for-papers.html
-
-   Important Dates:
-
-     Deadline for final paper submissions: September 25, 2012 (was August 31, 2012)
-
-A complete technical paper is up to 15 pages and must describe original results.
-
-}
