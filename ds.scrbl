@@ -47,7 +47,7 @@ In dynamically typed languages such as @[CL] or Python
 (but also in some statically typed languages like the original C++),
 programmers usually rely on ad-hoc polymorphism
 to provide a uniform interface to multiple kinds of situations:
-a same function can accept arguments of many types thanks to dynamic typing,
+a given function can accept arguments of many types thanks to dynamic typing,
 then dispatch on the type of these arguments to select an appropriate behavior.
 Object-Oriented programming via user-defined classes or prototypes
 may then provide extension mechanisms
@@ -68,8 +68,8 @@ algorithmic units be parameterized with types, functions
 and other similar algorithmic units.
 These units can then be composed, allowing for elegant designs
 that make it easier to reason about programs in modular ways;
-the composition also enables the bootstrapping of more elaborate versions
-of a same datastructure interface type from simpler components.
+the composition also enables the bootstrapping of more elaborate implementations
+of a given interface interface type from simpler implementations.
 
 In the past, many languages,
 usually statically typed languages (C++, OCaml, Haskell, Java, Scala, etc.),
@@ -758,7 +758,7 @@ where no object exists yet on which to dispatch.
 @subsubsection{Bootstrapping Datastructures}
 
 A second advantage of explicit interfaces is that
-different instances of a same interface class can apply to the same object.
+different instances of a given interface class can apply to the same object.
 One way that we put this technique to profit on LIL is
 in how we bootstrap pure hash-tables.
 @;@note{@smaller{
@@ -939,7 +939,7 @@ in the first come Turing tar-pit of a programming language.
 Still we contend that interfaces can be an elegant solution to many problems,
 particularly in situations where a problem has symmetries and regularities
 that can be expressed as
-a same parametric interface applying to multiple situations.
+the same parametric interface applying to multiple situations.
 
 @section{Interface Transformations}
 
@@ -1064,7 +1064,7 @@ from there through one of the above or below mechanisms.
 
 @subsection{From Pure to Stateful and Back}
 
-@subsubsection{Variants of a Same Structure}
+@subsubsection{Variants of a Datastructure}
 
 In previous sections, we explained how interfaces maintain meta-information
 about the call arguments and return value conventions
@@ -1085,7 +1085,7 @@ that convert between pure and stateful interfaces.
 
 @subsubsection{Mutating and Linearized}
 
-In a pure (functional) interface implementing a persistent datastructure
+In a pure (functional) interface implementing a persistent datastructure,
 input arguments are values that are never modified.
 Instead, some functions have output values that represent
 an updated value for the "same" notional object
@@ -1709,7 +1709,7 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
    This gives our library a low-level flavor of control and responsibility;
    while the responsibility is indeed sometimes burdensome,
    we can take advantage of that control to access
-   a same datastructure through multiple interfaces.}
+   the same datastructure through multiple interfaces.}
  @item{
    @emph{Our interfaces can be parameterized by arbitrary first-class data}.
    The parameters are not constrained to be second-class entities
