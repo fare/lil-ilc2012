@@ -375,7 +375,7 @@ For instance,
 for datatypes with an equality comparison predicate @cl{==}.
 @<>{hashable}, is an interface that inherits from @<>{eq},
 for datatypes with a function @cl{hash} such
-that two equal values (as compared by @<>{==}) have the same hash.
+that two equal values (as compared by @cl{==}) have the same hash.
 @<>{equal} is an interface that inherits from @<>{hashable},
 and implements equality with the standard @[CL] predicate @cl{equal}
 and @cl{hash} with the standard @[CL] function @cl{sxhash}.
