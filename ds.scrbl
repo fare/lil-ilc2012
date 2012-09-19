@@ -1574,7 +1574,7 @@ into a @cl{>map<} class API, evaluating this in package @cl{classified}:
   (:interface-argument (<interface> stateful:<map>)))
 }
 
-Wrappers for @cl{lookup}, @cl{insert} are then as follows:
+The wrappers for @cl{lookup}, @cl{insert} are then as follows:
 @clcode{
 (defmethod lookup ((map >map<) key)
   (let* ((<interface> (class-interface map))
@@ -1788,7 +1788,7 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
    @emph{We make it easy for users to hide these interfaces in usual cases}
    thanks to @[CL] macros,
    with facilities both syntactic (such as @cl{with-interface})
-o   and semantic (such as our macros to go from interfaces to classes).
+   and semantic (such as our macros to go from interfaces to classes).
    In common cases, we can therefore eschew the burden
    of explicitly passing around interface objects.}
  @item{
@@ -2024,4 +2024,4 @@ to Eric O'Connor for kickstarting the development of LIL
 as an independent library,
 to Zach Beane for being a one-man Release and QA system for @[CL] libraries,
 to Arthur Gleckler for his careful proofreading,
-to my anonymous reviewers and my many other proofreaders for their feedback.
+and to my anonymous reviewers and my other proofreaders for their feedback.

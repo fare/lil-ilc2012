@@ -71,7 +71,7 @@
 
 (define (sf . str) (make-element 'sf (decode-content str)))
 
-(define (ldquo) 'ldquo) ;;(make-element 'ldquo '()))
-(define (rdquo) 'rdquo) ;;(make-element 'rdquo '()))
+(define (ldquo) 'ldquo)
+(define (rdquo) 'rdquo)
 
 (define (q . content) (list (ldquo) content (rdquo)))
