@@ -86,7 +86,7 @@ in a way that nicely fits into the language
 and its existing ad-hoc polymorphism,
 taking full advantage of the advanced features of CLOS.
 
-In section 2, we describe
+In @seclink["sec-IPS"]{section 2}, we describe
 the @[IPS] @~cite[Rideau-IPS] in which LIL is written:
 meta-data about the current algorithm is encapsulated
 in a first-class interface object,
@@ -95,7 +95,7 @@ in computations that may require specialization based on it.
 We show basic mechanisms by which this makes it possible
 to express both ad-hoc and parametric polymorphism.
 
-In section 3, we demonstrate how we use this style to implement
+In @seclink["sec-ClassicStructs"]{section 3}, we demonstrate how we use this style to implement
 a library of classic data structures,
 both pure (persistent) and stateful (ephemeral).
 We show how our library makes good use of @[IPS]
@@ -109,7 +109,7 @@ from simpler but less efficient variants;
 first-class interfaces allow the very same object
 to implement a given type of interface in different ways.
 
-In section 4, we show how adequate macros can bridge the gap
+In @seclink["sec-Transformations"]{section 4}, we show how adequate macros can bridge the gap
 between different programming styles:
 between syntactically implicit or explicit interfaces,
 between pure functional and stateful data structures,
@@ -127,7 +127,7 @@ for polymorphism in these languages or to their underlying implementation,
 and what are the current limitations of our library and
 our plans of future developments.
 
-@section{Interface-Passing Style}
+@section[#:tag "sec-IPS"]{Interface-Passing Style}
 @subsection{Using Interfaces}
 
 @subsubsection{Interface Passing: An Extra Argument}
@@ -476,7 +476,7 @@ It works because interfaces don't usually have intensional identity,
 only extensional content.
 Indeed, they embody behavioral meta-information notionally meant
 to be expanded before any code is actually run.
-See in latter sections how interfaces compare to traditional objects.
+See in @seclink["sec-Classify"]{latter sections} how interfaces compare to traditional objects.
 }}
 
 In the above @cl{<alist>} example,
@@ -602,7 +602,7 @@ even in a language without single dispatch and/or with static typing.
 Indeed, an equivalent approach already solves these issues in Haskell.
 @[pdflinebreak]@[pdflinebreak]
 
-@section{Revisiting Classic Structures}
+@section[#:tag "sec-ClassicStructs"]{Revisiting Classic Structures}
 
 @subsection{Pure and Stateful Data Structures}
 
@@ -840,7 +840,7 @@ Our @cl{pure:<hash-table>} is defined parametrically as follows
 }
 
 Methods are then straightforward.
-For instance see the @cl{insert} method, and notice the pun:
+For instance, see the @cl{insert} method, and notice the pun:
 @clcode{
 (defmethod insert
     ((<i> <hash-table>) map key value)
@@ -1485,7 +1485,7 @@ Efforts toward such a generalization would probably be
 an interesting venue for further research,
 but are beyond the scope of our current projects.
 
-@subsection{From Interfaces to Classes and Back}
+@subsection[#:tag "sec-Classify"]{From Interfaces to Classes and Back}
 
 @subsubsection{Interfaces as Detached Classes}
 
