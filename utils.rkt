@@ -51,7 +51,7 @@
 (define-syntax-rule (cl str ...)
   @code[#|#:lang "cl"|# str ...])
 
-(define-syntax-rule (<> x) (cl (string-append "<" x ">")))
+(define-syntax-rule (<> x) (cl "<" x ">"))
 
 (define-syntax-rule (pdfonly body ...)
   (case (backend) ((#:pdf) body ...)))

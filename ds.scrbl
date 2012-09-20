@@ -144,8 +144,8 @@ symbols that denote interface classes,
 variables bound to interface objects,
 or functions returning interface objects
 will usually start and end with respective angle brackets @cl{<} and @cl{>}.
-For instance, the interface to objects that may be empty is @<>{emptyable},
-whereas a prototypical interface variable would be @<>{i}.
+For instance, the interface to objects that may be empty is @cl{<emptyable>},
+whereas a prototypical interface variable would be @cl{<i>}.
 
 @subsubsection{Trivial Example: Maps}
 
@@ -198,7 +198,7 @@ Our alist interface is pure,
 meaning that the maps it manipulates are never modified in place, but
 new lists and association pairs are created as required.
 In particular, the function @cl{insert}
-when applied to our @<>{alist} interface,
+when applied to our @cl{<alist>} interface,
 will return a new alist object:
 @clcode{
 (insert <alist>
@@ -292,7 +292,7 @@ unspecified behavior may ensue
 (usually resulting in a runtime error at some point),
 as generic functions may or may not check their arguments for consistency.
 While our library does provide a function @cl{check-invariant}
-as part of the signature of interface @<>{type},
+as part of the signature of interface @cl{<type>},
 most of the methods we provide do not call said function, which may be expensive,
 and instead trust the user to call as appropriate,
 typically at the entry points of his code or while testing or debugging.
@@ -325,16 +325,16 @@ a stripped-down excerpt from our library:
    (:in 1) (:values boolean)
    (:documentation "Is object empty?")))}
 
-It defines an interface @<>{emptyable},
+It defines an interface @cl{<emptyable>},
 the name of which is passed as first argument to the macro,
 as in @cl{defclass}.
 
 The second argument is a list specifying super-interfaces
 from which to inherit behavior, also as in @cl{defclass}.
-In this case, there is one and only one super-interface, @<>{type}.
-In our library, @<>{type} is an abstract interface
+In this case, there is one and only one super-interface, @cl{<type>}.
+In our library, @cl{<type>} is an abstract interface
 specifying that some datatype is targeted by interface functions.
-@<>{emptyable} extends it with the notion that
+@cl{<emptyable>} extends it with the notion that
 elements of that type may be empty.
 
 Still as in @cl{defclass}, the third argument is a list of slots.
@@ -370,19 +370,19 @@ Interfaces may inherit from other interfaces
 and be organized in inheritance hierarchies.
 
 For instance,
-@<>{type} is an interface with an associated datatype.
-@<>{eq}, is an interface that inherits from @<>{type},
+@cl{<type>} is an interface with an associated datatype.
+@cl{<eq>}, is an interface that inherits from @cl{<type>},
 for datatypes with an equality comparison predicate @cl{==}.
-@<>{hashable}, is an interface that inherits from @<>{eq},
+@cl{<hashable>}, is an interface that inherits from @cl{<eq>},
 for datatypes with a function @cl{hash} such
 that two equal values (as compared by @cl{==}) have the same hash.
-@<>{equal} is an interface that inherits from @<>{hashable},
+@cl{<equal>} is an interface that inherits from @cl{<hashable>},
 and implements equality with the standard @[CL] predicate @cl{equal}
 and @cl{hash} with the standard @[CL] function @cl{sxhash}.
-@<>{eql} is an interface that inherits from @<>{eq},
+@cl{<eql>} is an interface that inherits from @cl{<eq>},
 and implements equality with the standard @[CL] predicate @cl{eql};
 since there is no standard @[CL] hash function that corresponds to it,
-it doesn't inherit from @<>{hashable}.
+it doesn't inherit from @cl{<hashable>}.
 
 @subsubsection{Multiple Inheritance of Interfaces}
 
@@ -411,20 +411,20 @@ the implementation of some signature functions from other signature functions.
 Depending on which signature functions are more @q{primitive} for a given concrete data structure,
 opposite mixins may be used that deduce some functions from the others or the other way around.
 
-For instance, the @<>{eq} interface actually has two associated functions,
+For instance, the @cl{<eq>} interface actually has two associated functions,
 @cl{(== <i> x y)}  that compares two objects @cl{x} and @cl{y}, and equivalently
 @cl{(eq-function <i>)} that returns a function object that may be passed
 as an argument to various higher-order functions.
-The mixin @<>{eq-from-==} will automatically deduce @cl{eq-function}
+The mixin @cl{<eq-from-==>} will automatically deduce @cl{eq-function}
 from @cl{==} while the converse deduction is provided by the mixin
-@<>{eq-from-eq-function}.
+@cl{<eq-from-eq-function>}.
 
 @subsubsection{Parametric Interfaces}
 
 Interfaces may be parameterized by other interfaces
 as well as by any object.
 
-For instance, consider the current definition of @<>{alist} in our library:
+For instance, consider the current definition of @cl{<alist>} in our library:
 
 @clcode{
 (define-interface <alist>
@@ -442,14 +442,14 @@ For instance, consider the current definition of @<>{alist} in our library:
 
 The super-interface list contains several mixins
 to deduce various methods from more primitive methods,
-together with the interface @<>{map} that provides the signature.
+together with the interface @cl{<map>} that provides the signature.
 
 But most importantly,
 The list of slots contains a single slot @cl{key-interface}.
 Indeed, association lists crucially depend on an equality predicate
 with which to compare keys when looking up a given key.
-Our @<>{alist} interface therefore has this slot,
-the value of which must inherit from @<>{eq},
+Our @cl{<alist>} interface therefore has this slot,
+the value of which must inherit from @cl{<eq>},
 that will specify how to compare keys.
 
 Slot definitions such as these are how
@@ -459,7 +459,7 @@ as interface objects with a specific value in that slot,
 and a method defined on this interface class
 can extract the value in said slot as a parameter to its behavior.
 
-Our definition of @<>{alist} also uses
+Our definition of @cl{<alist>} also uses
 two options recognized by @cl{define-interface}
 that are not provided by @cl{defclass}:
 @cl{:parametric} and @cl{:singleton}.
@@ -479,10 +479,10 @@ to be expanded before any code is actually run.
 See in latter sections how interfaces compare to traditional objects.
 }}
 
-In the above @<>{alist} example,
-the function takes one optional parameter that defaults to @<>{eql}
+In the above @cl{<alist>} example,
+the function takes one optional parameter that defaults to @cl{<eql>}
 (itself a variable bound to a singleton interface).
-This means that if no @<>{eq} interface is specified,
+This means that if no @cl{<eq>} interface is specified,
 we will follow the @[CL] convention and tradition in providing
 the @cl{eql} function as the default comparison function.
 The body of the parametric function creates the interface object using
@@ -492,7 +492,7 @@ that handles memoization of an underlying CLOS @cl{make-instance}.
 Our library implements data structures more elaborate than alists.
 For instance, you could use balanced binary tree, in which case
 you would have to provide the tree interface with
-a parameter @cl{key-interface} that inherits from @<>{order},
+a parameter @cl{key-interface} that inherits from @cl{<order>},
 so that keys may be compared.
 Thus,
 @cl{(stateful:<avl-tree> <number>)}
@@ -515,7 +515,7 @@ If a @cl{:parametric} option was provided,
 its function will be called with default values.
 Otherwise, a trivial version of such a function will be defined and used.
 
-Clients can therefore use the variable @<>{alist}
+Clients can therefore use the variable @cl{<alist>}
 to refer to the one default such interface,
 instead of having either to create a new instance every time,
 be it with @cl{(<alist>)}
@@ -532,8 +532,8 @@ at least not directly,
 as dispatching on the interface would use up the object-oriented ability
 to specialize behavior depending on arguments.
 
-As the simplest example, an interface @<>{empty-object}
-could implement the @<>{emptyable} signature functions as follows,
+As the simplest example, an interface @cl{<empty-object>}
+could implement the @cl{<emptyable>} signature functions as follows,
 given a class @cl{empty-object} for its empty objects:
 @clcode{
 (defmethod empty-p
@@ -556,10 +556,10 @@ The functions from the interface's super-interfaces are inherited;
 additional functions can be directly declared
 using the @cl{:generic} option of @cl{declare-interface}.
 
-Some interfaces, such as @<>{emptyable} above,
+Some interfaces, such as @cl{<emptyable>} above,
 exist for the sole purpose of declaring such functions,
 while leaving full freedom to sub-interfaces as to how to implement them.
-That is why @<>{emptyable} was marked as @cl{:abstract}:
+That is why @cl{<emptyable>} was marked as @cl{:abstract}:
 it is not meant to be instantiated,
 only to be inherited from by other interfaces,
 and dispatched upon in some methods.
@@ -989,9 +989,11 @@ an insertion sort for number-indexed alists:
     (let ((m (alist-map alist)))
       (fold-right m 'acons nil))))
 }
-Notice how the @<>{number-map} interface object was implicitly passed
-to calls to two functions in the @<>{map} interface class,
+Notice how the @cl{<number-map>} interface object was implicitly passed
+to calls to two functions in the @cl{<map>} interface class,
 @cl{alist-map} and @cl{fold-right}.
+This macro is of course gets more interesting
+as you write longer functions that have more such calls.
 (Interestingly, since we insert through the generic function
 @cl{alist-map}, this function works in both pure and stateful contexts.)
 
@@ -1004,7 +1006,7 @@ to other methods in the interface signature.
 Therefore @cl{define-interface} also has an option @cl{:method}
 that defines methods with an implicit @cl{with-interface}.
 For instance, here is the definition of the previously mentioned
-@<>{eq-from-==} mixin:
+@cl{<eq-from-==>} mixin:
 @clcode{
 (define-interface <eq-from-==> (<eq>) ()
   (:abstract)
@@ -1016,7 +1018,7 @@ Notice also how no interface argument is explicitly passed to @cl{==}.
 
 In case the interface is needed for some explicit call,
 the interface argument is bound to the symbol naming the interface
-(in this case @<>{eq-from-==}),
+(in this case @cl{<eq-from-==>}),
 rather than to a special symbol
 (such as @cl{self} as in other languages).
 In case one of the shadowed interface functions is needed for some call
@@ -1333,8 +1335,8 @@ Interestingly, amongst the many functions we initially came up with
 while developing our map API,
 the only that didn't fit this simplest of models were
 @cl{join/list} and @cl{divide/list}.
-These functions respectively
-take as argument and return a list of map objects.
+The former respectively takes a list of map objects as argument,
+and the latter returns a list of map objects.
 
 Here is a how we manually wrap @cl{divide/list}:
 @clcode{
@@ -1841,8 +1843,8 @@ as an alternative to traditional object-oriented style.
 
 @subsubsection{Innovation: Interface Transformations}
 
-Thanks to @[CL] syntax extension, we could also achieve
-a few interesting features
+Thanks notably to the syntax extensibility of @[CL],
+we could also achieve a few interesting features
 beside the addition of parametric polymorphism to @[CL]:
 
 @itemlist[
@@ -1850,7 +1852,7 @@ beside the addition of parametric polymorphism to @[CL]:
    Our library provides both pure and stateful data structures
    that share a common interface for read-only methods.}
  @item{
-   Macros make interfaces implicit again in the usual cases.}
+   We provide macros to make interfaces implicit again in the usual cases.}
  @item{
    For the sake of the above, we associate @[gfs] to interfaces.}
  @item{
@@ -1984,9 +1986,11 @@ to data structure development.
 
 @subsubsection{Why And Wherefore}
 
-The proximate trigger for the ideas that became this article was
+The proximate trigger for what became this article was
 a study we made on how to introduce modularity
-in the overly monolithic code base of QRes at ITA.
+in the overly monolithic code base of QRes at ITA;
+we started the library as a proof of concept of
+our proposal for introducing parametric polymorphism in @[CL].
 Interestingly, though, the idea of detaching behavioral meta-data about objects
 in an entity separate from their state data and passed as an extra argument
 dates from our very first dabbling in implementing

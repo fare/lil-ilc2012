@@ -33,3 +33,6 @@ clean:
 
 mrproper:
 	git clean -xfd
+
+rsync: html pdf
+	rsync -av ${LIL}.html ${LIL}.pdf common-lisp.net:~frideau/public_html/lil-ilc2012/
