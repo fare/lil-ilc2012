@@ -272,7 +272,7 @@ to the context at hand:
 The method above abstracts over interface @cl{<i>},
 which is constrained to be a sub-interface of @cl{pure:<map>},
 and will notably rely on the latter's signature function @cl{divide/list}.
-This function is a defined in our library,
+This function is defined in our library,
 and divides a map @cl{map} in a list of non-empty submaps
 each with strictly fewer mappings than the original map,
 unless said map has exactly one mapping, in which case
