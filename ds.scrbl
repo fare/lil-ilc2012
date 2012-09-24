@@ -38,7 +38,7 @@ pure functional persistent data structures without identity or state
 as to use stateful imperative ephemeral data structures.
 Judicious Lisp macros allow developers to avoid boilerplate and
 to abstract away interface objects to expose classic-looking Lisp APIs.
-Using on a very simple linear type system to model the side-effects of methods,
+Using only a very simple linear type system to model the side-effects of methods,
 it is even possible to transform pure interfaces into stateful interfaces
 or the other way around, or to transform a stateful interface
 into a traditional object-oriented API.
@@ -49,8 +49,8 @@ into a traditional object-oriented API.
 In dynamically typed languages such as @[CL] or Python
 (but also in some statically typed languages like the initial C++),
 programmers usually rely on ad-hoc polymorphism
-to provide a uniform interface to multiple kinds of situations:
-a given function can accept arguments of many types
+to provide a uniform interface to multiple situations:
+a given function can accept arguments of many types,
 then dispatch on the type of these arguments to select an appropriate behavior.
 Object-oriented programming via user-defined classes or prototypes
 may then provide extension mechanisms
@@ -67,12 +67,12 @@ In statically typed languages such as ML or Haskell
 in PLT Scheme when using units @~cite[Units-Flatt-Felleisen]),
 programmers usually rely on parametric polymorphism
 to write generic algorithms applicable to a large range of situations:
-algorithmic units be parameterized with types, functions
+algorithmic units can be parameterized with types, functions
 and other similar algorithmic units.
 These units can then be composed, allowing for elegant designs
 that make it easier to reason about programs in modular ways;
 the composition also enables the bootstrapping of more elaborate implementations
-of a given interface interface type from simpler implementations.
+of a given interface type from simpler ones.
 
 In the past, many languages,
 usually statically typed languages (C++, OCaml, Haskell, Java, Scala, etc.),
@@ -81,7 +81,7 @@ have offered some combination of both
 ad-hoc polymorphism and parametric polymorphism,
 with a variety of results.
 In this paper, we present LIL, the @[LIL]@~cite[LIL2012],
-which brings parametric polymorphism to @[CL],
+which brings parametric polymorphism to @[CL]
 in a way that nicely fits into the language
 and its existing ad-hoc polymorphism,
 taking full advantage of the advanced features of CLOS.
@@ -115,7 +115,7 @@ between syntactically implicit or explicit interfaces,
 between pure functional and stateful data structures,
 between interface-passing and object-oriented style.
 All these macros allow programmers to choose a programming style
-that best fit the problem at hand and their own tastes
+that best fits the problem at hand and their own tastes,
 while still enjoying the full benefits of @[IPS] libraries.
 They work based on a model of the effects of interface functions
 according to a simple type system rooted in linear logic.
@@ -164,7 +164,7 @@ where information on which precise algorithm to use
 is instead encapsulated in the extra argument @cl{<i>},
 an interface.
 
-You could thus lookup the year
+You could thus look up the year
 in an alist of data about a conference with code such as:
 @clcode{
 (lookup <alist>
@@ -188,7 +188,7 @@ Of course, which effects a function call has
 and which results it returns
 may vary with the interface as well as the function.
 
-For instance, our simplest of interface, @cl{<alist>},
+For instance, our simplest map interface, @cl{<alist>},
 as the name implies, implements maps as association lists
 in the usual @[CL] tradition:
 a list of pairs (@cl{cons} cells),
@@ -371,9 +371,9 @@ and be organized in inheritance hierarchies.
 
 For instance,
 @cl{<type>} is an interface with an associated datatype.
-@cl{<eq>}, is an interface that inherits from @cl{<type>},
+@cl{<eq>} is an interface that inherits from @cl{<type>},
 for datatypes with an equality comparison predicate @cl{==}.
-@cl{<hashable>}, is an interface that inherits from @cl{<eq>},
+@cl{<hashable>} is an interface that inherits from @cl{<eq>},
 for datatypes with a function @cl{hash} such
 that two equal values (as compared by @cl{==}) have the same hash.
 @cl{<equal>} is an interface that inherits from @cl{<hashable>},
@@ -404,7 +404,7 @@ with pure update as well as mere lookup.
 @subsubsection{Interface Mixins}
 
 Our library also relies on multiple-inheritance extensively
-in the form of mixins:
+in the form of mixins (also known as traits):
 small interface classes implement a small aspect of the interface.
 Oftentimes, a mixin will be used to simply deduce
 the implementation of some signature functions from other signature functions.
@@ -428,11 +428,14 @@ For instance, consider the current definition of @cl{<alist>} in our library:
 
 @clcode{
 (define-interface <alist>
-    (map-simple-empty map-simple-decons
-     map-simple-update-key
-     map-divide/list-from-divide
-     map-simple-map/2 map-simple-join
-     map-simple-join/list <map>)
+    (<map-empty-as-nil>
+     <map-decons-from-first-key-value-drop>
+     <map-update-key-from-lookup-insert-drop>
+     <map-divide/list-from-divide>
+     <map-map/2-from-fold-left-lookup-insert-drop>
+     <map-join-from-fold-left-insert>
+     <map-join/list-from-join>
+     <map>)
   ((key-interface
     :initarg :key-interface
     :reader key-interface))
@@ -469,7 +472,7 @@ that are not provided by @cl{defclass}:
 The @cl{:parametric} option automatically generates
 a function to instantiate parameterized interface objects.
 This function further uses memoization so interfaces with identical parameters
-end up being the actual same interface object
+end up being the same interface object
 rather than a new object every time.@note{@smaller{
 This memoization is effectively a hash-consing strategy.
 It works because interfaces don't usually have intensional identity,
@@ -550,7 +553,7 @@ with bigger class hierarchies or dispatch on more than two arguments.
 
 @subsubsection{Interface Signatures}
 
-To each interface is attached a set of functions declared
+Each interface is attached to a set of functions declared
 as part of the interface's signature.
 The functions from the interface's super-interfaces are inherited;
 additional functions can be directly declared
@@ -560,8 +563,8 @@ Some interfaces, such as @cl{<emptyable>} above,
 exist for the sole purpose of declaring such functions,
 while leaving full freedom to sub-interfaces as to how to implement them.
 That is why @cl{<emptyable>} was marked as @cl{:abstract}:
-it is not meant to be instantiated,
-only to be inherited from by other interfaces,
+it is an error to try to instantiate it,
+its purpose is to be inherited from by other interfaces,
 and dispatched upon in some methods.
 
 We saw that some abstract interfaces have the opposite purpose:
@@ -633,7 +636,8 @@ the commonalities and divergences between pure and stateful data structures.
 
 The @cl{interface::<map>} interface directly declares functions
 @cl{lookup}, @cl{first-key-value}, @cl{fold-left}, @cl{fold-right} and
-@cl{map-alist} that access an existing map in a read-only way.
+@cl{map-alist} that access an existing map in a read-only way
+(the latter builds an alist from the map).
 It also declares a function @cl{alist-map}
 that creates a map initialized from an alist,
 and is quite useful for specifying non-empty constant maps.
@@ -678,7 +682,7 @@ multiple dispatch and method combinations.
 For instance, here is the complete implementation
 of stateful AVL trees on top of previous layers,
 one of which implements self-balancing as two @cl{:after} methods,
-on @cl{insert} and @cl{drop}:
+on @cl{insert} and @cl{drop} that each simply call @cl{balance-node}:
 
 @clcode{
 (define-interface <avl-tree>
@@ -818,8 +822,11 @@ Our @cl{pure:<hash-table>} is defined parametrically as follows
 (the following paragraphs are to be read in package @cl{pure}):
 @clcode{
 (define-interface <hash-table>
-    (map-simple-join map-simple-update-key
-     map-simple-map/2 <map>)
+    (<map-join-from-fold-left-insert>
+     <map-join/list-from-join>
+     <map-update-key-from-lookup-insert-drop>
+     <map-map/2-from-fold-left-lookup-insert-drop>
+     <map>)
   ((key-interface
     :reader key-interface
     :initarg :key)
@@ -903,7 +910,8 @@ one way, or the reverse way;
 one can view it as the support for a binary queue or a hash-table.
 No need to shuffle around the array elements in memory,
 or to indirect access to the array
-through several view objects that may have to be managed.
+through several view or façade objects that have to be managed
+and still may cause extra allocation.
 Just look through the lens of a different interface.
 
 We haven't yet implemented any non-trivial example of such heavy punning.
@@ -982,12 +990,14 @@ and what optional prefix to use
 (by default none as that would defeat the purpose).
 
 For instance, the following code implements
-an insertion sort for number-indexed alists:
+an insertion sort for number-indexed alists,
+by inserting all its entries in an ordered tree
+then walking the tree entries in order:
 @clcode{
 (defun mysort (alist)
   (with-interface (<number-map> <map>)
     (let ((m (alist-map alist)))
-      (fold-right m 'acons nil))))
+      (fold-right m #'acons nil))))
 }
 Notice how the @cl{<number-map>} interface object was implicitly passed
 to calls to two functions in the @cl{<map>} interface class,
@@ -1100,11 +1110,11 @@ Instead, some functions have output values that represent
 an updated value for the @q{same} notional object
 as one of the input values.
 In a stateful (imperative) interface to an ephemeral data structure,
-input arguments are objects may be inspected read-only or modified in-place;
+input arguments are objects that may be inspected read-only or modified in-place;
 functions that update an object modify it in place
-and do not return a new object.
+and do not usually return a new object.
 
-The correspondences between these two styles are as follow.
+The correspondences between these two styles are as follows.
 From a pure interface, a stateful interface may be deduced
 by putting the persistent values in a mutating box
 that stores the current value of the object;
@@ -1119,12 +1129,19 @@ the object is extracted from the box into the input,
 and is invalidated if there are any modifications,
 while a fresh box is created to hold the object in its new state if modified.
 We call the above transformation linearize
-and its result or argument (depending on context) the @emph{linearized} interface.
+and its result or argument (depending on context) the @emph{linearized} interface.@note{
+The pure functions can be seen as the state-passing style expansion
+of implementing the imperative interface with an explicit state monad.
+Stateful functions can be seen as pure linear functions
+with some arguments and results made implicit.
+The transformations are all about making these details implicit or explicit,
+depending on which way you go.
+}
 
 Interestingly,
 a stateful data structure linearized then mutating
-is isomorphic to the original data structure,
-but a pure data structure mutating then linearized
+is isomorphic to the original data structure;
+however, a pure data structure mutating then linearized
 isn't isomorphic to the original,
 unless we require that users should make an explicit copy
 of the data structure each time it may be used more than once,
@@ -1132,7 +1149,7 @@ as per Linear Logic.
 Indeed, the mutating transform is all about introducing the discipline
 of an object having a single current value that is only used once
 to produce the new current value (unless explicitly copied),
-and the linearized transform is all about enforcing this discipline
+and the linearized transform is all about enforcing the discipline
 that any value may only be used once (unless explicitly copied).
 Now, the entire point of (pure) persistent data structures is usually
 that they make copying a data structure practically free, and that
@@ -1348,7 +1365,7 @@ Here is a how we manually wrap @cl{divide/list}:
      (and list
           (progn
             (set-box-value (first list) map)
-            (cons map (mapcar 'box! (rest list)))))))}
+            (cons map (mapcar #'box! (rest list)))))))}
 
 Note how the first element in the list is special in that
 it shares the identity of the map being divided,
@@ -1473,7 +1490,7 @@ which it did not cover,
 can be considered as convenience optimizations for what
 can be done without, using fixed-arity functions
 @cl{divide} and @cl{join}.
-Still, we have already reached the the limits of our model,
+Still, we have already reached the limits of our model,
 and we must mention how our model may be fixed to handle such cases.
 
 Our signature annotations can be seen as some very simple
@@ -1511,7 +1528,7 @@ as the part of an object that doesn't include its state,
 and by viewing an object as a @q{subjective} interface,
 one where some state has been moved into the interface.
 
-Using this view point, it is possible to mechanically derive
+Using this viewpoint, it is possible to mechanically derive
 an Interface-Passing API from an object-oriented API or
 an object-oriented API from an Interface-Passing API.
 To go from one style to the other is a matter of splitting or joining back
@@ -1671,7 +1688,7 @@ in its own package @cl{classified-number-map}:
 Here the @cl{:allocation} @cl{:class} means
 that the interface slot is the same for all objects of that class.
 Indeed, when classifying an interface API,
-instance-specific data of the interface become
+instance-specific data of the interface becomes
 class-specific data of the class of the manipulated objects.
 The @cl{:extract-interface} option tells us how to get the interface
 in constructor methods despite the absence of extra interface argument.
@@ -1679,8 +1696,7 @@ The @cl{:interface-keyword} option,
 being overridden to @cl{nil} instead of the default @cl{:interface},
 tells us that we don't need to provide
 an interface argument to the internal @cl{make-instance} constructor,
-since it is a class constant rather than an object-specific parameter.@;@note{
-@;@smaller{
+since it is a class constant rather than an object-specific parameter.
 We could have further customized object wrapping and unwrapping with the
 @cl{:wrap} and @cl{:unwrap} options, defaulting respectively to
 @cl{`(make-instance ',class)} and @cl{`(box-ref)},
@@ -1688,7 +1704,6 @@ specifying the prefix of a form to build the object from interface data
 or extract the interface data from the object respectively;
 in the default wrapper, @cl{,class} will actually be
 the name of the class being defined by @cl{define-classified-interface-class}.
-@;}}
 
 With the definition above,
 the wrapper for the @cl{empty} constructor will then be:
@@ -1751,7 +1766,7 @@ have long practiced the principle of reifying
 some previously implicit aspect of their programs
 into new explicit objects that are passed around,
 as a means to formalize the meaning of their computations.
-Continuation Passing Style is a famous instance this practice,
+Continuation Passing Style is a famous instance of this practice,
 as are all kinds of environment passing styles.
 
 @subsubsection{@[IPS] Specificities}
@@ -1947,9 +1962,9 @@ but first-class reflection.
 Some protocol would manage the several classes of objects
 associated to an interface, and combine them all (or the relevant subset)
 with additional mixins when such mixins are specified;
-this would also be used extracting @q{classified} APIs from @[IPS] APIs.
+this would also be used for extracting @q{classified} APIs from @[IPS] APIs.
 Possibly, we could also provide some way for abstract interfaces
-to provide a default concrete implementations;
+to provide default concrete implementations;
 thus, in simple cases one could obtain a full implementation
 just by specifying the high-level properties of the desired algorithm,
 yet in more complex cases, manual specialization would be possible.
@@ -2027,5 +2042,5 @@ to Jon Rafkind for giving me a template to start from,
 to Eric O'Connor for kickstarting the development of LIL
 as an independent library,
 to Zach Beane for being a one-man Release and QA system for @[CL] libraries,
-to Arthur Gleckler for his careful proofreading,
+to Arthur Gleckler and Scott McKay for their careful proofreading,
 and to my anonymous reviewers and my other proofreaders for their feedback.
