@@ -16,7 +16,6 @@
 @(htmlonly (title title1 ", " title2))
 
 @authorinfo["François-René Rideau" "Google" "tunes@google.com"]
-@;@authorinfo["Eric O'Connor" "Mercer University" "oconnore@gmail.com"]
 
 @conferenceinfo["ILC 2012" "October 26--27, Kyoto, Japan."]
 @copyrightyear{2012}
@@ -26,7 +25,7 @@
 LIL, the @[LIL], is a data structure library based on @[IPS].
 This programming style was designed to allow for parametric polymorphism
 (abstracting over types, classes, functions, data) as well as
-ad-hoc polymorphism
+ad hoc polymorphism
 (incremental development with inheritance and mixins).
 It consists in isolating algorithmic information into first-class interfaces,
 explicitly passed around as arguments dispatched upon by generic functions.
@@ -48,7 +47,7 @@ into a traditional object-oriented API.
 
 In dynamically typed languages such as @[CL] or Python
 (but also in some statically typed languages like the initial C++),
-programmers usually rely on ad-hoc polymorphism
+programmers usually rely on ad hoc polymorphism
 to provide a uniform interface to multiple situations:
 a given function can accept arguments of many types,
 then dispatch on the type of these arguments to select an appropriate behavior.
@@ -78,12 +77,12 @@ In the past, many languages,
 usually statically typed languages (C++, OCaml, Haskell, Java, Scala, etc.),
 but also dynamically typed languages (PLT Scheme@~cite[MOOPUM]),
 have offered some combination of both
-ad-hoc polymorphism and parametric polymorphism,
+ad hoc polymorphism and parametric polymorphism,
 with a variety of results.
 In this paper, we present LIL, the @[LIL]@~cite[LIL2012],
 which brings parametric polymorphism to @[CL]
 in a way that nicely fits into the language
-and its existing ad-hoc polymorphism,
+and its existing ad hoc polymorphism,
 taking full advantage of the advanced features of CLOS.
 
 In @seclink["sec-IPS"]{section 2}, we describe
@@ -93,14 +92,14 @@ in a first-class interface object,
 and this object is then explicitly passed around
 in computations that may require specialization based on it.
 We show basic mechanisms by which this makes it possible
-to express both ad-hoc and parametric polymorphism.
+to express both ad hoc and parametric polymorphism.
 
 In @seclink["sec-ClassicStructs"]{section 3}, we demonstrate how we use this style to implement
 a library of classic data structures,
 both pure (persistent) and stateful (ephemeral).
 We show how our library makes good use of @[IPS]
 to build up interesting data structures:
-ad-hoc polymorphism allows us to share code fragments through mixins;
+ad hoc polymorphism allows us to share code fragments through mixins;
 various tree implementations can thus share most of their code
 yet differ where it matters;
 parametric polymorphism allows the composition of data structures
@@ -1809,14 +1808,14 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
    In common cases, we can therefore eschew the burden
    of explicitly passing around interface objects.}
  @item{
-   @emph{We support ad-hoc polymorphism by explicitly dispatching on interface arguments}.
+   @emph{We support ad hoc polymorphism by explicitly dispatching on interface arguments}.
    These interfaces need not be uniform dictionaries
    (like the implicit arguments in the respective implementations
    of the above-mentioned systems),
    but can be objects of arbitrary user-defined classes,
    subject to the usual object-oriented dispatch techniques.}
  @item{
-   @emph{Our ad-hoc polymorphism is scoped outside of parameters, not inside}.
+   @emph{Our ad hoc polymorphism is scoped outside of parameters, not inside}.
    This lambda lifting of interface objects matters a lot for @[CL],
    because @[CL] has neither first-class class combinators
    nor cheap portable anonymous classes,
@@ -1836,7 +1835,7 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
    not sacrifice object-oriented style when using interface dispatch}.
    In a language with single-dispatch,
    dispatch on our explicit interface argument will use up
-   the programmer's ability to rely on ad-hoc polymorphism
+   the programmer's ability to rely on ad hoc polymorphism
    to express his algorithms.
    In LIL, we leverage the multimethod capabilities of CLOS
    to dispatch on our interface objects and
