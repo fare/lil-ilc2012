@@ -227,13 +227,6 @@ The syntax for a symbol can either leave the package implicit,
 or explicitly specify a package name as a prefix
 followed by one or two colons and the symbol name.
 }}
-@note{@smaller{
-It is easy to underestimate the importance of the semantic differences
-between pure and stateful data structures,
-until you've actually tried to gloss over them.
-See in @seclink["sec-ClassicStructs"]{section 3} a more detailed
-justification why we keep such a clear distinction between the two.
-}}
 
 By contrast, there is only one function @cl{interface:lookup}
 that is shared by all pure and stateful interfaces
@@ -243,6 +236,12 @@ it takes an interface, a map and a key as parameters, and
 it returns two values,
 the value associated to the given key if a mapping was found,
 and a boolean that is true if and only if a mapping was found.
+
+It is easy to underestimate the importance of the semantic differences
+between pure and stateful data structures,
+until you've actually tried to gloss over them.
+See in @seclink["sec-ClassicStructs"]{section 3} a more detailed
+justification why we keep such a clear distinction between the two.
 
 @subsubsection{First-Class Interfaces}
 
@@ -279,13 +278,54 @@ to the context at hand:
 The method above abstracts over interface @cl{<i>},
 which is constrained to be a sub-interface of @cl{pure:<map>},
 and will notably rely on the latter's signature function @cl{divide/list}.
-This function is defined in our library,
-and divides a map @cl{map} in a list of non-empty submaps
+This function is defined in our library;
+it divides a map @cl{map} into a list of non-empty submaps
 each with strictly fewer mappings than the original map,
 unless said map has exactly one mapping, in which case
 it returns a singleton list containing that map.
 The above method could be trivially parallelized by replacing
 @cl{mapcar} and/or @cl{reduce} by parallelizing variants.
+
+@subsubsection{Functions of Multiple Interfaces}
+
+Most algorithms are parameterized by a single interface object.
+Indeed, when multiple interface objects are required,
+they are usually uncurried into a single argument,
+with reader methods allowing to extract the former interfaces
+from the argument and its parameter slots.
+For instance, instead of tree-manipulating functions
+requiring two interface arguments,
+one to describe the tree structure
+and another one to describe the key order,
+such functions will typically require only one interface argument,
+encapsulating both tree structure and key order;
+then, from a given interface object @cl{<my-tree>},
+the key interface can typically be obtained by evaluating
+@cl{(key-interface <my-tree>)}.
+
+Still, some functions naturally require several interfaces as arguments.
+This typically happens when writing algorithms
+that bridge between two different domains,
+rather than when dealing inside a given domain.
+For instance, the function @cl{convert} is defined as follows:
+@clcode{
+(defgeneric convert
+    (<destination> <origin> object)
+  (:documentation "Convert an OBJECT
+  following interface <ORIGIN> into a new object
+  following interface <DESTINATION>."))
+}
+
+Thus, an algorithm working on finite maps
+will typically take a single interface argument,
+and assume all maps used inside the algorithm
+use the same representation strategy described by this interface;
+but an algorithm that specifically federates access to several databases
+will typically take several interface arguments, one per federated database...
+and will typically return a single interface
+(and possibly an object that follows this interface)
+so that normal algorithms can access it all through that single interface
+(and object, if any).
 
 @subsubsection{Caveat: No Type Checking}
 
@@ -307,8 +347,8 @@ as part of the signature of interface @cl{<type>},
 most of the methods we provide do not call said function,
 which in general is rather expensive
 (with a cost increasing at least linearly with the size of the object),
-and instead trust the user to call it as appropriate,
-typically at the entry points of his code,
+and instead trust users to call it as appropriate,
+typically at the entry points of their code,
 and often only while testing or debugging.
 
 The upside of this lack of automatic type-based interface control
@@ -317,6 +357,7 @@ in some uncommon cases where the @q{canonical} interface
 that could have been deduced by type inference isn't what he wants,
 and even in cases where
 there isn't any such @q{canonical} interface to begin with.
+@[pdflinebreak]@[pdflinebreak]
 
 @subsection{Defining Interfaces}
 
@@ -399,6 +440,7 @@ and @cl{hash} with the standard @[CL] function @cl{sxhash}.
 and implements equality with the standard @[CL] predicate @cl{eql};
 since there is no standard @[CL] hash function that corresponds to it,
 it doesn't inherit from @cl{<hashable>}.
+@[pdflinebreak]@[pdflinebreak]
 
 @subsubsection{Multiple Inheritance of Interfaces}
 
@@ -615,11 +657,17 @@ that create an object of some target type
 when there was no object yet on which to dispatch methods;
 and there is no dilemma regarding contravariance or covariance of types
 when inheriting from a parametric interface.
+@[IPS] solves these issues by making subtyping between interfaces
+independent from subtyping between data structures,
+eschewing the need to resolve
+the sometimes contradictory constraints
+between the two kinds of subtyping.
 Note that many of these issues could be avoided or glossed over in @[CL]
 thanks to its multimethods and dynamic typing;
 however, our approach could solve these issues
-even in a language without single dispatch and/or with static typing.
-Indeed, an equivalent approach already solves these issues in Haskell.
+even in a language without single dispatch and/or with static typing;
+and indeed, an essentially equivalent approach
+already solves these issues in Haskell.
 
 @section[#:tag "sec-ClassicStructs"]{Revisiting Classic Structures}
 
@@ -692,10 +740,10 @@ that instead update existing data structures in place through side-effects.
 
 It was a deliberate decision to not seek further unification
 between the pure and stateful interfaces,
-and not make them follow the exact same convention for
+and to not make them follow the exact same convention for
 return values as well as for calling arguments.
-Indeed our very first API had fewer divergences than it now does.
-However, after a lot of experimentation, we discovered
+Indeed our very first API had fewer divergences than it now does;
+however, after a lot of experimentation, we discovered
 many convergent reasons why it is a good idea to maintain
 very clear separation between the two@note{@smaller{
 It was suggested we name our two packages @cl{church} and @cl{state}
@@ -706,30 +754,33 @@ to insist on the need to keep them separate.}}:
   @item{
     Most important of all, publishing interfaces
     that have identical signatures yet essential semantic differences
-    (i.e. side-effects vs no side-effects) are an invitation to
-    confused erroneous programs, as functions are written
+    (i.e. side-effects vs no side-effects) is an invitation to
+    confused erroneous programs: functions will be written
     that look like they work in both cases and get invoked as if they did,
-    yet somewhere along the way make crucial assumptions about
-    the presence or absence of side-effects.
+    yet somewhere along the way they will make crucial assumptions about
+    the presence or absence of side-effects, and
+    they will fail when called with the wrong kind of interface.
     That's a case where punning causes more confusion than it brings power.}
   @item{
     The only programs that would work in @emph{both} cases are
     programs that strictly follow the functional paradigm
     while following the linear logic discipline that no object
     is ever modified more than once nor read after it has been modified.
-    Our API still allows for such programs, using the pure interface,
-    and allows to trivially transform such program into programs that
-    use or provide a stateful interface, via the transformers of
-    @seclink["sec-Transformers"]{section 4}.}
+    Our API still allows users to write such programs,
+    using the pure interface,
+    and the transformers we describe in
+    @seclink["sec-Transformers"]{section 4}
+    these programs may use or provide
+    interfaces to stateful data structures.}
   @item{
-    Therefore, maintaining a fake identity of calling convention
-    between two APIs with actually different semantics
-    is often detrimental and never useful, and must be avoided.}
+    Therefore, maintaining a fake compatibility of calling convention
+    between these two APIs with actually different semantics
+    is often detrimental and never useful. It must be avoided.}
   @item{
-    Moreover, it more consistent
+    Moreover, it is more consistent
     both with previous practice of stateful OO APIs
     and with the principle of least redundancy
-    that no value should be returned as a result
+    that no value should be returned
     that is specified to always be identical to an input argument,
     where for stateful methods, identical usually means @cl{eq}.
     (Notable exceptions in our API are @cl{divide} where the initial map
@@ -743,14 +794,20 @@ to insist on the need to keep them separate.}}:
     Abiding by these simple principles allowed the transformations
     in @seclink["sec-Transformers"]{section 4},
     between pure and stateful interfaces
-    and between interfaces and object-oriented transformations,
+    and between @[IPS] and object-oriented style,
     to work based on a simpler effect language
     than might otherwise have been needed.
-    Here simpler is better not only because
+    In this case, simpler is better not only because
     it makes things easier to explain in this article, but also
     because it already took a month to write and debug the initial
-    175-line, 19-times nested functions
-    at the heart of these transformations.}
+    175-line macros with 19 nested levels of binding forms that lie
+    at the heart of these transformations.
+    @note{@smaller{
+    Such nesting is the best case I've seen for the use of @cl{nest}:
+    @(linebreak)
+    @tt|{(defmacro nest (&rest forms)}|@(linebreak)
+    @tt|{  (reduce #'(lambda (o i) `(,@o ,i))}|@(linebreak)
+    @tt|{    forms :from-end t))}|}}}
   @item{
     Making for neatly different interfaces between pure and stateful
     makes for a better demonstration of the adapter
@@ -779,16 +836,16 @@ taking advantage of CLOS @cl{:after} method combination:
     (<binary-tree>) ()
   (:abstract))
 
-(defmethod drop :after
-    ((i <post-self-balanced-binary-tree>)
-     node key)
-  (declare (ignore key))
-  (balance-node i node))
-
 (defmethod insert :after
     ((i <post-self-balanced-binary-tree>)
      node key value)
   (declare (ignore key value))
+  (balance-node i node))
+
+(defmethod drop :after
+    ((i <post-self-balanced-binary-tree>)
+     node key)
+  (declare (ignore key))
   (balance-node i node))
 }
 
@@ -849,7 +906,7 @@ each type of object that the interfaces may manipulate.
 We have hopes of eliminating this boilerplate in the future,
 by having @cl{define-interface} manage for each interface
 such a set of object classes;
-but we have no actual solution yet.
+but we have not started work on such a solution yet.
 
 @subsection{Interface Tricks and Puns}
 
@@ -931,6 +988,7 @@ but these parameters are under user control.
 
 Our @cl{pure:<hash-table>} is defined parametrically as follows
 (the following paragraphs are to be read in package @cl{pure}):
+
 @clcode{
 (define-interface <hash-table>
     (<map-join-from-fold-left-insert>
@@ -1115,8 +1173,9 @@ to calls to two functions in the @cl{<map>} interface class,
 @cl{alist-map} and @cl{fold-right}.
 This macro is of course gets more interesting
 as you write longer functions that have more such calls.
-(Interestingly, since we insert through the generic function
-@cl{alist-map}, this function works in both pure and stateful contexts.)
+(Interestingly, since the repeated insertion is
+hidden behind the generic function @cl{alist-map},
+this function works in both pure and stateful contexts.)
 
 @subsubsection{Implicit Interface in Method Definition}
 
@@ -1240,14 +1299,14 @@ the object is extracted from the box into the input,
 and is invalidated if there are any modifications,
 while a fresh box is created to hold the object in its new state if modified.
 We call the above transformation linearize
-and its result or argument (depending on context) the @emph{linearized} interface.@note{
+and its result or argument (depending on context) the @emph{linearized} interface.@note{@smaller{
 The pure functions can be seen as the state-passing style expansion
 of implementing the imperative interface with an explicit state monad.
 Stateful functions can be seen as pure linear functions
 with some arguments and results made implicit.
 The transformations are all about making these details implicit or explicit,
 depending on which way you go.
-}
+}}
 
 Interestingly,
 a stateful data structure linearized then mutating
@@ -1738,13 +1797,26 @@ This difference reflects a general problem
 that object-oriented style has with constructors.
 Because object-oriented style locates class dispatch information
 in the first object,
-it has nothing to dispatch from where there is no object yet.
-That is why object-oriented style has to treat constructors differently.
+it has nothing to dispatch on where there is no object yet.
+That is why object-oriented style has to treat constructors specially.
 In CLOS, objects are constructed by the @cl{make-instance} function,
-which is special in that it takes
-a class name or class meta-object as its first argument.
-@[IPS] is more uniform there,
-but transformation from @[IPS] to object-oriented style has to do something.
+which is special in that it takes as its first argument
+a class meta-object (or a class name, resolving to the former).
+Unhappily, this makes @cl{make-instance}
+(and constructors in general in other languages)
+a part of the meta-object protocol rather than of the interface protocol.
+@[IPS] is more uniform there, which enables us to
+do automatic transformations of interface protocols
+that just work with constructors without having to special-case them.
+@[IPS] also allows for several constructors in an interface to a sum type,
+without having to go through the hoops of having a single multiplexing
+constructor or having to have a different interface
+for each object type in the sum.
+For instance, in @[IPS],
+both @cl{empty} and @cl{cons} would be regular members
+of the interface signature for lists or sequences.
+However, our transformation from @[IPS] to object-oriented style
+has to do something about constructors.
 
 Since in this case we are transforming an abstract interface,
 each object needs to carry in a parameter
@@ -1980,36 +2052,39 @@ beside the addition of parametric polymorphism to @[CL]:
  @item{
    We provide macros to make interfaces implicit again in the usual cases.}
  @item{
-   For the sake of the above, we associate @[gfs] to interfaces.}
+   For the sake of the above and below, we associate @[gfs] to interfaces.}
  @item{
    Additionally, we annotate @[gfs] with trivial metadata about their side-effects.}
  @item{
-   Based on such effect types, we could implement automated transformations
+   Based on such effect types, we implemented automated transformations
    bridging between pure (persistent) and corresponding
    stateful (ephemeral) data structure.}
  @item{
-   Based on the same effect types, we could implement automated transformations
+   Based on the same effect types, we implemented automated transformations
    bridging between @[IPS] and traditional object-oriented style.}]
 
 While the ideas behind these features will sound quite well understood
 by people familiar with programming language theory,
 we are not aware of any existing library in any previous programming language
-that could or would in practice leverage those ideas.
+that could in theory or would in practice leverage those ideas.
 
 We hope our success will generate more widespread interest
 in supporting multiple programming styles
 with automated library transformations.
 
-@subsection{Current Limitations and Future Work}
+@subsection{Current Status and Future Work}
 
-@subsubsection{Current Usability Status}
+@subsubsection{Current Status}
 
 LIL at this point is already a usable data structure library
 that has contributed features not previously available to @[CL] users:
-not only does it offer infrastructure for users to develop their own
+it offers an infrastructure for users to develop their own
 parametrically polymorphic data structures,
-it sports a generic map interface with pure and stateful variants,
+or to easily extend existing ones;
+and it provides a generic map interface with pure and stateful variants,
 and implementations as balanced binary trees, hash-tables or Patricia trees.
+Some of these data structures were not previously available
+in free software libraries for @[CL].
 
 Yet, in many ways, LIL is still in its early stages;
 at the current moment it is a usable proof of concept
@@ -2047,6 +2122,14 @@ We could use ContextL@~cite[contextl-soa]
 or similar Context-Oriented Programming techniques
 to dynamically bind extra implicit arguments to our function calls
 to trivially reexpose an @[IPS] API as a classic object-oriented style API.
+
+Finally, we could try to study the performance impact of our code,
+and improve it where it matters.
+For instance, SBCL is known to dynamically optimize method dispatch;
+we could make sure that it does a proper job with our data structures.
+In case compilers have trouble with code in @[IPS],
+we could develop some protocol for partial evaluation
+that will ensure proper inlining is done.
 
 @subsubsection{More Advanced Projects}
 
@@ -2145,13 +2228,15 @@ best suits his needs.
 @section[#:style (style #f '(hidden unnumbered))]{}
 @larger{@bold{Credits}}
 
-Many thanks to my wife Rebecca for supporting me throughout this development,
-to my employer Google and my manager Allan Fraser for bearing with me
+I wish to thank my wife Rebecca for supporting me throughout this development,
+my employer Google and my manager Allan Fraser for bearing with me
 during this digression from my main tasks,
-to Eli Barzilay for the Racket Scribble system,
-to Jon Rafkind for giving me a template to start from,
-to Eric O'Connor for kickstarting the development of LIL
-as an independent library,
-to Zach Beane for being a one-man Release and QA system for @[CL] libraries,
-to Arthur Gleckler and Scott McKay for their careful proofreading,
-and to my anonymous reviewers and my other proofreaders for their feedback.
+Eli Barzilay for the Racket Scribble system,
+Jon Rafkind for giving me a template to start from,
+Eric O'Connor for kickstarting the development of
+LIL as an independent library,
+Zach Beane for being a one-man Release and QA system for @[CL] libraries,
+Arthur Gleckler and Scott McKay for their careful proofreading,
+my anonymous reviewers and my other proofreaders for their feedback,
+and Kuroda Hisao for organizing the conference and
+pushing me to give my very best on this article.
