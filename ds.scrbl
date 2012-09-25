@@ -108,7 +108,8 @@ from simpler but less efficient variants;
 first-class interfaces allow the very same object
 to implement a given type of interface in different ways.
 
-In @seclink["sec-Transformations"]{section 4}, we show how adequate macros can bridge the gap
+In @seclink["sec-Transformers"]{section 4},
+we show how adequate macros can bridge the gap
 between different programming styles:
 between syntactically implicit or explicit interfaces,
 between pure functional and stateful data structures,
@@ -226,6 +227,13 @@ The syntax for a symbol can either leave the package implicit,
 or explicitly specify a package name as a prefix
 followed by one or two colons and the symbol name.
 }}
+@note{@smaller{
+It is easy to underestimate the importance of the semantic differences
+between pure and stateful data structures,
+until you've actually tried to gloss over them.
+See in @seclink["sec-ClassicStructs"]{section 3} a more detailed
+justification why we keep such a clear distinction between the two.
+}}
 
 By contrast, there is only one function @cl{interface:lookup}
 that is shared by all pure and stateful interfaces
@@ -281,9 +289,13 @@ The above method could be trivially parallelized by replacing
 
 @subsubsection{Caveat: No Type Checking}
 
-@[IPS] is somewhat low-level, in that
-the user is given both full control and full responsibility
-with respect to passing around appropriate interfaces.
+@[IPS] in @[CL] has a definite low-level feeling,
+in that the user is given both full control and full responsibility
+with respect to passing around appropriate interfaces,
+which is compounded the fact that @[CL]
+has dynamic typing rather than static typing,
+so that the evaluator will not issue errors or emit warnings at compile-time
+if you pass interfaces and arguments that do not match each other.
 
 The downside is that if the user fails to ensure consistency
 between the interfaces being used and data structures being passed as arguments,
@@ -292,12 +304,15 @@ unspecified behavior may ensue
 as generic functions may or may not check their arguments for consistency.
 While our library does provide a function @cl{check-invariant}
 as part of the signature of interface @cl{<type>},
-most of the methods we provide do not call said function, which may be expensive,
-and instead trust the user to call as appropriate,
-typically at the entry points of his code or while testing or debugging.
+most of the methods we provide do not call said function,
+which in general is rather expensive
+(with a cost increasing at least linearly with the size of the object),
+and instead trust the user to call it as appropriate,
+typically at the entry points of his code,
+and often only while testing or debugging.
 
-The upside of this lack of automatic type-based interface control is that
-the user can explicitly specify an interface
+The upside of this lack of automatic type-based interface control
+is that the user can explicitly specify an interface
 in some uncommon cases where the @q{canonical} interface
 that could have been deduced by type inference isn't what he wants,
 and even in cases where
@@ -341,11 +356,13 @@ A non-empty list of slots is how parametric polymorphism is achieved.
 In this case, this list is empty, as
 there are no parameters defined by this interface.
 
-Finally, the @cl{define-interface} macro accepts a list of options,
-always like @cl{defclass}. But it also accepts additional options
-not part of the @cl{defclass} specification.
-For instance, this interface uses the @cl{:abstract} option,
-to signal it doesn't implement all its declared functions
+Finally, and there again like @cl{defclass},
+@cl{define-interface} accepts a list of options.
+In addition to the regular @cl{defclass} options,
+it also recognizes a few of its own.
+For instance, the @cl{<emptyable>} interface above
+uses the @cl{:abstract} option,
+to declare that it doesn't implement all its declared functions
 and must not be instantiated.
 
 This interface also uses the @cl{:generic} option
@@ -354,7 +371,7 @@ to declare two @[gfs] that are part of the signature of the interface,
 Furthermore, for each function, a return value convention may be defined
 as well as a calling convention. Indeed they are defined in this case:
 the first function takes no argument beyond the interface;
-the @cl{(values object)} specifies that
+the @cl{(:values object)} specifies that
 it returns exactly one value, named object, and the
 @cl{(:out 0)} specifies that return argument in first position
 is of the target type (indexes are 0-based).
@@ -403,7 +420,7 @@ with pure update as well as mere lookup.
 @subsubsection{Interface Mixins}
 
 Our library also relies on multiple-inheritance extensively
-in the form of mixins (also known as traits):
+in the form of mixins (also known as traits in other programming languages):
 small interface classes implement a small aspect of the interface.
 Oftentimes, a mixin will be used to simply deduce
 the implementation of some signature functions from other signature functions.
@@ -435,7 +452,7 @@ For instance, consider the current definition of @cl{<alist>} in our library:
      <map-join-from-fold-left-insert>
      <map-join/list-from-join>
      <map>)
-  ((key-interface
+  ((key-interface :type <eq>
     :initarg :key-interface
     :reader key-interface))
   (:parametric (&optional (eq <eql>))
@@ -451,7 +468,8 @@ The list of slots contains a single slot @cl{key-interface}.
 Indeed, association lists crucially depend on an equality predicate
 with which to compare keys when looking up a given key.
 Our @cl{<alist>} interface therefore has this slot,
-the value of which must inherit from @cl{<eq>},
+the value of which must be an instance of
+a concrete sub-interface of @cl{<eq>},
 that will specify how to compare keys.
 
 Slot definitions such as these are how
@@ -521,7 +539,7 @@ Clients can therefore use the variable @cl{<alist>}
 to refer to the one default such interface,
 instead of having either to create a new instance every time,
 be it with @cl{(<alist>)}
-or directly using @cl{(make-instance '<alist> :key-interface <eq>)}.
+or using @cl{(make-instance '<alist> :key-interface <eq>)}.
 
 @subsubsection{Multiple Dispatch}
 
@@ -602,7 +620,6 @@ thanks to its multimethods and dynamic typing;
 however, our approach could solve these issues
 even in a language without single dispatch and/or with static typing.
 Indeed, an equivalent approach already solves these issues in Haskell.
-@[pdflinebreak]@[pdflinebreak]
 
 @section[#:tag "sec-ClassicStructs"]{Revisiting Classic Structures}
 
@@ -671,6 +688,81 @@ pure methods tend to return new updated data structures as additional values,
 whereas such return values are omitted by stateful methods
 that instead update existing data structures in place through side-effects.
 
+@subsubsection{Keeping The Two Apart}
+
+It was a deliberate decision to not seek further unification
+between the pure and stateful interfaces,
+and not make them follow the exact same convention for
+return values as well as for calling arguments.
+Indeed our very first API had fewer divergences than it now does.
+However, after a lot of experimentation, we discovered
+many convergent reasons why it is a good idea to maintain
+very clear separation between the two@note{@smaller{
+It was suggested we name our two packages @cl{church} and @cl{state}
+rather than @cl{pure} and @cl{stateful},
+to insist on the need to keep them separate.}}:
+
+@itemlist[
+  @item{
+    Most important of all, publishing interfaces
+    that have identical signatures yet essential semantic differences
+    (i.e. side-effects vs no side-effects) are an invitation to
+    confused erroneous programs, as functions are written
+    that look like they work in both cases and get invoked as if they did,
+    yet somewhere along the way make crucial assumptions about
+    the presence or absence of side-effects.
+    That's a case where punning causes more confusion than it brings power.}
+  @item{
+    The only programs that would work in @emph{both} cases are
+    programs that strictly follow the functional paradigm
+    while following the linear logic discipline that no object
+    is ever modified more than once nor read after it has been modified.
+    Our API still allows for such programs, using the pure interface,
+    and allows to trivially transform such program into programs that
+    use or provide a stateful interface, via the transformers of
+    @seclink["sec-Transformers"]{section 4}.}
+  @item{
+    Therefore, maintaining a fake identity of calling convention
+    between two APIs with actually different semantics
+    is often detrimental and never useful, and must be avoided.}
+  @item{
+    Moreover, it more consistent
+    both with previous practice of stateful OO APIs
+    and with the principle of least redundancy
+    that no value should be returned as a result
+    that is specified to always be identical to an input argument,
+    where for stateful methods, identical usually means @cl{eq}.
+    (Notable exceptions in our API are @cl{divide} where the initial map
+    is returned as second value, or @cl{divide/list}
+    where it is returned (if not empty)
+    as the first element of the result list;
+    these exceptions are in the sake of preserving another invariant,
+    that the results of division can be respectively be @cl{join}'ed
+    or @cl{join/list}'ed back into the original map.)}
+  @item{
+    Abiding by these simple principles allowed the transformations
+    in @seclink["sec-Transformers"]{section 4},
+    between pure and stateful interfaces
+    and between interfaces and object-oriented transformations,
+    to work based on a simpler effect language
+    than might otherwise have been needed.
+    Here simpler is better not only because
+    it makes things easier to explain in this article, but also
+    because it already took a month to write and debug the initial
+    175-line, 19-times nested functions
+    at the heart of these transformations.}
+  @item{
+    Making for neatly different interfaces between pure and stateful
+    makes for a better demonstration of the adapter
+    between pure and stateful interfaces.
+    Our transformers would still work and be required
+    if the interfaces were the same,
+    but the confusion between the two similar-looking interfaces
+    might make it harder to explain what is going on
+    versus what isn't, while hiding the fact that
+    our transformations work even if the interfaces differ.}
+]
+
 @subsubsection{Incremental Layers of Functionality}
 
 We have striven to implement our data structures
@@ -678,10 +770,30 @@ in small incremental layers by taking full advantage
 of CLOS features such as multiple inheritance,
 multiple dispatch and method combinations.
 
-For instance, here is the complete implementation
-of stateful AVL trees on top of previous layers,
-one of which implements self-balancing as two @cl{:after} methods,
-on @cl{insert} and @cl{drop} that each simply call @cl{balance-node}:
+For instance, here is an abstract mixin
+that adds a layer of self-balancing to a binary tree,
+taking advantage of CLOS @cl{:after} method combination:
+
+@clcode{
+(define-interface <post-self-balanced-binary-tree>
+    (<binary-tree>) ()
+  (:abstract))
+
+(defmethod drop :after
+    ((i <post-self-balanced-binary-tree>)
+     node key)
+  (declare (ignore key))
+  (balance-node i node))
+
+(defmethod insert :after
+    ((i <post-self-balanced-binary-tree>)
+     node key value)
+  (declare (ignore key value))
+  (balance-node i node))
+}
+
+And here is how stateful AVL trees are implemented
+on top of previous layers:
 
 @clcode{
 (define-interface <avl-tree>
@@ -720,7 +832,7 @@ on @cl{insert} and @cl{drop} that each simply call @cl{balance-node}:
      (rotate-node-left node))))
 }
 
-The superclasses already handle the read-only aspect of avl-trees
+The superclasses already handle the read-only aspect of AVL trees
 (mostly invariant checking, in this case),
 and the stateful aspects of maintaining the tree height
 and having to rebalance after updates.
@@ -954,7 +1066,7 @@ particularly in situations where a problem has symmetries and regularities
 that can be expressed as
 the same parametric interface applying to multiple situations.
 
-@section{Interface Transformations}
+@section[#:tag "sec-Transformers"]{Interface Transformations}
 
 @subsection{Making Interfaces Implicit or Explicit}
 
