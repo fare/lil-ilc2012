@@ -2205,7 +2205,7 @@ to data structure development.
 
 The proximate trigger for what became this article was
 a study we made on how to introduce modularity
-in the overly monolithic code base of QRes at ITA;
+in the overly monolithic code base we were working on;
 we started the library as a proof of concept of
 our proposal for introducing parametric polymorphism in @[CL].
 Interestingly, though, the idea of detaching behavioral meta-data about objects
