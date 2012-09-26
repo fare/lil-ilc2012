@@ -462,12 +462,12 @@ with pure update as well as mere lookup.
 @subsubsection{Interface Mixins}
 
 Our library also relies on multiple-inheritance extensively
-in the form of mixins (also known as traits in other programming languages):
+in the form of mixins, also known as traits in other programming languages:
 small interface classes implement a small aspect of the interface.
 Oftentimes, a mixin will be used to simply deduce
 the implementation of some signature functions from other signature functions.
 Depending on which signature functions are more @q{primitive} for a given concrete data structure,
-opposite mixins may be used that deduce some functions from the others or the other way around.
+converse mixins may be used that deduce some functions from the others or the other way around.
 
 For instance, the @cl{<eq>} interface actually has two associated functions,
 @cl{(== <i> x y)}  that compares two objects @cl{x} and @cl{y}, and equivalently
@@ -736,16 +736,16 @@ pure methods tend to return new updated data structures as additional values,
 whereas such return values are omitted by stateful methods
 that instead update existing data structures in place through side-effects.
 
-@subsubsection{Keeping The Two Apart}
+@subsubsection{Keeping Pure and Stateful Apart}
 
-It was a deliberate decision to not seek further unification
+It was a deliberate decision to avoid further unification
 between the pure and stateful interfaces,
 and to not make them follow the exact same convention for
 return values as well as for calling arguments.
 Indeed our very first API had fewer divergences than it now does;
 however, after a lot of experimentation, we discovered
 many convergent reasons why it is a good idea to maintain
-very clear separation between the two@note{@smaller{
+a very clear separation between the two@note{@smaller{
 It was suggested we name our two packages @cl{church} and @cl{state}
 rather than @cl{pure} and @cl{stateful},
 to insist on the need to keep them separate.}}:
@@ -754,28 +754,29 @@ to insist on the need to keep them separate.}}:
   @item{
     Most important of all, publishing interfaces
     that have identical signatures yet essential semantic differences
-    (i.e. side-effects vs no side-effects) is an invitation to
+    (i.e. side-effects versus no side-effects) is an invitation to
     confused erroneous programs: functions will be written
     that look like they work in both cases and get invoked as if they did,
     yet somewhere along the way they will make crucial assumptions about
     the presence or absence of side-effects, and
-    they will fail when called with the wrong kind of interface.
-    That's a case where punning causes more confusion than it brings power.}
+    they will fail when called with the wrong kind of interface.}
   @item{
     The only programs that would work in @emph{both} cases are
     programs that strictly follow the functional paradigm
     while following the linear logic discipline that no object
     is ever modified more than once nor read after it has been modified.
     Our API still allows users to write such programs,
-    using the pure interface,
-    and the transformers we describe in
+    using the pure interface;
+    and thanks to the transformers we describe in
     @secref["sec-Transformers"]
     these programs may use or provide
     interfaces to stateful data structures.}
   @item{
     Therefore, maintaining a fake compatibility of calling convention
     between these two APIs with actually different semantics
-    is often detrimental and never useful. It must be avoided.}
+    is often detrimental and never useful. It must be avoided.
+    That's a case where punning causes confusion
+    without bringing expressive power.}
   @item{
     Moreover, it is more consistent
     both with previous practice of stateful OO APIs
@@ -803,13 +804,14 @@ to insist on the need to keep them separate.}}:
     175-line macros with 19 nested levels of binding forms that lie
     at the heart of these transformations.
     @note{@smaller{
-    Such nesting is the best case I've seen for the use of @cl{nest}:
+    Such deep nesting is the best case I've seen
+    for the use of @cl{nest}:
     @(linebreak)
-    @tt|{(defmacro nest (&rest forms)}|@(linebreak)
-    @tt|{  (reduce #'(lambda (o i) `(,@o ,i))}|@(linebreak)
-    @tt|{    forms :from-end t))}|}}}
+    @tt|{(defmacro nest (&rest r)}|@(linebreak)
+    @tt|{  (reduce (λ (o i) `(,@o ,i)) r :from-end t))}|@(linebreak)
+    Note with our system @cl{lambda-reader} one can actually use λ instead of @cl{lambda}.}}}
   @item{
-    Making for neatly different interfaces between pure and stateful
+    Making for clearly different interfaces between pure and stateful
     makes for a better demonstration of the adapter
     between pure and stateful interfaces.
     Our transformers would still work and be required
@@ -1062,8 +1064,8 @@ abstracting away patterns and reproduce them automatically;
 you are not limited to agglutinating exponentially ever more unrelatable cases.
 
 In the near future, we would like to bootstrap more data structures this way,
-for instance following some of the algorithms documented by Chris Okasaki
-in @~cite[Okasaki].
+for instance following some of
+the algorithms documented by Chris Okasaki @~cite[Okasaki].
 
 @subsubsection{Same Data, Multiple Interfaces}
 
@@ -1071,7 +1073,7 @@ As a more general kind of pun,
 an object can be in the target type of several interfaces,
 not necessarily instances of the same interface class.
 There is no need to wrap and unwrap data inside constructors of different classes
-to see that data through a different view point;
+to see that data through a different viewpoint;
 simply change the interface,
 and the same data can be punned into meaning usefully different things.
 For instance, one can see an array as a sequence of elements
@@ -1171,7 +1173,7 @@ then walking the tree entries in order:
 Notice how the @cl{<number-map>} interface object was implicitly passed
 to calls to two functions in the @cl{<map>} interface class,
 @cl{alist-map} and @cl{fold-right}.
-This macro is of course gets more interesting
+This macro of course gets more interesting
 as you write longer functions that have more such calls.
 (Interestingly, since the repeated insertion is
 hidden behind the generic function @cl{alist-map},
@@ -1191,7 +1193,7 @@ For instance, here is the definition of the previously mentioned
 (define-interface <eq-from-==> (<eq>) ()
   (:abstract)
   (:method eq-function ()
-    #'(lambda (x y) (== x y))))
+    (λ (x y) (== x y))))
 }
 Notice how the interface argument is omitted from the lambda-list.
 Notice also how no interface argument is explicitly passed to @cl{==}.
@@ -1383,7 +1385,7 @@ then may specify optional arguments introduced by @cl{&optional},
 then may specify a rest argument introduced by @cl{&rest},
 then may specify keyword arguments introduced by @cl{&key}.
 We remember the lambda-list of the input arguments the function accepts,
-and we record a lambda-list of the output values it returns
+and we record a lambda-list of the output values it returns,
 which may be considered as the lambda-list of the function's continuation.
 }}.
 
@@ -1455,6 +1457,11 @@ we simplify the @cl{funcall} case into a direct call,
 and do away with unnecessary @cl{values} statements.
 Finally, we omit some the package of symbols
 where it isn't relevant to our explanation.
+But we neither simplify a @cl{multiple-value-bind}
+with a single binding into a @cl{let} nor merge it
+with a previous or subsequent binding forms,
+as it would blur rather than demonstrate
+the general pattern of the macro.
 }}
 macroexpansion of the wrapping for @cl{lookup} is as follows:
 @clcode{
@@ -1463,16 +1470,17 @@ macroexpansion of the wrapping for @cl{lookup} is as follows:
   (let* ((<pure-interface>
            (pure-interface <interface>))
          (pure-map (box-value map)))
-    (multiple-value-bind
-           (value foundp)
+    (multiple-value-bind (value foundp)
         (lookup <pure-interface>
 	        pure-map key)
-        (values value foundp))))}
+      (values value foundp))))}
 
 When a function updates an old value into a new one,
 we simply extract the updated value from the pure function's results
 and store it into the box.
 For instance, the cleaned up wrapper for @cl{insert} is:
+@[pdflinebreak]
+
 @clcode{
 (defmethod stateful:insert
     ((<interface> <mutating-map>) map key value)
@@ -1532,10 +1540,10 @@ Here is a how we manually wrap @cl{divide/list}:
          (pure:divide/list
            (pure-interface <mutating-map>)
            (box-value map))))
-     (and list
-          (progn
-            (set-box-value (first list) map)
-            (cons map (mapcar #'box! (rest list)))))))}
+     (when list
+       (set-box-value (first list) map)
+       (cons map
+             (mapcar #'box! (rest list))))))}
 
 Note how the first element in the list is special in that
 it shares the identity of the map being divided,
@@ -1548,6 +1556,7 @@ methods in the original and transformed APIs are simply matched by name.
 In the future, it would be easy to allow the user to customize
 the way method names are processed, transformed or overridden
 during these transformations.
+@[pdflinebreak]@[pdflinebreak]
 
 @subsubsection{Stateful Interface in a Linear Box}
 
@@ -2221,8 +2230,6 @@ And it should thereafter be possible to seamlessly combine
 these contributions into a common result,
 made available to the user according to whichever point of view
 best suits his needs.
-@[pdflinebreak]@[pdflinebreak]@[pdflinebreak]@[pdflinebreak]
-@[pdflinebreak]@[pdflinebreak]@[pdflinebreak]@[pdflinebreak]
 
 @(generate-bib)
 
@@ -2237,7 +2244,8 @@ Jon Rafkind for giving me a template to start from,
 Eric O'Connor for kickstarting the development of
 LIL as an independent library,
 Zach Beane for being a one-man Release and QA system for @[CL] libraries,
-my colleagues Arthur Gleckler, Scott McKay and Alejandro Sedeño
+my colleagues Arthur Gleckler, Scott McKay and
+Alejandro @htmlonly{Sedeño}@pdfonly{Sedeno}
 for their careful proofreading,
 my anonymous reviewers and my other proofreaders for their feedback,
 and Kuroda Hisao for organizing the conference and
