@@ -66,7 +66,7 @@ Read here for more:
     (add-sigplan-styles 
      (add-defaults doc
                    (string->bytes/utf-8
-                    (format "\\documentclass~a{sig-alternate}\n~a~a"
+                    (format "\\documentclass~a{sig-alternate}\n\\usepackage[utf8]{inputenc}\n~a~a"
                             options
                             (if times? 
                                 "\\usepackage{times}\n"
