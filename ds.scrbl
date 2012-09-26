@@ -85,7 +85,7 @@ in a way that nicely fits into the language
 and its existing ad hoc polymorphism,
 taking full advantage of the advanced features of CLOS.
 
-In @seclink["sec-IPS"]{section 2}, we describe
+In @secref["sec-IPS"], we describe
 the @[IPS] @~cite[Rideau-IPS] in which LIL is written:
 meta-data about the current algorithm is encapsulated
 in a first-class interface object,
@@ -94,7 +94,7 @@ in computations that may require specialization based on it.
 We show basic mechanisms by which this makes it possible
 to express both ad hoc and parametric polymorphism.
 
-In @seclink["sec-ClassicStructs"]{section 3}, we demonstrate how we use this style to implement
+In @secref["sec-ClassicStructs"], we demonstrate how we use this style to implement
 a library of classic data structures,
 both pure (persistent) and stateful (ephemeral).
 We show how our library makes good use of @[IPS]
@@ -108,7 +108,7 @@ from simpler but less efficient variants;
 first-class interfaces allow the very same object
 to implement a given type of interface in different ways.
 
-In @seclink["sec-Transformers"]{section 4},
+In @secref["sec-Transformers"],
 we show how adequate macros can bridge the gap
 between different programming styles:
 between syntactically implicit or explicit interfaces,
@@ -240,7 +240,7 @@ and a boolean that is true if and only if a mapping was found.
 It is easy to underestimate the importance of the semantic differences
 between pure and stateful data structures,
 until you've actually tried to gloss over them.
-See in @seclink["sec-ClassicStructs"]{section 3} a more detailed
+See in @secref["sec-ClassicStructs"] a more detailed
 justification why we keep such a clear distinction between the two.
 
 @subsubsection{First-Class Interfaces}
@@ -538,7 +538,7 @@ It works because interfaces don't usually have intensional identity,
 only extensional content.
 Indeed, they embody behavioral meta-information notionally meant
 to be expanded before any code is actually run.
-See in @seclink["sec-Classify"]{latter sections} how interfaces compare to traditional objects.
+See in @secref["sec-Classify"] how interfaces compare to traditional objects.
 }}
 
 In the above @cl{<alist>} example,
@@ -769,7 +769,7 @@ to insist on the need to keep them separate.}}:
     Our API still allows users to write such programs,
     using the pure interface,
     and the transformers we describe in
-    @seclink["sec-Transformers"]{section 4}
+    @secref["sec-Transformers"]
     these programs may use or provide
     interfaces to stateful data structures.}
   @item{
@@ -792,7 +792,7 @@ to insist on the need to keep them separate.}}:
     or @cl{join/list}'ed back into the original map.)}
   @item{
     Abiding by these simple principles allowed the transformations
-    in @seclink["sec-Transformers"]{section 4},
+    in @secref["sec-Transformers"],
     between pure and stateful interfaces
     and between @[IPS] and object-oriented style,
     to work based on a simpler effect language
@@ -1128,7 +1128,7 @@ the same parametric interface applying to multiple situations.
 
 @subsection{Making Interfaces Implicit or Explicit}
 
-@subsubsection{Making Interfaces Implicit in a Scope}
+@subsubsection[#:tag "sec-Implicit"]{Making Interfaces Implicit in a Scope}
 
 Even though arbitrary first-class interface objects
 can be passed as argument in any function call,
@@ -1730,8 +1730,7 @@ where any state has been moved inside the interface itself.
 
 To extract an Interface-Passing API from an object-oriented API is easy:
 it suffices to introduce a dummy interface object,
-which can be done as per the above subsubsection
-@emph{Making Interfaces Explicit}.
+which can be done as per the above @secref["sec-Implicit"].
 
 To extract an object-oriented API from an Interface-Passing API is harder,
 but we can reuse the same effect system we developed above for that purpose:
@@ -2222,6 +2221,8 @@ And it should thereafter be possible to seamlessly combine
 these contributions into a common result,
 made available to the user according to whichever point of view
 best suits his needs.
+@[pdflinebreak]@[pdflinebreak]@[pdflinebreak]@[pdflinebreak]
+@[pdflinebreak]@[pdflinebreak]@[pdflinebreak]@[pdflinebreak]
 
 @(generate-bib)
 
@@ -2236,7 +2237,8 @@ Jon Rafkind for giving me a template to start from,
 Eric O'Connor for kickstarting the development of
 LIL as an independent library,
 Zach Beane for being a one-man Release and QA system for @[CL] libraries,
-Arthur Gleckler and Scott McKay for their careful proofreading,
+my colleagues Arthur Gleckler, Scott McKay and Alejandro Sedeño
+for their careful proofreading,
 my anonymous reviewers and my other proofreaders for their feedback,
 and Kuroda Hisao for organizing the conference and
 pushing me to give my very best on this article.
