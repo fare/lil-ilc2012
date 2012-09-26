@@ -2244,8 +2244,7 @@ Jon Rafkind for giving me a template to start from,
 Eric O'Connor for kickstarting the development of
 LIL as an independent library,
 Zach Beane for being a one-man Release and QA system for @[CL] libraries,
-my colleagues Arthur Gleckler, Scott McKay and
-Alejandro @htmlonly{Sedeño}@pdfonly{Sedeno}
+my colleagues Arthur Gleckler, Scott McKay and Alejandro Sedeño
 for their careful proofreading,
 my anonymous reviewers and my other proofreaders for their feedback,
 and Kuroda Hisao for organizing the conference and
