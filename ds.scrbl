@@ -745,10 +745,10 @@ return values as well as for calling arguments.
 Indeed our very first API had fewer divergences than it now does;
 however, after a lot of experimentation, we discovered
 many convergent reasons why it is a good idea to maintain
-a very clear separation between the two@note{@smaller{
+a very clear separation between the two:@note{@smaller{
 It was suggested we name our two packages @cl{church} and @cl{state}
 rather than @cl{pure} and @cl{stateful},
-to insist on the need to keep them separate.}}:
+to insist on the need to keep them separate.}}
 
 @itemlist[
   @item{
@@ -804,7 +804,7 @@ to insist on the need to keep them separate.}}:
     175-line macros with 19 nested levels of binding forms that lie
     at the heart of these transformations.
     @note{@smaller{
-    Such deep nesting is the best case I've seen
+    Such deep nesting is the best case we've seen
     for the use of @cl{nest}:
     @(linebreak)
     @tt|{(defmacro nest (&rest r)}|@(linebreak)
@@ -1823,9 +1823,9 @@ for each object type in the sum.
 For instance, in @[IPS],
 both @cl{empty} and @cl{cons} would be regular members
 of the interface signature for lists or sequences.
-However, our transformation from @[IPS] to object-oriented style
-has to do something about constructors.
 
+Nevertheless, our transformation from @[IPS] to object-oriented style
+has to do something about constructors.
 Since in this case we are transforming an abstract interface,
 each object needs to carry in a parameter
 for the actual concrete interface with which the object was created.
@@ -2126,10 +2126,12 @@ These transformations could be more mindful of interface and class hierarchies
 rather than operating on all the generic functions of one pair of APIs at a time.
 The packaging of the current features could be improved,
 with internals being refactored and exported.
-We could use ContextL@~cite[contextl-soa]
-or similar Context-Oriented Programming techniques
-to dynamically bind extra implicit arguments to our function calls
-to trivially reexpose an @[IPS] API as a classic object-oriented style API.
+We could use Context-Oriented Programming techniques@~cite[contextl-soa]
+to dynamically bind extra implicit arguments to function calls and
+reexpose an @[IPS] API as a classic object-oriented style API.
+Our interfaces could integrate with
+@cl{deftype} and @cl{typep} via the same technique we used
+to implement the @cl{list-of} library.
 
 Finally, we could try to study the performance impact of our code,
 and improve it where it matters.
