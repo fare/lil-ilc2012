@@ -284,7 +284,7 @@ each with strictly fewer mappings than the original map,
 unless said map has exactly one mapping, in which case
 it returns a singleton list containing that map.
 The above method could be trivially parallelized by replacing
-@cl{mapcar} and/or @cl{reduce} by parallelizing variants.
+@cl{mapcar} and/or @cl{reduce} by parallelizing, queueing variants.
 
 @subsubsection{Functions of Multiple Interfaces}
 
@@ -506,7 +506,7 @@ to deduce various methods from more primitive methods,
 together with the interface @cl{<map>} that provides the signature.
 
 But most importantly,
-The list of slots contains a single slot @cl{key-interface}.
+the list of slots contains a single slot @cl{key-interface}.
 Indeed, association lists crucially depend on an equality predicate
 with which to compare keys when looking up a given key.
 Our @cl{<alist>} interface therefore has this slot,
@@ -552,7 +552,7 @@ the locally defined function @cl{make-interface}
 that handles memoization of an underlying CLOS @cl{make-instance}.
 
 Our library implements data structures more elaborate than alists.
-For instance, you could use balanced binary tree, in which case
+For instance, you could use a balanced binary tree, in which case
 you would have to provide the tree interface with
 a parameter @cl{key-interface} that inherits from @cl{<order>},
 so that keys may be compared.
@@ -720,11 +720,11 @@ and @cl{stateful:insert} have different signatures as far as return values go.
 The same difference exists between the
 @cl{pure:drop} and @cl{stateful:drop} functions:
 both have the same input signature@[linebreak]
-@cl{(<map> map key)} @cl{(:in 1)}.@[linebreak]
+@cl{   (<map> map key)} @cl{(:in 1)}.@[linebreak]
 But whereas the former has the output signature@[linebreak]
-@cl{(:values map value foundp)} @cl{(:out 0)},@[linebreak]
+@cl{   (:values map value foundp)} @cl{(:out 0)},@[linebreak]
 the latter has the output signature@[linebreak]
-@cl{(:values value foundp)} @cl{(:out t)}.@[linebreak]
+@cl{   (:values value foundp)} @cl{(:out t)}.@[linebreak]
 This means that the pure function returns an updated version
 of the original map data structure as its first return value,
 whereas the stateful function omits this return value and
@@ -755,7 +755,7 @@ to insist on the need to keep them separate.}}
     Most important of all, publishing interfaces
     that have identical signatures yet essential semantic differences
     (i.e. side-effects versus no side-effects) is an invitation to
-    confused erroneous programs: functions will be written
+    confused, erroneous programs: functions will be written
     that look like they work in both cases and get invoked as if they did,
     yet somewhere along the way they will make crucial assumptions about
     the presence or absence of side-effects, and
@@ -1381,9 +1381,9 @@ our model cannot express effects on
 @note{@smaller{In @[CL], the list specifying how arguments are bound
 to what variables when a function is invoked is called a lambda-list.
 A lambda-list may specify required arguments,
-then may specify optional arguments introduced by @cl{&optional},
-then may specify a rest argument introduced by @cl{&rest},
-then may specify keyword arguments introduced by @cl{&key}.
+then optional arguments introduced by @cl{&optional},
+then a rest argument introduced by @cl{&rest},
+then keyword arguments introduced by @cl{&key}.
 We remember the lambda-list of the input arguments the function accepts,
 and we record a lambda-list of the output values it returns,
 which may be considered as the lambda-list of the function's continuation.
@@ -1594,7 +1594,8 @@ We use the latter invalidating read function before any operation
 that modifies the contents of the box;
 therefore, it is invalid to try to access an old version of the wrapped object.
 If you want to keep a version of an object for future use,
-you explicit copy its contents into a new object before you make any modification,
+you must explicit copy its contents into a new object
+before you make any modification,
 as per Linear Logic.
 
 Here are the cleaned up macroexpansions for the wrappers around
@@ -1686,7 +1687,7 @@ but are beyond the scope of our current projects.
 @subsubsection{Interfaces as Detached Classes}
 
 An object-oriented API is a set of classes and generic functions
-operating on objects, objects having both at the same time
+operating on objects, objects having at the same time
 identity, data content, and behavior attached to them;
 behavior of generic functions happen by dispatching
 on the class of the first object (and sometimes those of subsequent objects).
@@ -1827,7 +1828,7 @@ of the interface signature for lists or sequences.
 Nevertheless, our transformation from @[IPS] to object-oriented style
 has to do something about constructors.
 Since in this case we are transforming an abstract interface,
-each object needs to carry in a parameter
+objects need to carry a parameter
 for the actual concrete interface with which the object was created.
 We use the slot @cl{interface} for that,
 and the above definition overrides its default definition
@@ -1838,7 +1839,7 @@ how to pass the interface in its call to @cl{make-instance}.
 When creating the object,
 we need to supply this interface to constructor functions.
 The @cl{:interface-argument} option in
-@cl{define-classified-interface-class},
+@cl{define-classified-interface-class}
 tells constructors such as @cl{empty} to accept an extra argument
 which will become the interface to be attached to the constructed object.
 How the interface is extracted from that argument
@@ -1847,7 +1848,7 @@ but we rely on the default, which is to use it directly.
 All this customization was necessary to generate the @cl{empty} wrapper above.
 
 Also note how, in this example,
-we constrain argument to be of type @cl{stateful:<map>}
+we constrain the argument to be of type @cl{stateful:<map>}
 before we construct a @cl{>map<} object,
 so that other methods of @cl{empty} could construct
 other kind of empty objects based on a different interface.
@@ -1889,11 +1890,12 @@ tells us that we don't need to provide
 an interface argument to the internal @cl{make-instance} constructor,
 since it is a class constant rather than an object-specific parameter.
 We could have further customized object wrapping and unwrapping with the
-@cl{:wrap} and @cl{:unwrap} options, defaulting respectively to
-@cl{`(make-instance ',class)} and @cl{`(box-ref)},
-specifying the prefix of a form to build the object from interface data
+@cl{:wrap} and @cl{:unwrap} options;
+they specify the prefix of a form to build the object from interface data
 or extract the interface data from the object respectively;
-in the default wrapper, @cl{,class} will actually be
+they default respectively to
+@cl{`(make-instance ',class)} and @cl{`(box-ref)},
+where @cl{,class} will actually be
 the name of the class being defined by @cl{define-classified-interface-class}.
 
 With the definition above,
@@ -2016,7 +2018,7 @@ the powers and limitations of @[CL] in implementing parametric polymorphism:
    and dynamic instantiation of new interface objects with runtime parameters.
    Note that this starkly contrasts with classes inside parameterized units,
    as done in the PLT unit article @~cite[MOOPUM],
-   where parameterized class are statically linked and strictly scoped
+   where parameterized classes are statically linked and strictly scoped
    via an assemblage of units;
    though the PLT approach allows for dynamic instantiation of unit assemblages
    with runtime parameters, any such assemblage is semantically sealed
@@ -2140,6 +2142,7 @@ we could make sure that it does a proper job with our data structures.
 In case compilers have trouble with code in @[IPS],
 we could develop some protocol for partial evaluation
 that will ensure proper inlining is done.
+@;Philipp Marek says: see http://discontinuity.info/~pkhuong/gf-sealing.lisp
 
 @subsubsection{More Advanced Projects}
 
@@ -2222,7 +2225,7 @@ for object systems and ways to modularly express mathematical concepts.
 As for the goal we are aiming for,
 it is the automated unification of different programming styles:
 programmers shall be able to write incremental contributions
-each in a style most suited to expressing its meaning,
+each in a style most suited to express its meaning,
 yet be able to combine them all despite their being written in different styles.
 The program fragments would be automatically aligned
 along a common semantic framework thanks to declarative specifications
@@ -2246,8 +2249,8 @@ Jon Rafkind for giving me a template to start from,
 Eric O'Connor for kickstarting the development of
 LIL as an independent library,
 Zach Beane for being a one-man Release and QA system for @[CL] libraries,
-my colleagues Arthur Gleckler, Scott McKay and Alejandro Sedeño
-for their careful proofreading,
+my colleagues Arthur Gleckler, Scott McKay and Alejandro Sedeño,
+as well as Philipp Marek, for their careful proofreading,
 my anonymous reviewers and my other proofreaders for their feedback,
 and Kuroda Hisao for organizing the conference and
 pushing me to give my very best on this article.
