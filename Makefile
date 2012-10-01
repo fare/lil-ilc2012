@@ -4,7 +4,7 @@ LILSRC = ds.scrbl bibliography.scrbl utils.rkt
 
 export PLTCOLLECTS:=$(shell pwd):${PLTCOLLECTS}
 
-all: pdf PDF
+all: slideshow # pdf PDF
 html: ${LIL}.html
 pdf: ${LIL}.pdf
 PDF: ${LIL}.PDF
@@ -36,3 +36,6 @@ mrproper:
 
 rsync: html pdf
 	rsync -av ${LIL}.html ${LIL}.pdf common-lisp.net:~frideau/public_html/lil-ilc2012/
+
+slideshow: lil-slides.rkt utils.rkt
+	racket $<
