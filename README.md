@@ -1,5 +1,5 @@
-LIL: higher-order datastructures meet CLOS
-==========================================
+LIL: CLOS reaches higher-order, sheds identity, and has a transformative experience
+===================================================================================
 
 This article was submitted and accepted for the International Lisp Conference 2012:
 	http://international-lisp-conference.org/2012/

@@ -96,5 +96,8 @@ See discussion on 2012-08-03 on #racket
 ;; uses no dash. Scott wins!
 ;;  http://www.itu.dk/courses/BPRD/E2009/fundamental-1967.pdf
 
+;; Greg Morrisett
+;; http://www.eecs.harvard.edu/~greg/cs256sp2005/lec15.txt
+;; method 4, runtime dispatch.
 
 ;; Mention traits?

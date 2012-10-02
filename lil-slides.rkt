@@ -199,6 +199,19 @@ also known as IPS.
 Just like Object-Oriented Programming is OOP.
 |#
 
+(define slides
+  (make-keyword-procedure
+   (lambda (kws kvs repeats . lines)
+     (for ([i repeats])
+       (let ((m (λ (xs) (map (λ (x) (x i)) xs))))
+	 (keyword-apply
+	  slide kws (m kvs) (m lines)))))))
+
+(define (always x) (lambda (i) x))
+(define (if= n x [y ~]) (lambda (i) (if (= i n) x y)))
+(define (if<= n x [y ~]) (lambda (i) (if (<= i n) x y)))
+(define (if>= n x [y ~]) (lambda (i) (if (>= i n) x y)))
+
 (slide #:title (title "Interface Passing Style")
   (t "Let's lookup a map")
   ~
@@ -211,6 +224,21 @@ Just like Object-Oriented Programming is OOP.
   ~
   (code (lookup map key)))
 #|
+|#
+
+(slide #:title (title "Interface Passing Style")
+  (t "But is it an alist? a hash-table? A binary tree?")
+  (t "FP: have the correct function in scope")
+  (code (_lookup map key)))
+#|
+The function itself is monomorphic.
+To manipulate different data structures,
+you'd need different functions, each with a different name.
+For the expression to be polymorphic,
+some outer mechanism for polymorphism would arrange to bind
+the correct function to that name before entering the scope.
+Pushing polymorphism back to whoever binds the function.
+For instance, using the equivalent of PLT units.
 |#
 
 (slide #:title (title "Interface Passing Style")
