@@ -297,3 +297,22 @@ Thank you for listening to my talk.
 
 Any questions?
 |#
+
+;;------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+#|
+Ad hoc polymorphism is not just for imperative objects
+Parametric polymorphism is not just for pure computations
+linear logic unifies pure and stateful.
+It's more than time for a Linear Lisp — any taker?
+
+It's important to distinguish data and meta-data
+you can join them as convenient - but just THINKING about them separately
+is a conceptual step that simplifies many things,
+and avoids the horrific complications when you need to formalize their types.
+
+Exposing the innards of a programming language feature is a rich device.
+If you language feature doesn't have clean explainable semantics
+without introducing such innards, then it is the wrong primitive,
+and founding your language on it is an abstraction inversion.
+Make the innards the primitive.
+|#
