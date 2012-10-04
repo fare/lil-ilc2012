@@ -1,11 +1,10 @@
-#lang at-exp racket
-;;-*- Scheme -*-
+#lang at-exp racket ;;-*- Scheme -*-
 (require slideshow
 	 slideshow/code
-	 "utils.rkt"
-	 scheme/gui/base)
+	 scheme/gui/base
+	 "utils.rkt")
 
-(define ~ @t{     })
+(define ~ @t{ })
 (define *blue* (make-object color% "blue"))
 (define *red* (make-object color% "red"))
 (define *grey* (make-object color% 200 200 200))
@@ -15,8 +14,24 @@
 
 (define (title x) (text x (cons 'bold 'default) 38))
 
-(define (bLIL)
-  (title "Lisp Interface Library"))
+(define slides
+  (make-keyword-procedure
+   (lambda (kws kvs repeats . lines)
+     (for ([i repeats])
+       (let ((m (λ (xs) (map (λ (x) (x i)) xs))))
+	 (keyword-apply
+	  slide kws (m kvs) (m lines)))))))
+
+(define (always x) (lambda (i) x))
+(define (repeat-fun test n iftesttrue [iftestfalse ~] [ifnorepeat ~])
+  (lambda (i)
+    (cond
+     ((not i) ifnorepeat)
+     ((test i n) iftesttrue)
+     (#t iftestfalse))))
+(define (if= n x [y ~] [z ~]) (repeat-fun = n x y z))
+(define (if<= n x [y ~] [z ~]) (lambda (i) (if (<= i n) x y)))
+(define (if>= n x [y ~] [z ~]) (lambda (i) (if (>= i n) x y)))
 
 (define (?highlight n m object [shaded grey] [highlit red] [normal identity])
   (if n
@@ -25,8 +40,11 @@
 	  (shaded object))
       (normal object)))
 
+(define (tLIL)
+  (title "Lisp Interface Library"))
+
 (define (cover n [text ~] [text2 ~])
-  (slide #:title (?highlight n 0 (bLIL) identity)
+  (slide #:title (?highlight n 0 (tLIL) identity)
     (?highlight n 1 (bt "CLOS reaches higher-order,"))
     (?highlight n 2 (bt "sheds identity,"))
     (?highlight n 3 (bt "and has a transformative experience"))
@@ -36,7 +54,7 @@
   (cover n text ~)
   (cover n text text2))
 
-#;
+;#;
 (begin
 (cover #f (t "François-René Rideau <tunes@google.com> — ILC 2012"))
 #| Hi.
@@ -199,19 +217,6 @@ also known as IPS.
 Just like Object-Oriented Programming is OOP.
 |#
 
-(define slides
-  (make-keyword-procedure
-   (lambda (kws kvs repeats . lines)
-     (for ([i repeats])
-       (let ((m (λ (xs) (map (λ (x) (x i)) xs))))
-	 (keyword-apply
-	  slide kws (m kvs) (m lines)))))))
-
-(define (always x) (lambda (i) x))
-(define (if= n x [y ~]) (lambda (i) (if (= i n) x y)))
-(define (if<= n x [y ~]) (lambda (i) (if (<= i n) x y)))
-(define (if>= n x [y ~]) (lambda (i) (if (>= i n) x y)))
-
 (slide #:title (title "Interface Passing Style")
   (t "Let's lookup a map")
   ~
@@ -252,6 +257,29 @@ For instance, using the equivalent of PLT units.
   (t "But is it an alist? a hash-table? A binary tree?")
   (t "IPS: One little extra argument for the meta-data")
   (code (lookup _<interface> map key)))
+
+(slide #:title (title "Interface Passing Style")
+  ~
+  ~
+  (code (lookup <alist> map key)))
+
+(slide #:title (title "Interface Passing Style")
+  ~
+  ~
+  (code (lookup <hash-table> map key)))
+
+(slide #:title (title "Interface Passing Style")
+  ~
+  ~
+  (code (lookup (<avl-tree> <french-string>) map key)))
+
+(slide #:title (title "Interface Passing Style")
+  ~
+  ~
+  (code (lookup (<alist> <equal>) map key)))
+
+
+
 #|
 |#
 
