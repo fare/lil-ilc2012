@@ -281,6 +281,82 @@ For instance, using the equivalent of PLT units.
 
 
 #|
+@clcode{
+(lookup <alist>
+  '((name . "ILC") (year . 2010) (topic . "Lisp"))
+  'year)}
+
+@clcode{(insert <i> map key value)}
+
+@clcode{
+(insert <alist>
+  '((name . "ILC") (year . 2010) (topic . "Lisp"))
+  'year 2012)}
+
+@clcode{((name . "ILC") (year . 2012) (topic . "Lisp"))}
+
+Because @cl{insert} means something quite different
+for pure and stateful data structures, with incompatible invariants,
+our library actually defines two different generic functions,
+@cl{pure:insert} and @cl{stateful:insert},
+each in its own package.
+
+@clcode{
+(defmethod sum-values ((<i> pure:<map>) map)
+  (let ((submaps (divide/list <i> map)))
+    ;; see promised invariant of divide/list
+    (cond
+      ((null submaps) ; no element
+       0)
+      ((null (rest submaps))
+       ;; only one mapping, extract its value
+       (nth-value 1 (first-key-value <i> map)))
+      (t ;; general case: recurse and map-reduce
+       (reduce #'+
+         (mapcar (λ (m) (sum-values <i> m))
+                 submaps))))))}
+
+(defgeneric convert
+    (<destination> <origin> object)
+  (:documentation "Convert an OBJECT
+  following interface <ORIGIN> into a new object
+  following interface <DESTINATION>."))
+
+@clcode{
+(define-interface <emptyable> (<type>) ()
+  (:abstract)
+  (:generic empty (<emptyable>)
+   (:values object) (:out 0)
+   (:documentation "Return an empty object"))
+  (:generic empty-p (<emptyable> object)
+   (:in 1) (:values boolean)
+   (:documentation "Is object empty?")))}
+
+@clcode{
+(define-interface <alist>
+    (<map-empty-as-nil>
+     <map-decons-from-first-key-value-drop>
+     <map-update-key-from-lookup-insert-drop>
+     <map-divide/list-from-divide>
+     <map-map/2-from-fold-left-lookup-insert-drop>
+     <map-join-from-fold-left-insert>
+     <map-join/list-from-join>
+     <map>)
+  ((key-interface :type <eq>
+    :initarg :key-interface
+    :reader key-interface))
+  (:parametric (&optional (eq <eql>))
+     (make-interface :key-interface eq))
+  (:singleton))}
+
+(defmethod empty-p
+    ((<i> <empty-object>) (x t))
+  nil)
+(defmethod empty-p
+    ((<i> <empty-object>) (x empty-object))
+  t)}
+
+
 |#
 
 #|
@@ -343,4 +419,11 @@ If you language feature doesn't have clean explainable semantics
 without introducing such innards, then it is the wrong primitive,
 and founding your language on it is an abstraction inversion.
 Make the innards the primitive.
+|#
+
+#|
+1- Be better prepared, and finish faster
+2- Since the public knows ad hoc polymorphism, insist on parametric polymorphism
+3- Be ready to field questions on performance:
+   compare to existing libraries.
 |#

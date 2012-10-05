@@ -1490,7 +1490,7 @@ For instance, the cleaned up wrapper for @cl{insert} is:
     (multiple-value-bind (updated-map)
         (pure:insert <pure-interface>
 		     pure-map key value)
-      (set-box-value pure-map map)
+      (set-box-value updated-map map)
       (values))))
 }
 
