@@ -998,13 +998,13 @@ Our @cl{pure:<hash-table>} is defined parametrically as follows
      <map-update-key-from-lookup-insert-drop>
      <map-map/2-from-fold-left-lookup-insert-drop>
      <map>)
-  ((key-interface
+  ((key-interface :type <hashable>
     :reader key-interface
     :initarg :key)
-   (hashmap-interface
+   (hashmap-interface :type <map>
     :reader hashmap-interface
     :initarg :hashmap)
-   (bucketmap-interface
+   (bucketmap-interface :type <map>
     :reader bucketmap-interface
     :initarg :bucketmap))
   (:parametric
@@ -1615,7 +1615,7 @@ Here are the cleaned up macroexpansions for the wrappers around
     ((<interface> <linearized-map>) map key value)
   (let* ((<stateful-interface>
            (stateful-interface <interface>))
-         (stateful-map (box-value map)))
+         (stateful-map (box-ref map)))
      (stateful:insert <stateful-interface>
                       stateful-map key value)
      (let* ((updated-map
