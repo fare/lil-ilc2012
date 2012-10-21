@@ -18,9 +18,9 @@
    @bt{Building Common Lisp software}
    @bt{made slightly easier}
    ~ ~
-   (para #:align 'center @t{François-René Rideau,} @it{ITA Software})
-   @t{Boston Lisp Meeting, 2010-05-24}
-   @url{http://fare.tunes.org/computing/asdf2.ss})
+   (para #:align 'center @t{François-René Rideau,} @it{Google})
+   @t{ILC'2012}
+   #;@url{http://fare.tunes.org/computing/asdf.scrbl})
 
 (slide #:title "Problem"
 @t{How to build large Lisp systems}
@@ -97,7 +97,7 @@
 
 (slide #:title "ASDF just works, everywhere"
 @t{ASDF 1 ran on: SBCL, CCL, CLISP, CMUCL, ECL, LW, ACL, GCL 2.7}
-@t{ASDF 2 added: ABCL, SCL, XCL, Genera, Cormanlisp, RMCL}
+@t{ASDF 2 added: ABCL, SCL, MKCL, XCL, Genera, Cormanlisp, RMCL}
 @t{ASDF 2 works the same everywhere.}
 @t{OSes: Unix, Windows, MacOS 9, Genera, JVM}
 )
@@ -150,7 +150,7 @@
 @t{Deliver a single FASL for a system}
 @t{Easier delivery for system or sys+deps}
 @t{Works on SBCL, CCL; hopefully still ECL}
-@t{Unsupported: =.so='s from =cffi-wrapper= (except on ECL?)}
+@t{Unsupported: .so from cffi-wrapper (except on ECL?)}
 @t{Already works, but could use more features}
 @t{Good for blaze}
 )
@@ -175,10 +175,13 @@
 )
 
 (slide #:title "Extreme Makeover, Syntax Edition"
-@code{(defclass py (py-source-file)
-    ((source-file-type :initform "py")
-     (around-compile :initform "cl-py:with-py-syntax")))}
-@t{There you are, compiling another language as CL!}
+ (code
+  (defclass py (py-source-file)
+    ((source-file-type
+      :initform "py")
+     (around-compile
+      :initform "cl-py:with-py-syntax"))))
+ @t{There you are, compiling another language as CL!}
 )
 
 (slide #:title "LIST-OF"
@@ -190,7 +193,7 @@
 
 (slide #:title "Solution: ASDF-Finalizers"
 @t{Relies on :around-compile, :compile-check}
-@t{(eval-at-toplevel '(ensure-list-of-predicate string))}
+(code(eval-at-toplevel '(ensure-predicate string)))
 @t{evaluates it now, pushes it to a queue of final forms}
 @t{(final-forms) at the end of the file empties queue}
 )
@@ -214,7 +217,8 @@
 @t{Integration with SLIME, with Quicklisp}
 @t{Intent-indexed, content-addressed LRU cache}
 @t{Concurrent backend}
-@t{Support for blaze!}
+@t{Better delivery with FFI wrappers}
+;;@t{Support for blaze!}
 )
 
 (slide #:title "Success of XCVB derivatives"
