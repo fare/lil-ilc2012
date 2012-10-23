@@ -37,7 +37,10 @@ mrproper:
 rsync: html pdf
 	rsync -av ${LIL}.html ${LIL}.pdf common-lisp.net:~frideau/public_html/lil-ilc2012/
 
-slideshow: lil-slides.rkt utils.rkt
+slides: lil-slides.rkt utils.rkt
+	racket $<
+
+long-slides: lil-slides-long.rkt utils.rkt
 	racket $<
 
 asdf: asdf.scrbl utils.rkt
