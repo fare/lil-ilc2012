@@ -1185,14 +1185,14 @@ Many interfaces have methods implementing their declared functions
 in the context of which this situation definitely applies:
 the interface argument will be passed unchanged
 to other methods in the interface signature.
-Therefore @cl{define-interface} also has an option @cl{:method}
+Therefore @cl{define-interface} also has an option @cl{:method>}
 that defines methods with an implicit @cl{with-interface}.
 For instance, here is the definition of the previously mentioned
 @cl{<eq-from-==>} mixin:
 @clcode{
 (define-interface <eq-from-==> (<eq>) ()
   (:abstract)
-  (:method eq-function ()
+  (:method> eq-function ()
     (λ (x y) (== x y))))
 }
 Notice how the interface argument is omitted from the lambda-list.
@@ -1535,7 +1535,7 @@ and the latter returns a list of map objects.
 
 Here is a how we manually wrap @cl{divide/list}:
 @clcode{
-(:method stateful:divide/list (map)
+(:method> stateful:divide/list (map)
    (let ((list
          (pure:divide/list
            (pure-interface <mutating-map>)
@@ -1567,8 +1567,8 @@ linearized pure map interfaces as follows:
 (define-linearized-interface
   <linearized-map> (pure:<map>) (stateful:<map>)
   ()
-  (:method join/list (list) ...)
-  (:method divide/list (map)
+  (:method> join/list (list) ...)
+  (:method> divide/list (map)
      (let ((list
             (stateful:divide/list
              (stateful-interface <linearized-map>)
