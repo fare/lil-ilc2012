@@ -1330,7 +1330,7 @@ it can buy us a lot.
   (code
 (define-interface <eq-from-==> (<eq>) ()
   (:abstract)
-  (:method eq-function ()
+  (:method> eq-function ()
     (λ (x y) (== x y))))
 ))
 #|
@@ -1338,7 +1338,7 @@ Because interface functions always take the interface as their first argument,
 another obvious syntactic improvement is to provide a way to define
 interface methods with an implicit with-interface.
 
-Therefore define-interface accepts a :method option
+Therefore define-interface accepts a :method> option
 to define methods this way.
 
 Here this trivial implementation mixin, <eq-from-==>.
@@ -1364,11 +1364,11 @@ constraints of covariance and contravariance.
     (define-interface <empty-is-nil>
       (<emptyable>) ()
       (:abstract)
-      (:method empty ()
+      (:method> empty ()
 	 nil)
-      (:method empty-p (object)
+      (:method> empty-p (object)
 	 nil)
-      (:method empty-p ((object null))
+      (:method> empty-p ((object null))
 	 t))))
 #|
 We can now revisit the earlier example of <empty-is-nil>
@@ -1578,7 +1578,7 @@ It trivially creates a new box with an empty value.
 |#
 (slide #:title (title "Limits of our Trivial Types")
   (code
-(:method stateful:divide/list (map)
+(:method> stateful:divide/list (map)
    (let ((list
          (pure:divide/list
            (pure-interface <mutating-map>)
@@ -1629,8 +1629,8 @@ than to do a deep copy of your object every time.
 (define-linearized-interface
   <linearized-map> (pure:<map>) (stateful:<map>)
   ()
-  (:method join/list (list) ...)
-  (:method divide/list (map)
+  (:method> join/list (list) ...)
+  (:method> divide/list (map)
      (let ((list
             (stateful:divide/list
              (stateful-interface <linearized-map>)
