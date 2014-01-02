@@ -61,7 +61,7 @@
 (cover #f (t "François-René Rideau <tunes@google.com> — ILC 2012"))
 #| Hi.
 I am François-René Rideau.
-I am a Lisp hacker at ITA Software, now a part of Google Travel.
+I am a [2014: former] Lisp hacker at ITA Software, now a part of Google Travel.
 
 #-ILC
 Today I'm presenting
@@ -234,7 +234,7 @@ larger applicability with fewer lines of code,
 more cooperation with less coordination,
 higher division of labor with higher specialization.
 
-Let's examine an extremely common such protocols.
+Let's examine an extremely common such protocol.
 |#
 (slide #:title (title "Finite Maps")
   ~ (t "look up a key in a map") ~
@@ -262,13 +262,13 @@ with the type of data structure used to encode the map?
   (t "binary tree: DIY"))
 #|
 In the worst case,
-implementers have to build each each data structure separately from scratch,
+implementers have to build each and every data structure separately from scratch,
 and users have to learn a slightly different way to use each of them.
 
 Not only are functions monomorphic,
 that is, capable of processing only one kind of data structure;
 they do not implement a same protocol,
-except in a very abstract way outside the language itself.
+except in a very abstract sense outside the language itself.
 |#
 (slide #:title (title "Better monomorphism: uniform signature")
   (code
@@ -1571,7 +1571,7 @@ it can buy us a lot.
   (code
 (define-interface <eq-from-==> (<eq>) ()
   (:abstract)
-  (:method eq-function ()
+  (:method> eq-function ()
     (λ (x y) (== x y))))
 ))
 #|
@@ -1605,11 +1605,11 @@ constraints of covariance and contravariance.
     (define-interface <empty-is-nil>
       (<emptyable>) ()
       (:abstract)
-      (:method empty ()
+      (:method> empty ()
 	 nil)
-      (:method empty-p (object)
+      (:method> empty-p (object)
 	 nil)
-      (:method empty-p ((object null))
+      (:method> empty-p ((object null))
 	 t))))
 #|
 We can now revisit the earlier example of <empty-is-nil>
@@ -1695,9 +1695,9 @@ the stateful function captures this new value and updates the box.
   (code
 (defmethod lookup
     ((<interface> <mutating-map>) map key)
-  (let* ((<pure-interface>
-           (pure-interface <interface>))
-         (pure-map (box-value map)))
+  (let ((<pure-interface>
+          (pure-interface <interface>))
+        (pure-map (box-value map)))
     (multiple-value-bind (value foundp)
         (lookup <pure-interface>
 	        pure-map key)
@@ -1762,7 +1762,7 @@ our pure functions and their stateful variants.
 
    (:generic stateful:insert
      (<map> map key value) (:in 1)
-     (:values) (:out t))
+     (:values)             (:out t))
 
    (:generic stateful:empty
      (<map>)
@@ -1781,9 +1781,9 @@ and a constructor.
   (code
 (defmethod stateful:insert
     ((<interface> <mutating-map>) map key value)
-  (let* ((<pure-interface>
-           (pure-interface <interface>))
-         (pure-map (box-value map)))
+  (let ((<pure-interface>
+          (pure-interface <interface>))
+        (pure-map (box-value map)))
     (multiple-value-bind (updated-map)
         (pure:insert <pure-interface>
 		     pure-map key value)
@@ -1806,11 +1806,11 @@ of my partly copy-pasted macro expansion cleanup.
   (code
 (defmethod stateful:empty
     ((<interface> <mutating-map>))
-  (let* ((<pure-interface>
-           (pure-interface <interface>)))
+  (let ((<pure-interface>
+          (pure-interface <interface>)))
     (multiple-value-bind (pure-empty)
         (pure:empty <pure-interface>)
-      (let* ((empty-object (box! pure-empty)))
+      (let ((empty-object (box! pure-empty)))
         empty-object))))
 ))
 #|
@@ -1820,7 +1820,7 @@ It trivially creates a new box with an empty value.
 |#
 (slide #:title (title "Limits of our Trivial Types")
   (code
-(:method stateful:divide/list (map)
+(:method> stateful:divide/list (map)
    (let ((list
          (pure:divide/list
            (pure-interface <mutating-map>)
@@ -1871,8 +1871,8 @@ than to do a deep copy of your object every time.
 (define-linearized-interface
   <linearized-map> (pure:<map>) (stateful:<map>)
   ()
-  (:method join/list (list) ...)
-  (:method divide/list (map)
+  (:method> join/list (list) ...)
+  (:method> divide/list (map)
      (let ((list
             (stateful:divide/list
              (stateful-interface <linearized-map>)
@@ -2163,7 +2163,7 @@ you'll end up putting the cart before the horses.
   (code (quicklisp:quickload :lil))
   (t "Have fun!")
   ~
-  (bt "Wanna hack Lisp? Apply at Google!"))
+  (bt "Wanna hack Lisp? Apply at Google! [2014: kind of]"))
 #|
 Thank you for listening to my talk.
 

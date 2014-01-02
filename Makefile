@@ -4,7 +4,7 @@ LILSRC = ds.scrbl bibliography.scrbl utils.rkt
 
 export PLTCOLLECTS:=$(shell pwd):${PLTCOLLECTS}
 
-all: asdf # slideshow # PDF
+all: long-slides # asdf # PDF
 html: ${LIL}.html
 pdf: ${LIL}.pdf
 PDF: pdf ${LIL}.PDF
