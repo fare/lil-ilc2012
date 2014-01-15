@@ -1455,20 +1455,38 @@ to actually implement hash-tables.
 |#
 (slide #:title (title "Mind the Pun")
   (code
-(defmethod insert
-    ((_<i> <hash-table>) _map key value)
-  (let ((hash (hash (key-interface <i>) key)))
-    (insert
-     (_hashmap-interface _<i>) _map hash
-     (insert
-      (bucketmap-interface <i>)
-      (multiple-value-bind (bucket foundp)
-           (lookup (_hashmap-interface _<i>)
-	           _map hash)
-         (if foundp
-	     bucket
-	     (empty (bucketmap-interface <i>))))
-      key value))))))
+(defmethod insert ((_<i> <hash-table>) _map key value)
+  (nest
+   (let ((hash (hash (key-interface <i>) key))))
+   (multiple-value-bind (bucket foundp)
+       (lookup (hashmap-interface <i>) map hash))
+   (let ((old-bucket
+          (if foundp
+	      bucket
+	      (empty (bucketmap-interface <i>))))))
+   (let ((new-bucket
+          (insert (bucketmap-interface <i>)
+                  old-bucket key value))))
+   (insert (hashmap-interface <i>) map
+           hash new-bucket)))))
+
+(slide #:title (title "Mind the Pun")
+  (code
+(defmethod insert ((<i> <hash-table>) map key value)
+  (nest
+   (let ((hash (hash (key-interface <i>) key))))
+   (multiple-value-bind (bucket foundp)
+       (lookup (_hashmap-interface _<i>) _map hash))
+   (let ((old-bucket
+          (if foundp
+	      bucket
+	      (empty (bucketmap-interface <i>))))))
+   (let ((new-bucket
+          (insert (bucketmap-interface <i>)
+                  old-bucket key value))))
+   (insert (_hashmap-interface _<i>) _map
+           hash new-bucket)))))
+
 #|
 Here is a typical such method, for insertion.
 
@@ -1540,7 +1558,7 @@ and in the BODY of the macro,
 calls to the specified interface functions will implicitly
 pass around the the provided interface object.
 |#
-(slide #:title (title "Making interfaces implicit")
+(slide #:title (title "Using interfaces made implicit")
   (code
 (defun insertion-sort (alist)
   (with-interface (<number-map> <map>)
@@ -1567,7 +1585,7 @@ so with-interface didn't buy us much.
 But in more complex functions with many interface function calls,
 it can buy us a lot.
 |#
-(slide #:title (title "Making interfaces implicit")
+(slide #:title (title "Defining interfaces implicit style")
   (code
 (define-interface <eq-from-==> (<eq>) ()
   (:abstract)
@@ -1600,7 +1618,7 @@ because interface meta-data and the actual data-structures
 follow separate hierarchy, we are not stuck with contradictory
 constraints of covariance and contravariance.
 |#
-(slide #:title (title "Making interfaces implicit")
+(slide #:title (title "Defining interfaces implicit style")
   (code
     (define-interface <empty-is-nil>
       (<emptyable>) ()
@@ -1637,7 +1655,10 @@ from your structures built in @IPS.
 (defpackage :pure-hash-table ...)
 (in-package :pure-hash-table)
 (define-interface-specialized-functions
-  pure:<hash-table> pure:<map>)))
+  pure:<hash-table> pure:<map>)
+(let ((h (empty)))
+  (insert h 1 "a")
+  (join h (alist-map '((2 . "b") (3 . "c")))))))
 #|
 Here is a trivial use of the macro.
 
@@ -1649,6 +1670,10 @@ This way, you can create your data structures
 with all the power of @IPS,
 and export them for use by your customers
 who don't want to hear anything about @IPS.
+
+There is no more polymorphism in the provided API,
+though polymorphism was used (and how!)
+in building the data structure.
 |#
 (slide #:title (title "From Pure to Stateful and Back")
   (t "put pure objects in mutable box") ~
@@ -1698,11 +1723,7 @@ the stateful function captures this new value and updates the box.
   (let ((<pure-interface>
           (pure-interface <interface>))
         (pure-map (box-value map)))
-    (multiple-value-bind (value foundp)
-        (lookup <pure-interface>
-	        pure-map key)
-      (values value foundp))))
-))
+    (lookup <pure-interface> pure-map key)))))
 #|
 Here is how the lookup method is automatically generated.
 In practice, the macro uses gensyms, here I cleaned up the macro output.
@@ -1781,15 +1802,14 @@ and a constructor.
   (code
 (defmethod stateful:insert
     ((<interface> <mutating-map>) map key value)
-  (let ((<pure-interface>
+  (let* ((<pure-interface>
           (pure-interface <interface>))
-        (pure-map (box-value map)))
-    (multiple-value-bind (updated-map)
-        (pure:insert <pure-interface>
-		     pure-map key value)
+         (pure-map (box-value map))
+         (updated-map
+          (pure:insert <pure-interface>
+                       pure-map key value)))
       (set-box-value _updated-map map)
-      (values))))
-))
+      (values)))))
 #|
 And so here is the insert method.
 
@@ -1806,12 +1826,11 @@ of my partly copy-pasted macro expansion cleanup.
   (code
 (defmethod stateful:empty
     ((<interface> <mutating-map>))
-  (let ((<pure-interface>
-          (pure-interface <interface>)))
-    (multiple-value-bind (pure-empty)
-        (pure:empty <pure-interface>)
-      (let ((empty-object (box! pure-empty)))
-        empty-object))))
+  (let* ((<pure-interface>
+          (pure-interface <interface>))
+         (pure-empty
+          (pure:empty <pure-interface>)))
+    (box! pure-empty)))
 ))
 #|
 Finally, here is the empty method.
@@ -1891,14 +1910,11 @@ with the same manual method definitions.
   (code
 (defmethod lookup
     ((<interface> <linearized-map>) map key)
-  (let* ((<stateful-interface>
-           (stateful-interface <interface>))
-         (stateful-map (box-value map)))
-    (multiple-value-bind (value foundp)
-        (lookup <stateful-interface>
-	        stateful-map key)
-      (values value foundp))))
-))
+  (let ((<stateful-interface>
+         (stateful-interface <interface>))
+        (stateful-map (box-value map)))
+    (lookup <stateful-interface>
+            stateful-map key)))))
 #|
 Here is the lookup method.
 It is exactly the same as for the pure to stateful transformation.
@@ -1941,18 +1957,28 @@ That's why we have those boxes to throw an error if you do it.
 (defmethod empty
     ((<interface> <linearized-map>))
   (let* ((<stateful-interface>
-           (stateful-interface <interface>)))
-    (multiple-value-bind (empty-object)
-        (empty <stateful-interface>)
-      (let* ((one-use-empty
-               (one-use-value-box empty-object)))
-	one-use-empty))))
-))
+           (stateful-interface <interface>))
+         (empty-object
+          (empty <stateful-interface>)))
+    (one-use-value-box empty-object)))))
 #|
 Finally, the constructor simply puts the object in a box.
 |#
 (slide #:title (title "IPS to OOP")
   (code
+(define-classified-interface-class
+  >map< (object-box) stateful:<map>
+  ((interface :initarg :interface))
+  (:interface-argument (<interface> stateful:<map>)))
+))
+
+(slide #:title (title "Using code OOP style")
+  (code
+(let ((map (make-instance '>map<
+                          :interface 'number-map)))
+  (insert map 2010 50)
+  (insert map 2012 60)
+  (reduce #'+ (collection-values map)))
 (define-classified-interface-class
   >map< (object-box) stateful:<map>
   ((interface :initarg :interface))
@@ -1973,12 +1999,9 @@ the interface used and the value for that interface.
 (slide #:title (title "IPS to OOP")
   (code
 (defmethod lookup ((map >map<) key)
-  (let* ((<interface> (class-interface map))
-         (map-data (box-ref map)))
-    (multiple-value-bind (value foundp)
-        (interface:lookup <interface> map key)
-      (values value foundp))))
-))
+  (let ((<interface> (class-interface map))
+        (map-data (box-ref map)))
+    (interface:lookup <interface> map-data key)))))
 #|
 The read-only method would
 trivially extract the interface and value from the box argument
@@ -1987,11 +2010,9 @@ and do the lookup.
 (slide #:title (title "IPS to OOP")
   (code
 (defmethod insert ((map >map<) key value)
-  (let* ((<interface> (class-interface map))
-         (map-data (box-ref map)))
-    (stateful:insert <interface> map key value)
-    (values)))
-))
+  (let ((<interface> (class-interface map))
+        (map-data (box-ref map)))
+    (stateful:insert <interface> map-data key value)))))
 #|
 Similarly, the side-effecting method
 can simply extract the interface and datum from the argument,
@@ -2000,12 +2021,11 @@ and do the side-effect.
 (slide #:title (title "Issue with Constructors!")
   (code
 (defmethod empty ((<interface> stateful:<map>))
-  (multiple-value-bind (empty-data)
-      (interface:empty <interface>)
-    (let* ((object (make-instance '>map<
-                    :interface <interface>
-		    :value empty-data)))
-      object)))))
+  (let ((empty-data
+          (interface:empty <interface>)))
+    (make-instance '>map<
+                   :interface <interface>
+                   :value empty-data)))))
 #|
 But the constructor doesn't have an object as argument,
 it has an object as a result.
@@ -2047,12 +2067,10 @@ constructors just use a constant value for the interface.
 (slide #:title (title "IPS to OOP, monomorphic constructor")
   (code
 (defmethod empty ()
-  (let* ((<interface> <number-map>))
-    (multiple-value-bind (empty-data)
-        (interface:empty <interface>)
-      (let* ((object (make-instance '>nm<
-      	    	        :value empty-data)))
-        object))))))
+  (let* ((<interface> <number-map>)
+         (empty-data
+          (interface:empty <interface>)))
+    (make-instance '>nm< :value empty-data)))))
 #|
 Then the constructor does not need to take an extra argument.
 
