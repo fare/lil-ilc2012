@@ -1979,10 +1979,6 @@ Finally, the constructor simply puts the object in a box.
   (insert map 2010 50)
   (insert map 2012 60)
   (reduce #'+ (collection-values map)))
-(define-classified-interface-class
-  >map< (object-box) stateful:<map>
-  ((interface :initarg :interface))
-  (:interface-argument (<interface> stateful:<map>)))
 ))
 #|
 Now, using the same Linear Type System,
