@@ -6,6 +6,7 @@
 
 ;; See TODO at the end.
 
+
 (define ~ @t{ })
 (define *blue* (make-object color% "blue"))
 (define *red* (make-object color% "red"))
@@ -74,6 +75,10 @@ I am honored to be in Kyoto today
 at this 2012 International Lisp Conference
 to present the work I did on
 LIL, the Lisp Interface Library.
+
+You may have noticed my talk has a mystical sounding title.
+
+I stand by every word.
 
 So what is LIL?
 |#
@@ -241,7 +246,7 @@ Let's examine an extremely common such protocol.
   (code (lookup map key)) ~)
 #|
 A finite map is
-data structures that encode the mapping
+a data structure that encodes the mapping
 from a finite number of keys each to one value.
 
 Here's how we'd like to write code that can
@@ -256,7 +261,7 @@ Now when you tell the system to lookup a map,
 how is it going to match the algorithm used to look up the key
 with the type of data structure used to encode the map?
 |#
-(slide #:title (title "Bad monorphism: incompatible protocols")
+(slide #:title (title "Bad monomorphism: incompatible protocols")
   (code (assoc map key) => pair?)
   (code (gethash key map) => value foundp)
   (t "binary tree: DIY"))
@@ -269,6 +274,8 @@ Not only are functions monomorphic,
 that is, capable of processing only one kind of data structure;
 they do not implement a same protocol,
 except in a very abstract sense outside the language itself.
+
+That's the situation for built-in CL maps.
 |#
 (slide #:title (title "Better monomorphism: uniform signature")
   (code
@@ -295,6 +302,8 @@ and a boolean indicating whether a value was found.
 Users and implementers may have to do as much work,
 but at least they only have to remember one pattern.
 The protocol has been moved oh so slightly inside the language.
+It is kind of polymorphic at the meta-level,
+but remains monomorphic in the base language.
 
 But this is not actually solving the issue of polymorphism,
 just pushing it back to whoever chooses the function to use or implement.
@@ -470,7 +479,7 @@ explicit passing around such meta-data as an extra argument
 to generic functions.
 
 We don't hide the plumbing, we flaunt it proudly,
-and we give that piece first-class meta-data the
+and we give that piece of first-class meta-data the
 glorious name of Interface.
 
 And thanks to that trick, we can have both
@@ -561,8 +570,8 @@ but other data structures are just one function call away.
   =>
   "RNO" T))
 #|
-We could also use a binary tree, by using the interface <number-map>,
-that under the hood is an avl-tree with real numbers as keys.
+We could also use a binary tree, by using the interface <number-map>.
+Under the hood, this is an avl-tree using real numbers as its ordered keys.
 |#
 (slide #:title (title "Inserting in a map"))
 #|
@@ -573,6 +582,7 @@ but we also want to be able to insert a key value association in a map.
  (code (insert <i> map key value)))
 #|
 We do it with the function insert.
+
 Did you notice how we follow the convention
 of starting and ending the names of our interface variables
 with angle brackets?
@@ -640,9 +650,10 @@ What happens if I insert a key-value association in a hash-table?
   \; no value))
 #|
 It returns nothing,
-because in Common Lisp, the built-in hash-table data structures are stateful;
+because in Common Lisp,
+the built-in hash-table data structures are stateful.
 insert happens through side-effect;
-it does not return a new one, it modifies the existing one.
+it does not return a new hash-table, it modifies the existing one.
 The same hash-table now associates a different value to the provided key.
 
 Note that in the example displayed,
@@ -695,7 +706,7 @@ An unqualified hash-table is a stateful hash-table.
 Later on, when I discuss stateful alists and pure hash-tables,
 I will keep explicit package qualifiers.
 
-But the defaults make the context is ambiguous,
+But the defaults make the context ambiguous,
 I will omit the package qualifier.
 So I'll write lookup for interface:lookup,
 and insert for whichever of pure:insert or stateful:insert
@@ -1597,7 +1608,7 @@ Because interface functions always take the interface as their first argument,
 another obvious syntactic improvement is to provide a way to define
 interface methods with an implicit with-interface.
 
-Therefore define-interface accepts a :method option
+Therefore define-interface accepts a :method> option
 to define methods this way.
 
 Here this trivial implementation mixin, <eq-from-==>.
@@ -1850,14 +1861,14 @@ It trivially creates a new box with an empty value.
              (mapcar #'box! (rest list))))))
 ))
 #|
-Our of over a dozen interface functions that were designed
+Out of over a dozen interface functions that were designed
 before I wrote the transformations,
 most fit our trivial linear type system.
 Unhappily, two fail: join/list and divide/list
 that respectively take as argument and return as result
 a list of submaps.
 My type system can't express the preservation of identity in list arguments.
-Therefore I have explicitly write methods for these functions.
+Therefore I explicitly wrote methods for these functions.
 
 Here is divide/list that we used earlier
 in our generic divide and conquer reduction algorithm.
@@ -1937,7 +1948,7 @@ That's because it's read-only either way.
 However, for the insert method,
 see how we put new value in a fresh one-use-value-box.
 We do not reuse the old box.
-Instead we we extract the value with box-ref instead of box-value,
+Instead we extract the value with box-ref instead of box-value,
 and this invalidates the original one-use-value-box.
 Therefore, anyone trying to use the old value will get an error.
 
@@ -2070,7 +2081,7 @@ constructors just use a constant value for the interface.
 #|
 Then the constructor does not need to take an extra argument.
 
-But then you want to have several classes share the same protocol,
+But when you want to have several classes share the same protocol,
 you need to rename your constructors, for instance with a prefix or suffix,
 so every class has differently named constructors.
 |#
@@ -2137,7 +2148,7 @@ and my next project will be a Lisp variant
 that provides Linearity.
 This was suggested by @hbaker long ago.
 I think the time has come.
-If you're interested, I'd looking for help.
+If you're interested, I'm looking for help.
 |#
 (slide #:title @title{5. Simpler Semantics}
   (t "Interfaces were everywhere, just hidden") ~
@@ -2165,10 +2176,10 @@ And so I invite you always expose the guts of your system.
 Have nothing to hide!
 @IPS is in the long tradition of @CPS, State Passing Style, etc.,
 in exposing the innards of existing systems for fun and profit.
-Anything else is results in an abstraction inversion,
+Anything else results in an abstraction inversion,
 to reuse another idea by Henry Baker.
 In other words, if you don't expose your internals,
-you'll find that when you need to express those internals,
+you'll find that when you need to reason about those internals,
 you'll end up putting the cart before the horses.
 |#
 (slide #:title @title{Questions?}

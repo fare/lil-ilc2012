@@ -97,7 +97,7 @@ The interface objects it manipulates are themselves without identity.
 |#
 (cover2 3
  (t "Automatic Transformations between Styles")
- (t "Enlightening Experience"))
+ (t "thanks to Linear Logic"))
 #|
 And it automates the transformation of data structures
 from one style to the other.
@@ -147,14 +147,14 @@ and the system would find the associated value (if any).
 But how is the system going to match the algorithm used
 with the type of data structure used to encode the map?
 |#
-(slide #:title (title "Bad monorphism: incompatible protocols")
+(slide #:title (title "Bad monomorphism: incompatible protocols")
   (code (assoc map key) => pair?)
   (code (gethash key map) => value foundp)
   (t "binary tree: DIY"))
 #|
 Without any polymorphism,
 implementers have to build each each data structure separately from scratch;
-not only are the functions monorphic,
+not only are the functions monomorphic,
 and users have to learn a slightly different protocol each time.
 
 That's the situation for built-in CL maps.
@@ -1589,7 +1589,7 @@ It trivially creates a new box with an empty value.
              (mapcar #'box! (rest list))))))
 ))
 #|
-Our of over a dozen interface functions that were designed
+Out of over a dozen interface functions that were designed
 before I wrote the transformations,
 most fit our trivial linear type system.
 Unhappily, two fail: join/list and divide/list
@@ -1679,7 +1679,7 @@ That's because it's read-only either way.
 However, for the insert method,
 see how we put new value in a fresh one-use-value-box.
 We do not reuse the old box.
-Instead we we extract the value with box-ref instead of box-value,
+Instead we extract the value with box-ref instead of box-value,
 and this invalidates the original one-use-value-box.
 Therefore, anyone trying to use the old value will get an error.
 
@@ -1814,7 +1814,7 @@ constructors just use a constant value for the interface.
 #|
 Then the constructor does not need to take an extra argument.
 
-But then you want to have several classes share the same protocol,
+But when you want to have several classes share the same protocol,
 you need to rename your constructors, for instance with a prefix or suffix,
 so every class has differently named constructors.
 |#
@@ -1881,7 +1881,7 @@ and my next project will be a Lisp variant
 that provides Linearity.
 This was suggested by @hbaker long ago.
 I think the time has come.
-If you're interested, I'd looking for help.
+If you're interested, I'm looking for help.
 |#
 (slide #:title @title{5. Simpler Semantics}
   (t "Interfaces were everywhere, just hidden") ~
@@ -1909,10 +1909,10 @@ And so I invite you always expose the guts of your system.
 Have nothing to hide!
 @IPS is in the long tradition of @CPS, State Passing Style, etc.,
 in exposing the innards of existing systems for fun and profit.
-Anything else is results in an abstraction inversion,
+Anything else results in an abstraction inversion,
 to reuse another idea by Henry Baker.
 In other words, if you don't expose your internals,
-you'll find that when you need to express those internals,
+you'll find that when you need to reason about those internals,
 you'll end up putting the cart before the horses.
 |#
 (slide #:title @title{Questions?}
