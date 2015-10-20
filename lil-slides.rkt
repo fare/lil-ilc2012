@@ -61,51 +61,157 @@
 (begin
 (cover #f (t "François-René Rideau <tunes@google.com> — ILC 2012"))
 #| Hi.
-I am François-René Rideau, from Google.
+I am François-René Rideau.
+I am a [2014: former] Lisp hacker at ITA Software, now a part of Google Travel.
+
+#-ILC
+Today I'm presenting
+LIL, the Lisp Interface Library
+on which I published a paper at ILC 2012 —
+the International Lisp Conference
+
+#+ILC
+I am honored to be in Kyoto today
+at this 2012 International Lisp Conference
+to present the work I did on
+LIL, the Lisp Interface Library.
 
 You may have noticed my talk has a mystical sounding title.
 
 I stand by every word.
+
+So what is LIL?
 |#
 
 (cover2 0
  (t "Data Structure Library for Common Lisp")
  (t "in Interface-Passing Style"))
 #|
-I'll be presenting a Library, for Common Lisp, that provides Data Structures.
-It is written in special style called Interface-Passing Style.
+As the name says, it's a Data Structure Library for Common Lisp,
+and it is written in special style called Interface-Passing Style.
+
+And my claim is that it is THE most fun way
+to develop and use Data Structures,
+in Common Lisp, or in any language.
 |#
 
 (cover2 1
  (t "Parametric Polymorphism")
  (t "married with Ad hoc Polymorphism"))
 #|
-This style enables Parametric Polymorphism,
-which allows for higher-order data structures.
-It does it in a way fully integrated
-with the Ad Hoc Polymorphism provided by CLOS,
-the Common Lisp Object System.
+@(IPS) allows for Parametric Polymorphism,
+which was not previously available in Common Lisp.
+This means that you can design not just data structures,
+but higher-order data structures:
+that is, functions
+that take as arguments data structures, or functions,
+or types, or numbers, or arbitrary objects,
+and from them build new more elaborate data structures, etc.
+
+If you have ever used functors in ML or OCaml,
+or Type Classes in Haskell,
+or maybe done advanced work with
+C++ templates, Java Generics, F# or Scala,
+you may know what a joy it is to be able to use Parametric Polymorphism
+when developing generic, reusable, libraries.
+|#
+#|
+However, what is important, as we achieve this Parametric Polymorphism,
+we integrate very well with the Ad Hoc Polymorphism provided by
+CLOS, the Common Lisp Object System.
+We can take advantage of the many features that decades later
+still make it a bleeding edge system for Ad Hoc Polymorphism:
+multiple dispatch, multiple inheritance, method combination,
+meta-object protocol.
+
+These features combined allow for nicely incremental, decentralized
+specification of software behavior.
+
+[The concepts of Ad hoc polymorphism vs Parametric polymorphism
+have been formalized by Christopher Strachey in his seminal 1967 article.]
+
+And so that's why LIL is about CLOS reaching higher-order:
+we marry the unsurpassed Ad hoc Polymorphism of CLOS
+with Parametric Polymorphism previously not available to CLOS.
 |#
 
 (cover2 2
  (t "Pure (and Stateful) Data Structures")
  (t "Ad hoc Polymorphism without State"))
 #|
-It enables a programming without object identity and mutable state,
-by providing Pure Data Structures as well as Stateful Data Structures.
-The interface objects it manipulates are themselves without identity.
+Thanks to this power,
+I have built a library of Data Structures, both Pure and Stateful.
+
+I mean pure, as in pure functional languages:
+without side-effects,
+where each value is immutable and therefore without identity,
+persistent in preserving its structure unmodified forever,
+till the Great Garbage Collector does us part,
+while new values come into the spotlight
+through the declarative exploration of updated variants of previous values.
+This contrasts with Stateful Data Structures,
+where each ephemeral object maintains a transient State
+that potentially changes at every operation
+through imperative side-effects
+that irreversibly modify its intimate structure,
+its only constant being its identity.
+
+Using @IPS, I demonstrate once again (if anyone doubted it)
+how the panoply of features of Ad Hoc Polymorphism,
+far from being tied to stateful objects with identity,
+applies very well to empowering the development of
+pure functional computing without identity.
+|#
+#|
+More than that, the very interfaces in @IPS themselves
+are fundamentally instances of Ad hoc Polymorphism without State.
+
+So is @IPS just a small change of point of view
+on well-known programming techniques?
+Yes, but it's a change of point of view that enables cool new things.
+Which brings me to...
 |#
 (cover2 3
  (t "Automatic Transformations between Styles")
  (t "thanks to Linear Logic"))
 #|
-And it automates the transformation of data structures
-from one style to the other.
+The transformative experience.
 
-Finally developing the library for this paper
-was enlightening indeed to me.
-I hope I can share this enlightenment with you.
+Thanks to @IPS,
+I could easily achieve in practice
+what so far as I know
+has only been done in theory:
+the automatic transformation of software
+and between Pure Programming Style and Stateful Programming Style.
+While I was at it, and to prove @IPS is directly applicable
+to existing programs written in traditional Object-Oriented style,
+I also implemented an automatic transformation
+from @IPS to traditional Object-Oriented Style.
+So you can write in @IPS things that would be extremely painful
+to write without Parametric Polymorphism in traditional OOP,
+yet be safe that your code is not lost
+to people who'd refuse to use @IPS but would demand traditional OOP.
+
+There was a secret technique thanks to which I could write these transformation,
+and this secret is...
 |#
+#|
+Linear Logic.
+
+Linear Logic is
+the idea that you can model computation as formal transformations
+that are mindful that entities in general are resources
+that are consumed as we use or abuse them,
+and that we must explicitly duplicate
+if we want to be able to use more than one copy.
+
+Thanks to Linear Logic, we can view these various programming styles
+as but different encodings of the very same programs,
+and write the transformations.
+The interfaces of @IPS happen to be the perfect entities
+to encapsulate the programs that are to be transformed.
+|#
+
 (slide #:title (title "I. Interface Passing Style")
        ~ @t{(a.k.a. IPS)} ~)
 #|
@@ -113,10 +219,15 @@ So let's start with Interface Passing Style.
 
 As the name implies, it a style of programming
 that involves passing around interfaces.
+
+Just like Object-Oriented Programming is OOP,
+Functional Programming is FP,
+and Continuation-Passing Style is CPS,
+Interface Passing Style is IPS.
 |#
 
 (slide #:title (title "Polymorphism")
-  (t "Abstraction of data structures") ~
+  (t "Protocol of functions and data structures") ~
   (t "Users and Implementers") ~
   (bt "Get more for Less"))
 #|
@@ -127,24 +238,27 @@ so both can get more for less:
 larger applicability with fewer lines of code,
 more cooperation with less coordination,
 higher division of labor with higher specialization.
+
+Let's examine an extremely common such protocol.
 |#
 (slide #:title (title "Finite Maps")
   ~ (t "look up a key in a map") ~
   (code (lookup map key)) ~)
 #|
-Our main example is finite maps:
-data structures that encode
-a finite number of associations from key to value.
+A finite map is
+a data structure that encodes the mapping
+from a finite number of keys each to one value.
 
-Ideally, users would just write
-  (lookup map key)
-and the system would find the associated value (if any).
+Here's how we'd like to write code that can
+look up a key in an arbitrary map
+and find the associated value.
 |#
 (slide #:title (title "Dispatch the correct algorithm")
   ~ (t "But is it an alist? a hash-table? A binary tree?") ~
   (code (lookup map key)) ~)
 #|
-But how is the system going to match the algorithm used
+Now when you tell the system to lookup a map,
+how is it going to match the algorithm used to look up the key
 with the type of data structure used to encode the map?
 |#
 (slide #:title (title "Bad monomorphism: incompatible protocols")
@@ -152,10 +266,14 @@ with the type of data structure used to encode the map?
   (code (gethash key map) => value foundp)
   (t "binary tree: DIY"))
 #|
-Without any polymorphism,
-implementers have to build each each data structure separately from scratch;
-not only are the functions monomorphic,
-and users have to learn a slightly different protocol each time.
+In the worst case,
+implementers have to build each and every data structure separately from scratch,
+and users have to learn a slightly different way to use each of them.
+
+Not only are functions monomorphic,
+that is, capable of processing only one kind of data structure;
+they do not implement a same protocol,
+except in a very abstract sense outside the language itself.
 
 That's the situation for built-in CL maps.
 |#
@@ -167,10 +285,58 @@ That's the situation for built-in CL maps.
    =>
    value foundp))
 #|
-You could have all your monomorphic functions
-follow a same calling convention.
-That would be polymorphism at the meta-level;
-but not at the language level.
+A better way to organize your code is that
+whereas your functions are still monomorphic,
+they all possess a uniform signature.
+
+You will have different functions with different names,
+such as alist-lookup, hash-table-lookup, binary-tree-lookup.
+
+But they all follow the same calling convention.
+They will all take the same arguments,
+in this case a map and a key;
+they will all return the same things,
+in this case the value found if any,
+and a boolean indicating whether a value was found.
+
+Users and implementers may have to do as much work,
+but at least they only have to remember one pattern.
+The protocol has been moved oh so slightly inside the language.
+It is kind of polymorphic at the meta-level,
+but remains monomorphic in the base language.
+
+But this is not actually solving the issue of polymorphism,
+just pushing it back to whoever chooses the function to use or implement.
+|#
+(slide #:title (title "Pseudo-polymorphism: Namespaces")
+  (code
+   (_alist:lookup map key)
+   (_hash-table:lookup map key)
+   (_binary-tree:lookup map key)
+   =>
+   value foundp))
+#|
+You could have a same name, lookup, but different namespaces.
+In Common Lisp, that would be packages.
+Each data structure would be implemented in its own package,
+but using a uniform signature,
+so you "just" have to select the correct package.
+|#
+(slide #:title (title "Pseudo-polymorphism: Namespaces")
+  (code
+   (in-package _:binary-tree)
+   (lookup map key)))
+#|
+At the meta-language level, the code is polymorphic.
+The source code looks the same, and by selecting the correct package,
+you can omit the package prefix.
+But by having him select the correct package,
+you reduce the programmer to doing the linker's job.
+And once things are linked one way at compile-time,
+so the code is actually monomorphic.
+If your language supports EVAL or reflection,
+you could programmatically build polymorphism on top,
+but that's going to be very ugly and inefficient.
 |#
 (slide #:title (title "Functional Programming")
   (t "Use higher-order functions")
@@ -183,11 +349,16 @@ Now if your monomorphic functions follow the same protocol,
 and your language supports higher-order functions,
 then you can achieve parametric polymorphism.
 
-You must "just" make sure you function lookup is properly bound
-in the scope you call it.
+Users can simply say (lookup map key), and
+the system will dispatch on the binding of the function
+to determine which algorithm to use.
 
-Of course, manually binding each and every function in the protocol
-in each and every scope is a lot of bureaucracy.
+However, in setting up the scope, the user has to somehow
+bind all the protocol functions
+to coherent algorithms that manipulate the same data structures.
+
+If you have to manually bind each and every function in the protocol
+in each and every scope, you'll have a lot of binding bureaucracy to deal with.
 |#
 (slide #:title (title "Parametric Polymorphism")
   (t "ML: Modules and Functors")
@@ -197,13 +368,23 @@ in each and every scope is a lot of bureaucracy.
   (t "Racket: Units"))
 #|
 To reduce this bureaucracy,
-modern functional programming languages support abstractions
-that encapsulate the simultaneous binding of many functions and data types.
+modern functional programming languages support abstractions such as
+Modules and Functors (in ML),
+Type Classes (in Haskell), or
+Units (in Racket).
+Each in its own way, they encapsulate
+the simultaneous binding of
+a signature of functions and data types.
 
-However, parametric polymorphism
-is that it is often quite static and rigid, in that
+New modules can extend older ones;
+and functors allow implementers
+to build more elaborate modules from previous ones.
+
+
+Something that can be both a feature or a limitation of parametric polymorphism
+is that it is often quite static and rigid.
+Once you've bound your parameters,
 the function values inside the scope are monomorphic.
-This can be both a feature or a limitation.
 |#
 
 (slide #:title (title "Object Oriented Programming")
@@ -213,17 +394,42 @@ This can be both a feature or a limitation.
   ~
   (code (lookup _map key)))
 #|
-The dual approach is to
-dispatch the algorithm to use based on the object,
+There exists a very different and in some way dual approach:
+Instead of dispatching the correct algorithm based on the functional object,
 we can dispatch the correct algorithm based on the data value.
 
 In Object-Oriented Programming, or OOP,
 the map data structure contains
 some self-descriptive meta-information, its class.
+The same generic function lookup
+can examine the class of the map object passed as argument,
+and select the correct method to use
+in that particular type of data structure.
+|#
+(slide #:title (title "Ad Hoc Polymorphism")
+  (t "Most languages: Classes")
+  ~
+  (t "Haskell: Type Classes")
+  ~
+  (t "Common Lisp: classes, and more"))
+#|
+Most modern programming languages have adopted
+some form or variant of Object-Oriented Programming
+to provide Ad Hoc Polymorphism.
 
-Lookup is a generic function,
-it will examine the class of the object passed as its map argument,
-and select the correct combination of methods to use.
+Programmers define classes,
+that can be refined and extended into subclasses.
+The subclasses can inherit structure and behavior from their superclasses,
+so implementers can reuse code from the superclasses,
+and users can reuse code for all subclasses.
+
+In dynamically typed languages such as Smalltalk, Lisp,
+and after them Python, Ruby, etc., (maybe Java)
+the objects are examined as runtime to determine the correct method.
+
+In a statically typed language such as C++ or Haskell, (maybe Java),
+the class can be determined statically,
+and the proper function chosen at compile-time.
 |#
 (slide #:title (title "Implementing Polymorphism")
   (t "Reduction to monomorphism")
@@ -232,36 +438,52 @@ and select the correct combination of methods to use.
   ~
   (t "OOP: self, virtual method table"))
 #|
-One way or another,
-whether at compile-time or runtime,
-polymorphism is implemented by resolving any relevant binding
-and dispatching an appropriate monomorphic method.
-This dispatch is necessarily based on an extra piece of meta-data,
-that has to be passed around, even if only at compile-time:
+To implement polymorphism,
+calls to polymorphic functions
+can be reduced to monomorphic functions at compile-time or runtime.
+Every source call site may exists in multiple copies,
+one per combination of classes to which it applies.
+
+But whether for parametric polymorphism or ad hoc polymorphism,
+whether statically at compile-time or dynamically at runtime,
+the implementation of this reduction relies on
+internally passing around an extra argument containing meta-data
+based on which to dispatch the correct function to use:
 a dictionary of functions,
 a virtual method table,
 a self object reference,
 a method resolution context.
-|#   
-(slide #:title (title "Interface Passing Style")
-  (t "Expose the internals") ~
-  (t "Reconcile FP and OOP"))
-#|
-In Interface Passing Style, we explicitly reify that meta-data,
-and call it an interface,
-exposing what is a usually a hidden internal.
 
-We thereby contribute to reconciling
+At that leads us to
+|#
+(slide #:title (title "Interface Passing Style")
+  (t "Reconcile FP and OOP") ~
+  (t "Expose the internals"))
+#|
+Interface Passing Style.
+
+This is contribution to reconciling
 Functional Programming and Object-Oriented Programming.
+
+Instead of leaving the polymorphism meta-data
+as a hidden piece of internals,
+I'm exposing it as a first-class entity.
 |#
 (slide #:title (title "Interface Passing Style")
   (t "IPS: One little extra argument for the meta-data")
   ~
   (code (lookup _<interface> map key)))
 #|
-To the user, Interface-Passing Style is nothing but
+And so Interface-Passing Style is nothing but
 explicit passing around such meta-data as an extra argument
 to generic functions.
+
+We don't hide the plumbing, we flaunt it proudly,
+and we give that piece of first-class meta-data the
+glorious name of Interface.
+
+And thanks to that trick, we can have both
+ad hoc polymorphism and parametric polymorphism together.
 |#
 (slide #:title (title "Using an alist")
  (code
@@ -271,14 +493,16 @@ to generic functions.
      =>
      ?))
 #|
+Let's see how to use it.
+
 The most trivial implementation for a finite map in Lisp
 is an association list, or alist,
 which is a list of key-value pairs.
 Here, we have an alist that maps year
 to city code of the corresponding recent ILC conference.
 
-Here we pass the <alist> interface to the function lookup,
-so it knows that the map argument is an alist.
+And so if you pass the <alist> interface to the function lookup,
+it will know that the map argument is an alist.
 
 Can anyone in the audience tell me what this function call returns?
 |#
@@ -336,6 +560,7 @@ alists are thus slightly privileged in Lisp
 because there is a built-in literal syntax for them;
 but other data structures are just one function call away.
 |#
+
 (slide #:title (title "Using a balanced binary tree")
  (code
   (lookup <number-map>
@@ -374,7 +599,7 @@ Let's say we notice that
 the airport code for Kyoto is actually UKY, not KYO,
 and we want to fix the alist.
 
-What happens if you insert a key and value in an alist?
+So what happens if you insert a key and value in an alist?
 |#
 (slide #:title (title "Inserting in an alist")
  (code
@@ -426,9 +651,9 @@ What happens if I insert a key-value association in a hash-table?
 #|
 It returns nothing,
 because in Common Lisp,
-the built-in hash-table data structure is stateful:
+the built-in hash-table data structures are stateful.
 insert happens through side-effect;
-it does not return a new one, it modifies the existing one.
+it does not return a new hash-table, it modifies the existing one.
 The same hash-table now associates a different value to the provided key.
 
 Note that in the example displayed,
@@ -468,6 +693,25 @@ It is part of a read-only fragment common to pure and stateful maps.
 Both packages pure and stateful import it from a common package interface,
 and reexport it.
 |#
+(slide #:title (title "Pure vs Stateful, defaults")
+  (code <alist> = pure:<alist>) ~
+  (code <hash-table> = stateful:<hash-table>) ~
+  (code lookup = interface:lookup) ~
+  (code insert = pure:insert OR stateful:insert))
+#|
+In some cases where the context is otherwise ambiguous,
+I'll assume some implicit defaults, following common usage:
+An unqualified alist is a pure alist.
+An unqualified hash-table is a stateful hash-table.
+Later on, when I discuss stateful alists and pure hash-tables,
+I will keep explicit package qualifiers.
+
+But the defaults make the context ambiguous,
+I will omit the package qualifier.
+So I'll write lookup for interface:lookup,
+and insert for whichever of pure:insert or stateful:insert
+makes sense for the data structure at hand.
+|#
 (slide #:title (title "Parametric Interfaces"))
 #|
 Now let's discuss Parametric Interfaces
@@ -506,15 +750,15 @@ and thus the key cannot be found.
 |#
 (slide #:title (title "Parametric Interfaces")
   (code
-   <alist> = (<alist> <eql>)))
+    <alist> = (<alist> <eql>)))
 #|
 So if <eql> (in angle brackets) is
 the interface for comparing objects with EQL,
-then the interface <alist> is actually the same thing as (<alist> <eql>).
-Note that the former <alist> is
-a variable bound to the default <alist> interface,
-whereas the latter <alist> is a function to construct
-<alist> interfaces with specialized equality comparison.
+then the interface <alist> is the same thing as (<alist> <eql>),
+where the former <alist> is a variable or constant
+bound to the default <alist> interface,
+and the latter <alist> is a function to construct
+different <alist> interfaces with specialized comparison functions.
 |#
 (slide #:title (title "Parametric Interfaces")
   (code
@@ -538,8 +782,9 @@ that specifies this comparison.
    =>
    2009 T))
 #|
-We could also use the <string> interface.
-<string> knows how to compare strings for equality or for order.
+We could also use the <string> interface
+that specifically knows how to compare strings for equality,
+and also knows how to order them.
 In this case, though, we don't rely on order,
 and it would behave the same as using <equal>.
 |#
@@ -556,22 +801,23 @@ However, we could have a different behavior with
 which doesn't make a difference between uppercase and lowercase.
 
 The important point here is that @IPS allows for Parametric Polymorphism.
-In @IPS, you can build it at runtime,
-based on user-provided information.
 
 In standard @OOP and without Parametric Polymorphism,
 you would have to define at compile-time
-a new class for every kind of alist that your program uses.
-If the parameter space is very large
-(e.g. user-specified Unicode collation order),
-or infinite,
-then you can't directly express your class without Parametric Polymorphism.
+a new class for every kind of alist that you want.
+In @IPS, you can build it at runtime.
+
+The number of classes to create would increase
+polynomially with the size of your parameter space,
+and exponentially with the number of parameters;
+and if the parameters can be arbitrary interface expressions,
+you just can't do it without Parametric Polymorphism.
 |#
 (slide #:title (title "Passing Interfaces Around"))
 #|
-We have seen how to make individual calls to interface functions.
-Let's combine them into larger functions and see
-how to write polymorphic code.
+Now that we have seen how to make individual calls to interface functions,
+let's combine them into larger functions and see
+how we can write polymorphic code.
 |#
 (slide #:title (title "Passing Interfaces Around")
   (code
@@ -587,10 +833,10 @@ how to write polymorphic code.
 	   (mapcar (λ (m) (sum-values <i> m))
 		   submaps))))))))
 #|
-This function computes the sum the values in a pure map.
-It uses a polymorphic divide-and-conquer strategy.
+In this function, we sum the values in a pure map
+through a polymorphic divide-and-conquer strategy.
 
-It relies on two interface functions,
+We rely on two interface functions,
 divide/list and first-key-value.
 divive/list divides the map into a list of non-empty submaps.
 If the map was empty, it returns the empty list,
@@ -605,61 +851,56 @@ and we recurse using a simple map-reduce strategy.
 
 Note that we could trivially parallelize this function
 with parallel versions of map and reduce.
-Also note that with my system LAMBDA-READER,
+Note also that with my system LAMBDA-READER,
 you could actually use the symbol λ instead of LAMBDA.
 
 But the takeaway is that you can write very polymorphic algorithms
 that work on arbitrary data structures.
-All I rely on here is a pure map from arbitrary keys to numbers.
-
-I could generalize numbers to any monoid;
-I would have to abstract away the sum operator into another interface;
-that codomain interface could be passed as a second argument,
-or extracted from the map interface.
+All I rely on here is that I have a pure map that maps keys to numbers;
+and I could generalize numbers to any monoid
+if I bothered to abstract away the sum operator into another interface.
 |#
 (slide #:title (title "Functions of multiple interfaces")
-  (t "A few functions have multiple interface arguments")
-  (code (convert <dest> <orig> object))
-  (t "Mostly use higher-order interfaces")
+  (t "Most functions take one interface as input")
+  (code (join <map> map1 map2))
+  ~
+  (t "A few take multiple interfaces")
+  (code (convert <dest> <orig> object)))
+#|
+Most functions take one and only one interface object as an argument,
+the first argument.
+
+Our join function, for instance,
+takes two maps
+that use the same data structure representation,
+after a single interface argument that describes that representation.
+The pure:join function returns a new map that joins the mappings of the two;
+the stateful:join function adds the mapping of the latter to the former.
+
+But there are also some functions take multiple interfaces as parameters.
+
+For instance, the convert function,
+that creates an object that follows the destination interface
+from an object that follows the origin interface.
+|#
+(slide #:title (title "Multiple interfaces")
+  (t "Mostly use higher-order interfaces.")
   (code
    (defgeneric <federate> (<db1> <db2>)
      (:documentation
       "Create federated db interface"))))
 #|
-This leads me to functions with multiple interface parameters.
+Typically though, the way to deal with multiple interfaces
+is to combine them into a single interface using parametric polymorphism,
+then use the combined interface as THE interface to pass around to functions.
 
-Some functions, such as the convert function,
-that creates an object that follows the destination interface
-from an object that follows the origin interface.
-
-But most functions of multiple interfaces are
-constructors for more elaborate interfaces.
-This is consistent with separating meta-data level computations
-from data-level computations.
-
-For instance, a hypothetical <federate> function
-would create an interface for a federated database
-from interfaces of the elementary databases.
+And so, most functions of multiple interfaces are actually
+constructors for more elaborate interfaces,
+such as a hypothetical <federate> function
+that could federate database by building federated database interfaces
+from elementary database interfaces.
 |#
-(slide #:title (title "Multiple interfaces")
-  (t "Most functions take one interface as input")
-  (code (join <map> map1 map2)))
-#|
-But most functions take one and only one interface object as an argument,
-the first argument.
 
-For instance, the join function that merges two maps into one
-takes only one interface argument;
-all maps follow the specified representation strategy,
-and the algorithm takes advantage of that for performance.
-
-When dealing with multiple interfaces, the recommended solution
-is to combine the multiple interfaces into one using parametric polymorphism,
-then use the combined interface.
-
-Interface combination is typically completed in an early phase of computation,
-often at compile-time.
-|#
 (slide #:title (title "Beware! No Type Checking")
   (t "No implicit check")
   (code (check-invariant <type> object)) ~
@@ -668,30 +909,41 @@ often at compile-time.
 #|
 Following the tradition of Common Lisp,
 our library does NOT provide static typechecking.
+You could combine parametric and ad hoc polymorphism
+in the context of static typechecking, as in C++ or Scala,
+but in this case, this is Common Lisp, so we don't.
 
-You can EXPLICITLY check invariants with the method check-invariant
-of the <type> interface.
-However, its cost is usually proportional to the size of objects,
-so it is not good around every operation.
+We do not implicitly include type checks everywhere.
+They are expensive and in general have a cost proportional to the size of the objects,
+so you don't want them for everyday operation.
+But we do provide a function check-invariant,
+that takes a <type> interface and an object and checks the object is of the type,
+and throws an error if it doesn't.
 
-It is great for testing, and helped me found many bugs,
-and probably good around module boundaries.
+When running tests, you should check invariants a lot.
+In my tests I do and I caught many bugs that way.
+You should probably also check invariants
+in the various the entry points of a module
+to validate any untrusted user-provided inputs.
 
 So what happens when you run code with the wrong argument?
-sometimes, a runtime error;
-sometimes, worse: the wrong answer.
+We already saw that in some cases,
+Lisp will eventually throw a runtime error at you
+as you try to do an illegal operation.
+In other cases, you might get worse: the wrong answer.
 
-That's the usual Lisp attitude:
-great power, and with it, great responsibility.
+So beware, you have the great power to do anything you want;
+with great power comes great responsibility.
 
-[Finally, there is no integration CL's typep yet.
-It would involve using ASDF-FINALIZERS.]
+We also don't provide integration of interfaces with Common Lisp's typep yet.
+I know how to do that, and it involves using ASDF-FINALIZERS.
+But I haven't bothered yet.
 |#
 
 (slide #:title (title "Defining Interfaces"))
 #|
-We've seen how to use interfaces,
-Defining interfaces is rather straightforward.
+Now that we've seen how to use interfaces,
+defining interfaces is rather straightforward.
 |#
 
 (slide #:title (title "Abstract Interfaces")
@@ -1214,20 +1466,38 @@ to actually implement hash-tables.
 |#
 (slide #:title (title "Mind the Pun")
   (code
-(defmethod insert
-    ((_<i> <hash-table>) _map key value)
-  (let ((hash (hash (key-interface <i>) key)))
-    (insert
-     (_hashmap-interface _<i>) _map hash
-     (insert
-      (bucketmap-interface <i>)
-      (multiple-value-bind (bucket foundp)
-           (lookup (_hashmap-interface _<i>)
-	           _map hash)
-         (if foundp
-	     bucket
-	     (empty (bucketmap-interface <i>))))
-      key value))))))
+(defmethod insert ((_<i> <hash-table>) _map key value)
+  (nest
+   (let ((hash (hash (key-interface <i>) key))))
+   (multiple-value-bind (bucket foundp)
+       (lookup (hashmap-interface <i>) map hash))
+   (let ((old-bucket
+          (if foundp
+	      bucket
+	      (empty (bucketmap-interface <i>))))))
+   (let ((new-bucket
+          (insert (bucketmap-interface <i>)
+                  old-bucket key value))))
+   (insert (hashmap-interface <i>) map
+           hash new-bucket)))))
+
+(slide #:title (title "Mind the Pun")
+  (code
+(defmethod insert ((<i> <hash-table>) map key value)
+  (nest
+   (let ((hash (hash (key-interface <i>) key))))
+   (multiple-value-bind (bucket foundp)
+       (lookup (_hashmap-interface _<i>) _map hash))
+   (let ((old-bucket
+          (if foundp
+	      bucket
+	      (empty (bucketmap-interface <i>))))))
+   (let ((new-bucket
+          (insert (bucketmap-interface <i>)
+                  old-bucket key value))))
+   (insert (_hashmap-interface _<i>) _map
+           hash new-bucket)))))
+
 #|
 Here is a typical such method, for insertion.
 
@@ -1299,7 +1569,7 @@ and in the BODY of the macro,
 calls to the specified interface functions will implicitly
 pass around the the provided interface object.
 |#
-(slide #:title (title "Making interfaces implicit")
+(slide #:title (title "Using interfaces made implicit")
   (code
 (defun insertion-sort (alist)
   (with-interface (<number-map> <map>)
@@ -1326,7 +1596,7 @@ so with-interface didn't buy us much.
 But in more complex functions with many interface function calls,
 it can buy us a lot.
 |#
-(slide #:title (title "Making interfaces implicit")
+(slide #:title (title "Defining interfaces implicit style")
   (code
 (define-interface <eq-from-==> (<eq>) ()
   (:abstract)
@@ -1359,7 +1629,7 @@ because interface meta-data and the actual data-structures
 follow separate hierarchy, we are not stuck with contradictory
 constraints of covariance and contravariance.
 |#
-(slide #:title (title "Making interfaces implicit")
+(slide #:title (title "Defining interfaces implicit style")
   (code
     (define-interface <empty-is-nil>
       (<emptyable>) ()
@@ -1396,7 +1666,10 @@ from your structures built in @IPS.
 (defpackage :pure-hash-table ...)
 (in-package :pure-hash-table)
 (define-interface-specialized-functions
-  pure:<hash-table> pure:<map>)))
+  pure:<hash-table> pure:<map>)
+(let ((h (empty)))
+  (insert h 1 "a")
+  (join h (alist-map '((2 . "b") (3 . "c")))))))
 #|
 Here is a trivial use of the macro.
 
@@ -1408,6 +1681,10 @@ This way, you can create your data structures
 with all the power of @IPS,
 and export them for use by your customers
 who don't want to hear anything about @IPS.
+
+There is no more polymorphism in the provided API,
+though polymorphism was used (and how!)
+in building the data structure.
 |#
 (slide #:title (title "From Pure to Stateful and Back")
   (t "put pure objects in mutable box") ~
@@ -1454,14 +1731,10 @@ the stateful function captures this new value and updates the box.
   (code
 (defmethod lookup
     ((<interface> <mutating-map>) map key)
-  (let* ((<pure-interface>
-           (pure-interface <interface>))
-         (pure-map (box-value map)))
-    (multiple-value-bind (value foundp)
-        (lookup <pure-interface>
-	        pure-map key)
-      (values value foundp))))
-))
+  (let ((<pure-interface>
+          (pure-interface <interface>))
+        (pure-map (box-value map)))
+    (lookup <pure-interface> pure-map key)))))
 #|
 Here is how the lookup method is automatically generated.
 In practice, the macro uses gensyms, here I cleaned up the macro output.
@@ -1521,7 +1794,7 @@ our pure functions and their stateful variants.
 
    (:generic stateful:insert
      (<map> map key value) (:in 1)
-     (:values) (:out t))
+     (:values)             (:out t))
 
    (:generic stateful:empty
      (<map>)
@@ -1541,14 +1814,13 @@ and a constructor.
 (defmethod stateful:insert
     ((<interface> <mutating-map>) map key value)
   (let* ((<pure-interface>
-           (pure-interface <interface>))
-         (pure-map (box-value map)))
-    (multiple-value-bind (updated-map)
-        (pure:insert <pure-interface>
-		     pure-map key value)
+          (pure-interface <interface>))
+         (pure-map (box-value map))
+         (updated-map
+          (pure:insert <pure-interface>
+                       pure-map key value)))
       (set-box-value _updated-map map)
       (values)))))
-(t "Erratum p. 72 section 4.2.3"))
 #|
 And so here is the insert method.
 
@@ -1566,11 +1838,11 @@ of my partly copy-pasted macro expansion cleanup.
 (defmethod stateful:empty
     ((<interface> <mutating-map>))
   (let* ((<pure-interface>
-           (pure-interface <interface>)))
-    (multiple-value-bind (pure-empty)
-        (pure:empty <pure-interface>)
-      (let* ((empty-object (box! pure-empty)))
-        empty-object))))))
+          (pure-interface <interface>))
+         (pure-empty
+          (pure:empty <pure-interface>)))
+    (box! pure-empty)))
+))
 #|
 Finally, here is the empty method.
 
@@ -1596,7 +1868,7 @@ Unhappily, two fail: join/list and divide/list
 that respectively take as argument and return as result
 a list of submaps.
 My type system can't express the preservation of identity in list arguments.
-Therefore I have explicitly write methods for these functions.
+Therefore I explicitly wrote methods for these functions.
 
 Here is divide/list that we used earlier
 in our generic divide and conquer reduction algorithm.
@@ -1649,14 +1921,11 @@ with the same manual method definitions.
   (code
 (defmethod lookup
     ((<interface> <linearized-map>) map key)
-  (let* ((<stateful-interface>
-           (stateful-interface <interface>))
-         (stateful-map (box-value map)))
-    (multiple-value-bind (value foundp)
-        (lookup <stateful-interface>
-	        stateful-map key)
-      (values value foundp))))
-))
+  (let ((<stateful-interface>
+         (stateful-interface <interface>))
+        (stateful-map (box-value map)))
+    (lookup <stateful-interface>
+            stateful-map key)))))
 #|
 Here is the lookup method.
 It is exactly the same as for the pure to stateful transformation.
@@ -1673,8 +1942,8 @@ That's because it's read-only either way.
                       stateful-map key value)
      (let* ((updated-map
               (one-use-value-box stateful-map)))
-       updated-map))))
-(t "Erratum p. 73 section 4.2.5"))
+       updated-map)))
+))
 #|
 However, for the insert method,
 see how we put new value in a fresh one-use-value-box.
@@ -1699,13 +1968,10 @@ That's why we have those boxes to throw an error if you do it.
 (defmethod empty
     ((<interface> <linearized-map>))
   (let* ((<stateful-interface>
-           (stateful-interface <interface>)))
-    (multiple-value-bind (empty-object)
-        (empty <stateful-interface>)
-      (let* ((one-use-empty
-               (one-use-value-box empty-object)))
-	one-use-empty))))
-))
+           (stateful-interface <interface>))
+         (empty-object
+          (empty <stateful-interface>)))
+    (one-use-value-box empty-object)))))
 #|
 Finally, the constructor simply puts the object in a box.
 |#
@@ -1715,6 +1981,15 @@ Finally, the constructor simply puts the object in a box.
   >map< (object-box) stateful:<map>
   ((interface :initarg :interface))
   (:interface-argument (<interface> stateful:<map>)))
+))
+
+(slide #:title (title "Using code OOP style")
+  (code
+(let ((map (make-instance '>map<
+                          :interface 'number-map)))
+  (insert map 2010 50)
+  (insert map 2012 60)
+  (reduce #'+ (collection-values map)))
 ))
 #|
 Now, using the same Linear Type System,
@@ -1731,12 +2006,9 @@ the interface used and the value for that interface.
 (slide #:title (title "IPS to OOP")
   (code
 (defmethod lookup ((map >map<) key)
-  (let* ((<interface> (class-interface map))
-         (map-data (box-ref map)))
-    (multiple-value-bind (value foundp)
-        (interface:lookup <interface> map key)
-      (values value foundp))))
-))
+  (let ((<interface> (class-interface map))
+        (map-data (box-ref map)))
+    (interface:lookup <interface> map-data key)))))
 #|
 The read-only method would
 trivially extract the interface and value from the box argument
@@ -1745,11 +2017,9 @@ and do the lookup.
 (slide #:title (title "IPS to OOP")
   (code
 (defmethod insert ((map >map<) key value)
-  (let* ((<interface> (class-interface map))
-         (map-data (box-ref map)))
-    (stateful:insert <interface> map key value)
-    (values)))
-))
+  (let ((<interface> (class-interface map))
+        (map-data (box-ref map)))
+    (stateful:insert <interface> map-data key value)))))
 #|
 Similarly, the side-effecting method
 can simply extract the interface and datum from the argument,
@@ -1758,12 +2028,11 @@ and do the side-effect.
 (slide #:title (title "Issue with Constructors!")
   (code
 (defmethod empty ((<interface> stateful:<map>))
-  (multiple-value-bind (empty-data)
-      (interface:empty <interface>)
-    (let* ((object (make-instance '>map<
-                    :interface <interface>
-		    :value empty-data)))
-      object)))))
+  (let ((empty-data
+          (interface:empty <interface>)))
+    (make-instance '>map<
+                   :interface <interface>
+                   :value empty-data)))))
 #|
 But the constructor doesn't have an object as argument,
 it has an object as a result.
@@ -1805,12 +2074,10 @@ constructors just use a constant value for the interface.
 (slide #:title (title "IPS to OOP, monomorphic constructor")
   (code
 (defmethod empty ()
-  (let* ((<interface> <number-map>))
-    (multiple-value-bind (empty-data)
-        (interface:empty <interface>)
-      (let* ((object (make-instance '>nm<
-      	    	        :value empty-data)))
-        object))))))
+  (let* ((<interface> <number-map>)
+         (empty-data
+          (interface:empty <interface>)))
+    (make-instance '>nm< :value empty-data)))))
 #|
 Then the constructor does not need to take an extra argument.
 
@@ -1921,7 +2188,7 @@ you'll end up putting the cart before the horses.
   (code (quicklisp:quickload :lil))
   (t "Have fun!")
   ~
-  (bt "Wanna hack Lisp? Apply at Google!"))
+  (bt "Wanna hack Lisp? Apply at Google! [2014: kind of]"))
 #|
 Thank you for listening to my talk.
 
