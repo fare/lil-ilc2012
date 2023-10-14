@@ -11,10 +11,10 @@ The home page for this article is at:
 	http://github.com/fare/lil-ilc2012/
 
 A PDF extract of this article is here:
-	http://common-lisp.net/~frideau/lil-ilc2012/lil-ilc2012.pdf
+	http://fare.tunes.org/files/cs/lil-ilc2012/lil-ilc2012.pdf
 
 An HTML extract of this article is here:
-	http://common-lisp.net/~frideau/lil-ilc2012/lil-ilc2012.html
+	http://fare.tunes.org/files/cs/lil-ilc2012/lil-ilc2012.html
 
 Note that this article was slightly modified
 since it was accepted and published at ILC 2012:
